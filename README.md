@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SerwisDesk (MVP)
 
-## Getting Started
+Webowy helpdesk/ticketing (Next.js + Prisma + NextAuth + Tailwind).
 
-First, run the development server:
+## Wymagania
+- Node 22+ (w repo: `node-portable/node-v22.12.0-win-x64`)
+- pnpm (`npm-global/pnpm.cmd`)
+- Postgres (lokalny lub przez Docker Desktop + docker-compose)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Konfiguracja
+1. Skopiuj `.env.example` do `.env.local` i ustaw:
+   - `DATABASE_URL` (np. `postgresql://postgres:postgres@localhost:5432/serwisdesk`)
+   - `NEXTAUTH_SECRET` (silny losowy)
+2. Zainstaluj zależności (PowerShell):
+   ```powershell
+   $env:PATH="$PWD\node-portable\node-v22.12.0-win-x64;$PWD\npm-global;$env:PATH"
+   cd serwisdesk
+   pnpm.cmd install
+   ```
+3. Migracje + seed (wymaga bazy):
+   ```powershell
+   pnpm.cmd prisma:migrate
+   pnpm.cmd prisma:seed
+   ```
+
+## Uruchomienie
+```powershell
+pnpm.cmd dev
 ```
+Domyślnie: http://localhost:3000  
+Logowanie demo: `admin@serwisdesk.local` / `Admin123!` (zmień po starcie).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Skrypty
+- `pnpm dev` – dev server
+- `pnpm build` / `pnpm start` – produkcja
+- `pnpm prisma:migrate`, `pnpm prisma:seed`
+- `pnpm test` – Vitest (do uzupełnienia)
+- `pnpm test:e2e` – Playwright (do uzupełnienia)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Modele (Prisma)
+- Organization, User (role: REQUESTER/AGENT/ADMIN), Team, TeamMembership
+- Ticket (statusy: NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE; priorytety: NISKI, SREDNI, WYSOKI, KRYTYCZNY)
+- Comment (public/internal), Attachment, Tag, TicketTag, AuditEvent, SlaPolicy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Stan MVP
+- Logowanie (NextAuth credentials, Prisma adapter)
+- Lista ticketów (requester widzi tylko swoje)
+- Tworzenie ticketu + SLA due (first/resolve) wg SlaPolicy
+- Szczegóły ticketu, komentarze public/internal (internal tylko agent/admin)
+- Seed: org Demo, admin/requester/agent, zespół IT Support, przykładowy ticket
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Do zrobienia (kolejne iteracje)
+- Panel admin (użytkownicy/zespoły/słowniki/SLA)
+- Załączniki (upload + metadane)
+- Raporty, Kanban, dashboard KPI
+- E2E/Unit testy, Dockerfile + docker-compose
