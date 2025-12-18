@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient, Role, TicketPriority, TicketStatus } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 

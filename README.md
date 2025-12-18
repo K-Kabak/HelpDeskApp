@@ -2,6 +2,17 @@
 
 Webowy helpdesk/ticketing (Next.js + Prisma + NextAuth + Tailwind).
 
+## Podsumowanie zmian
+
+- Added client-side validation rules with length limits, inline error messaging, and error clearing for ticket form fields to enforce required inputs before submission.
+- Improved submission experience by disabling inputs, showing a spinner, resetting state after success, and surfacing detailed API error responses.
+- Introduced an edit/preview toggle for the Markdown description using ReactMarkdown and remarkGfm so users can see formatting before sending.
+- **Naprawa dokumentacji:** sekcja poniżej wcześniej raportowała błąd linta, choć po poprawkach w seed/auth/tailwind konfiguracja przechodzi pomyślnie.
+
+### Testy
+
+- ✅ `pnpm lint` (aktualne; wcześniejszy wpis był nieaktualny)
+
 ## Wymagania
 - Node 22+ (w repo: `node-portable/node-v22.12.0-win-x64`)
 - pnpm (`npm-global/pnpm.cmd`)

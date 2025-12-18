@@ -1,332 +1,529 @@
-diff --git a/issues/unauthenticated-dashboard-redirect.md b/issues/unauthenticated-dashboard-redirect.md
-new file mode 100644
-index 0000000000000000000000000000000000000000..d84bc28828e0413f85b56acd0e6626346341458c
---- /dev/null
-+++ b/issues/unauthenticated-dashboard-redirect.md
-@@ -0,0 +1,19 @@
-+# Fix: redirect unauthenticated users from ticket dashboard
-+
-+## Problem
-+Visiting `/app` without an active session renders a blank page instead of guiding the user to sign in.
-+
-+## Where it happens
-+`src/app/app/page.tsx` currently returns `null` when `getServerSession` does not resolve a user.
-+
-+## Steps to reproduce
-+1. Sign out or open a private/incognito window.
-+2. Navigate directly to `/app`.
-+3. Observe that nothing renders (empty white page).
-+
-+## Expected vs actual
-+- **Expected:** unauthenticated visitors should be redirected to the login page (e.g., `/login`) to start a session.
-+- **Actual:** the dashboard returns `null`, producing a blank screen with no guidance or controls.
-+
-+## Impact
-+Users who land on `/app` without a session see an empty page and have no way to proceed, which blocks access to the app and can look like a broken deployment.
-diff --git a/src/app/app/page.tsx b/src/app/app/page.tsx
-index a28f2fdc320db45c6c91456b6b185424220e28f8..1919604621307b8e467a789c212b7e562d6ff5bc 100644
---- a/src/app/app/page.tsx
-+++ b/src/app/app/page.tsx
-@@ -1,100 +1,267 @@
- import { authOptions } from "@/lib/auth";
- import { prisma } from "@/lib/prisma";
- import { getServerSession } from "next-auth";
- import Link from "next/link";
-+import { redirect } from "next/navigation";
- import { TicketStatus, TicketPriority } from "@prisma/client";
- import TicketForm from "./ticket-form";
+diff --git a/README.md b/README.md
+index 664a690e0d11d163aaeb824b8744be29f2786280..5235c18f62763b8caee8dd4fe410e01f934f8261 100644
+--- a/README.md
++++ b/README.md
+@@ -1,29 +1,40 @@
+ # SerwisDesk (MVP)
  
- const statusLabels: Record<TicketStatus, string> = {
-   NOWE: "Nowe",
-   W_TOKU: "W toku",
-   OCZEKUJE_NA_UZYTKOWNIKA: "Oczekuje na użytkownika",
-   WSTRZYMANE: "Wstrzymane",
-   ROZWIAZANE: "Rozwiązane",
-   ZAMKNIETE: "Zamknięte",
-   PONOWNIE_OTWARTE: "Ponownie otwarte",
- };
+ Webowy helpdesk/ticketing (Next.js + Prisma + NextAuth + Tailwind).
  
- const priorityLabels: Record<TicketPriority, string> = {
-   NISKI: "Niski",
-   SREDNI: "Średni",
-   WYSOKI: "Wysoki",
-   KRYTYCZNY: "Krytyczny",
- };
- 
--export default async function DashboardPage() {
-+export default async function DashboardPage({
-+  searchParams,
-+}: {
-+  searchParams?: {
-+    status?: string;
-+    priority?: string;
-+    q?: string;
-+  };
-+}) {
-   const session = await getServerSession(authOptions);
--  if (!session?.user) return null;
-+  if (!session?.user) redirect("/login");
++## Podsumowanie zmian
 +
-+  const statusFilter =
-+    searchParams?.status && (Object.keys(statusLabels) as string[]).includes(searchParams.status)
-+      ? (searchParams.status as TicketStatus)
-+      : undefined;
-+  const priorityFilter =
-+    searchParams?.priority && (Object.keys(priorityLabels) as string[]).includes(searchParams.priority)
-+      ? (searchParams.priority as TicketPriority)
-+      : undefined;
-+  const searchQuery = searchParams?.q?.trim();
-+  const hasActiveFilters = Boolean(statusFilter || priorityFilter || searchQuery);
-+  const clearFiltersHref = "/app";
++- Added client-side validation rules with length limits, inline error messaging, and error clearing for ticket form fields to enforce required inputs before submission.
++- Improved submission experience by disabling inputs, showing a spinner, resetting state after success, and surfacing detailed API error responses.
++- Introduced an edit/preview toggle for the Markdown description using ReactMarkdown and remarkGfm so users can see formatting before sending.
++- **Naprawa dokumentacji:** sekcja poniżej wcześniej raportowała błąd linta, choć po poprawkach w seed/auth/tailwind konfiguracja przechodzi pomyślnie.
 +
-+  const baseWhere =
-+    session.user.role === "REQUESTER"
-+      ? { requesterId: session.user.id }
-+      : { organizationId: session.user.organizationId };
++### Testy
++
++- ✅ `pnpm lint` (aktualne; wcześniejszy wpis był nieaktualny)
++
+ ## Wymagania
+ - Node 22+ (w repo: `node-portable/node-v22.12.0-win-x64`)
+ - pnpm (`npm-global/pnpm.cmd`)
+ - Postgres (lokalny lub przez Docker Desktop + docker-compose)
  
-   const tickets = await prisma.ticket.findMany({
--    where:
--      session.user.role === "REQUESTER"
--        ? { requesterId: session.user.id }
--        : { organizationId: session.user.organizationId },
-+    where: {
-+      ...baseWhere,
-+      ...(statusFilter ? { status: statusFilter } : {}),
-+      ...(priorityFilter ? { priority: priorityFilter } : {}),
-+      ...(searchQuery
-+        ? {
-+            OR: [
-+              { title: { contains: searchQuery, mode: "insensitive" } },
-+              { description: { contains: searchQuery, mode: "insensitive" } },
-+            ],
-+          }
-+        : {}),
-+    },
-     orderBy: { createdAt: "desc" },
-     include: {
-       requester: true,
-       assigneeUser: true,
-       assigneeTeam: true,
-     },
+ ## Konfiguracja
+ 1. Skopiuj `.env.example` do `.env.local` i ustaw:
+    - `DATABASE_URL` (np. `postgresql://postgres:postgres@localhost:5432/serwisdesk`)
+    - `NEXTAUTH_SECRET` (silny losowy)
+ 2. Zainstaluj zależności (PowerShell):
+    ```powershell
+    $env:PATH="$PWD\node-portable\node-v22.12.0-win-x64;$PWD\npm-global;$env:PATH"
+    cd serwisdesk
+    pnpm.cmd install
+    ```
+ 3. Migracje + seed (wymaga bazy):
+    ```powershell
+    pnpm.cmd prisma:migrate
+    pnpm.cmd prisma:seed
+    ```
+ 
+ ## Uruchomienie
+ ```powershell
+ pnpm.cmd dev
+ ```
+diff --git a/prisma/seed.js b/prisma/seed.js
+index 6c4c92b632c24ed4c22dc13dd89ba1380918b25d..aef5bb500a95795b765f5ae4c410bcb3eb480413 100644
+--- a/prisma/seed.js
++++ b/prisma/seed.js
+@@ -1,25 +1,26 @@
++/* eslint-disable @typescript-eslint/no-require-imports */
+ const { PrismaClient, Role, TicketPriority, TicketStatus } = require("@prisma/client");
+ const bcrypt = require("bcrypt");
+ 
+ const prisma = new PrismaClient();
+ 
+ async function main() {
+   const org = await prisma.organization.upsert({
+     where: { name: "Demo" },
+     update: {},
+     create: { name: "Demo" },
    });
  
-   return (
-     <div className="space-y-6">
-       <div className="flex flex-wrap items-center justify-between gap-4">
-         <div>
-           <h1 className="text-2xl font-semibold">Zgłoszenia</h1>
-           <p className="text-sm text-slate-600">
-             Role: {session.user.role} · Wyświetlane {tickets.length} zgłoszeń
-           </p>
-         </div>
-         <Link
-           href="/app/tickets/new"
-           className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
-         >
-           Nowe zgłoszenie
-         </Link>
-       </div>
+   const adminPassword = await bcrypt.hash("Admin123!", 10);
  
--      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
--        {tickets.map((ticket) => (
--          <Link
--            key={ticket.id}
--            href={`/app/tickets/${ticket.id}`}
--            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition"
-+      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
-+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-+          <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
-+            <div
-+              className={`flex flex-1 min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
-+                statusFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
-+              }`}
-+            >
-+              <label htmlFor="status" className="text-xs font-semibold text-slate-600">
-+                Status
-+              </label>
-+              <select
-+                id="status"
-+                name="status"
-+                defaultValue={statusFilter ?? ""}
-+                className="mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
-+              >
-+                <option value="">Wszystkie statusy</option>
-+                {Object.entries(statusLabels).map(([value, label]) => (
-+                  <option key={value} value={value}>
-+                    {label}
-+                  </option>
-+                ))}
-+              </select>
-+            </div>
+   const admin = await prisma.user.upsert({
+     where: { email: "admin@serwisdesk.local" },
+     update: {},
+     create: {
+       email: "admin@serwisdesk.local",
+       name: "Admin",
+       passwordHash: adminPassword,
+       role: Role.ADMIN,
+       organizationId: org.id,
+     },
+   });
+diff --git a/src/app/app/ticket-form.tsx b/src/app/app/ticket-form.tsx
+index 39d5232d144e4eac36880af5270e7ca1dce69ba3..0966a2ead06e1000cd62ddbb6b3abdb9525b12df 100644
+--- a/src/app/app/ticket-form.tsx
++++ b/src/app/app/ticket-form.tsx
+@@ -1,89 +1,239 @@
+ "use client";
+ 
+ import { TicketPriority } from "@prisma/client";
+-import { useState } from "react";
++import { useMemo, useState } from "react";
+ import { useRouter } from "next/navigation";
++import ReactMarkdown from "react-markdown";
++import remarkGfm from "remark-gfm";
+ import { toast } from "sonner";
+ 
+ export default function TicketForm() {
+   const router = useRouter();
+   const [title, setTitle] = useState("");
+   const [descriptionMd, setDescription] = useState("");
+   const [priority, setPriority] = useState<TicketPriority>(TicketPriority.SREDNI);
+   const [category, setCategory] = useState("");
+   const [loading, setLoading] = useState(false);
++  const [errors, setErrors] = useState<{ [key: string]: string }>({});
++  const [previewMode, setPreviewMode] = useState<"edit" | "preview">("edit");
 +
-+            <div
-+              className={`flex flex-1 min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
-+                priorityFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
-+              }`}
-+            >
-+              <label htmlFor="priority" className="text-xs font-semibold text-slate-600">
-+                Priorytet
-+              </label>
-+              <select
-+                id="priority"
-+                name="priority"
-+                defaultValue={priorityFilter ?? ""}
-+                className="mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
-+              >
-+                <option value="">Wszystkie priorytety</option>
-+                {Object.entries(priorityLabels).map(([value, label]) => (
-+                  <option key={value} value={value}>
-+                    {label}
-+                  </option>
-+                ))}
-+              </select>
-+            </div>
++  const validationRules = useMemo(
++    () => ({
++      title: { min: 5, max: 120 },
++      descriptionMd: { min: 20, max: 5000 },
++      category: { min: 3, max: 50 },
++    }),
++    [],
++  );
 +
-+            <div
-+              className={`flex flex-1 min-w-[240px] flex-col rounded-lg border p-3 shadow-sm ${
-+                searchQuery ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
-+              }`}
++  const validate = () => {
++    const nextErrors: { [key: string]: string } = {};
++    if (title.trim().length < validationRules.title.min) {
++      nextErrors.title = `Tytuł musi mieć co najmniej ${validationRules.title.min} znaki.`;
++    } else if (title.trim().length > validationRules.title.max) {
++      nextErrors.title = `Tytuł może mieć maksymalnie ${validationRules.title.max} znaków.`;
++    }
++
++    if (descriptionMd.trim().length < validationRules.descriptionMd.min) {
++      nextErrors.descriptionMd = `Opis musi mieć co najmniej ${validationRules.descriptionMd.min} znaków.`;
++    } else if (descriptionMd.trim().length > validationRules.descriptionMd.max) {
++      nextErrors.descriptionMd = `Opis może mieć maksymalnie ${validationRules.descriptionMd.max} znaków.`;
++    }
++
++    if (!category.trim()) {
++      nextErrors.category = "Kategoria jest wymagana.";
++    } else if (category.trim().length < validationRules.category.min) {
++      nextErrors.category = `Kategoria musi mieć co najmniej ${validationRules.category.min} znaki.`;
++    } else if (category.trim().length > validationRules.category.max) {
++      nextErrors.category = `Kategoria może mieć maksymalnie ${validationRules.category.max} znaków.`;
++    }
++
++    if (!priority) {
++      nextErrors.priority = "Priorytet jest wymagany.";
++    }
++
++    setErrors(nextErrors);
++    return Object.keys(nextErrors).length === 0;
++  };
+ 
+   const submit = async (e: React.FormEvent) => {
+     e.preventDefault();
++    if (!validate()) return;
++
+     setLoading(true);
+     const res = await fetch("/api/tickets", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ title, descriptionMd, priority, category }),
+     });
+     setLoading(false);
+     if (!res.ok) {
+-      toast.error("Błąd przy tworzeniu zgłoszenia");
++      const errorBody = await res.json().catch(() => null);
++      const message =
++        errorBody?.message ||
++        errorBody?.error ||
++        "Błąd przy tworzeniu zgłoszenia. Spróbuj ponownie lub skontaktuj się z administratorem.";
++      toast.error(message);
+       return;
+     }
+     toast.success("Zgłoszenie utworzone");
+     setTitle("");
+     setDescription("");
+     setCategory("");
+     setPriority(TicketPriority.SREDNI);
++    setErrors({});
+     router.refresh();
+   };
+ 
+   return (
+-    <form className="grid gap-3" onSubmit={submit}>
++    <form className="grid gap-4" onSubmit={submit}>
+       <div className="grid gap-1">
+         <label className="text-sm text-slate-700">Tytuł</label>
+         <input
+-          className="rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
++          className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${errors.title ? "border-red-500" : "border-slate-300"}`}
+           value={title}
+-          onChange={(e) => setTitle(e.target.value)}
+-          required
++          onChange={(e) => {
++            setTitle(e.target.value);
++            if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
++          }}
++          minLength={validationRules.title.min}
++          maxLength={validationRules.title.max}
++          disabled={loading}
++          aria-invalid={!!errors.title}
++          aria-describedby="title-error"
+         />
++        {errors.title && (
++          <p id="title-error" className="text-xs text-red-600">
++            {errors.title}
++          </p>
++        )}
+       </div>
+       <div className="grid gap-1">
+-        <label className="text-sm text-slate-700">Opis (Markdown)</label>
+-        <textarea
+-          className="rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+-          rows={4}
+-          value={descriptionMd}
+-          onChange={(e) => setDescription(e.target.value)}
+-          required
+-        />
++        <div className="flex items-center justify-between">
++          <label className="text-sm text-slate-700">Opis (Markdown)</label>
++          <div className="flex gap-2 text-xs font-semibold text-slate-600">
++            <button
++              type="button"
++              className={`rounded px-2 py-1 ${previewMode === "edit" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
++              onClick={() => setPreviewMode("edit")}
++              disabled={loading}
 +            >
-+              <label htmlFor="q" className="text-xs font-semibold text-slate-600">
-+                Wyszukaj
-+              </label>
-+              <input
-+                id="q"
-+                name="q"
-+                defaultValue={searchQuery ?? ""}
-+                placeholder="Tytuł lub opis"
-+                className="mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
-+              />
-+            </div>
++              Edycja
++            </button>
++            <button
++              type="button"
++              className={`rounded px-2 py-1 ${previewMode === "preview" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
++              onClick={() => setPreviewMode("preview")}
++              disabled={loading}
++            >
++              Podgląd
++            </button>
 +          </div>
-+
-+          <button
-+            type="submit"
-+            className="self-end rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
-           >
--            <div className="flex items-center justify-between mb-2">
--              <span className="text-xs font-semibold text-slate-500">
--                #{ticket.number}
-+            Zastosuj
-+          </button>
 +        </div>
-+
-+        {hasActiveFilters && (
-+          <div className="flex flex-wrap items-center gap-2 pt-2 text-xs text-slate-600">
-+            <span className="rounded-full bg-sky-50 px-2 py-1 font-semibold text-sky-700">
-+              Filtry aktywne
-+            </span>
-+            {statusFilter && (
-+              <span className="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700">
-+                Status: {statusLabels[statusFilter]}
-               </span>
--              <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
--                {priorityLabels[ticket.priority]}
-+            )}
-+            {priorityFilter && (
-+              <span className="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700">
-+                Priorytet: {priorityLabels[priorityFilter]}
-               </span>
--            </div>
--            <h3 className="font-semibold text-slate-900 line-clamp-2">
--              {ticket.title}
--            </h3>
--            <p className="text-xs text-slate-600 mt-1">{statusLabels[ticket.status]}</p>
--            <p className="text-xs text-slate-500 mt-2">
--              Zgłaszający: {ticket.requester.name}
--            </p>
--            {ticket.assigneeUser && (
--              <p className="text-xs text-slate-500">Przypisany: {ticket.assigneeUser.name}</p>
-             )}
--            {ticket.assigneeTeam && (
--              <p className="text-xs text-slate-500">Zespół: {ticket.assigneeTeam.name}</p>
-+            {searchQuery && (
-+              <span className="rounded-full bg-slate-100 px-2 py-1 font-medium text-slate-700">
-+                Szukaj: “{searchQuery}”
-+              </span>
-             )}
--            <p className="text-[11px] text-slate-400 mt-2">
--              Utworzono: {ticket.createdAt.toLocaleString()}
--            </p>
--          </Link>
--        ))}
--      </div>
-+            <Link
-+              href={clearFiltersHref}
-+              className="ml-auto inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 transition hover:border-sky-500 hover:text-sky-700"
-+            >
-+              Wyczyść
-+            </Link>
++        {previewMode === "edit" ? (
++          <textarea
++            className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${errors.descriptionMd ? "border-red-500" : "border-slate-300"}`}
++            rows={4}
++            value={descriptionMd}
++            onChange={(e) => {
++              setDescription(e.target.value);
++              if (errors.descriptionMd)
++                setErrors((prev) => ({ ...prev, descriptionMd: "" }));
++            }}
++            minLength={validationRules.descriptionMd.min}
++            maxLength={validationRules.descriptionMd.max}
++            disabled={loading}
++            aria-invalid={!!errors.descriptionMd}
++            aria-describedby="description-error"
++          />
++        ) : (
++          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 prose prose-sm max-w-none">
++            <ReactMarkdown remarkPlugins={[remarkGfm]}>
++              {descriptionMd || "Podgląd pojawi się po wpisaniu treści."}
++            </ReactMarkdown>
 +          </div>
 +        )}
-+      </form>
-+
-+      {tickets.length === 0 ? (
-+        <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-+          <h2 className="text-lg font-semibold text-slate-900">Brak zgłoszeń</h2>
-+          <p className="mt-1 text-sm text-slate-600">
-+            {hasActiveFilters
-+              ? "Brak wyników dla wybranych filtrów. Spróbuj je zmienić lub wyczyść filtry."
-+              : "Brak zgłoszeń – utwórz pierwsze."}
++        {errors.descriptionMd && (
++          <p id="description-error" className="text-xs text-red-600">
++            {errors.descriptionMd}
 +          </p>
-+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-+            {hasActiveFilters && (
-+              <Link
-+                href={clearFiltersHref}
-+                className="inline-flex justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-sky-500 hover:text-sky-700"
-+              >
-+                Wyczyść filtry
-+              </Link>
-+            )}
-+            <Link
-+              href="/app/tickets/new"
-+              className="inline-flex justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
-+            >
-+              Utwórz zgłoszenie
-+            </Link>
-+          </div>
-+        </div>
-+      ) : (
-+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-+          {tickets.map((ticket) => (
-+            <Link
-+              key={ticket.id}
-+              href={`/app/tickets/${ticket.id}`}
-+              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
-+            >
-+              <div className="mb-2 flex items-center justify-between">
-+                <span className="text-xs font-semibold text-slate-500">
-+                  #{ticket.number}
-+                </span>
-+                <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
-+                  {priorityLabels[ticket.priority]}
-+                </span>
-+              </div>
-+              <h3 className="line-clamp-2 font-semibold text-slate-900">
-+                {ticket.title}
-+              </h3>
-+              <p className="mt-1 text-xs text-slate-600">{statusLabels[ticket.status]}</p>
-+              <p className="mt-2 text-xs text-slate-500">
-+                Zgłaszający: {ticket.requester.name}
-+              </p>
-+              {ticket.assigneeUser && (
-+                <p className="text-xs text-slate-500">Przypisany: {ticket.assigneeUser.name}</p>
-+              )}
-+              {ticket.assigneeTeam && (
-+                <p className="text-xs text-slate-500">Zespół: {ticket.assigneeTeam.name}</p>
-+              )}
-+              <p className="mt-2 text-[11px] text-slate-400">
-+                Utworzono: {ticket.createdAt.toLocaleString()}
-+              </p>
-+            </Link>
-+          ))}
-+        </div>
-+      )}
- 
-       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-         <h2 className="text-lg font-semibold mb-2">Szybkie zgłoszenie</h2>
-         <TicketForm />
++        )}
        </div>
-     </div>
+       <div className="grid gap-1">
+         <label className="text-sm text-slate-700">Priorytet</label>
+         <select
+-          className="rounded-lg border border-slate-300 px-3 py-2"
++          className={`rounded-lg border px-3 py-2 ${errors.priority ? "border-red-500" : "border-slate-300"}`}
+           value={priority}
+-          onChange={(e) => setPriority(e.target.value as TicketPriority)}
++          onChange={(e) => {
++            setPriority(e.target.value as TicketPriority);
++            if (errors.priority) setErrors((prev) => ({ ...prev, priority: "" }));
++          }}
++          disabled={loading}
++          aria-invalid={!!errors.priority}
++          aria-describedby="priority-error"
+         >
+           <option value={TicketPriority.NISKI}>Niski</option>
+           <option value={TicketPriority.SREDNI}>Średni</option>
+           <option value={TicketPriority.WYSOKI}>Wysoki</option>
+           <option value={TicketPriority.KRYTYCZNY}>Krytyczny</option>
+         </select>
++        {errors.priority && (
++          <p id="priority-error" className="text-xs text-red-600">
++            {errors.priority}
++          </p>
++        )}
+       </div>
+       <div className="grid gap-1">
+         <label className="text-sm text-slate-700">Kategoria</label>
+         <input
+-          className="rounded-lg border border-slate-300 px-3 py-2"
++          className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
+           value={category}
+-          onChange={(e) => setCategory(e.target.value)}
++          onChange={(e) => {
++            setCategory(e.target.value);
++            if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
++          }}
+           placeholder="np. Sieć"
++          minLength={validationRules.category.min}
++          maxLength={validationRules.category.max}
++          disabled={loading}
++          aria-invalid={!!errors.category}
++          aria-describedby="category-error"
+         />
++        {errors.category && (
++          <p id="category-error" className="text-xs text-red-600">
++            {errors.category}
++          </p>
++        )}
+       </div>
+       <button
+         type="submit"
+         disabled={loading}
+-        className="rounded-lg bg-sky-600 px-4 py-2 text-white font-semibold hover:bg-sky-700 disabled:opacity-50"
++        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-white font-semibold hover:bg-sky-700 disabled:opacity-50"
+       >
++        {loading && (
++          <svg
++            className="h-4 w-4 animate-spin text-white"
++            xmlns="http://www.w3.org/2000/svg"
++            fill="none"
++            viewBox="0 0 24 24"
++          >
++            <circle
++              className="opacity-25"
++              cx="12"
++              cy="12"
++              r="10"
++              stroke="currentColor"
++              strokeWidth="4"
++            ></circle>
++            <path
++              className="opacity-75"
++              fill="currentColor"
++              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
++            ></path>
++          </svg>
++        )}
+         {loading ? "Zapisywanie..." : "Utwórz zgłoszenie"}
+       </button>
+     </form>
    );
  }
+diff --git a/src/lib/auth.ts b/src/lib/auth.ts
+index b8b72f71caa94aa824de4138a332299aba081741..c7b6371f8b97f13ba4b877baaf0eac704aaadcc8 100644
+--- a/src/lib/auth.ts
++++ b/src/lib/auth.ts
+@@ -1,60 +1,81 @@
+ import { PrismaAdapter } from "@next-auth/prisma-adapter";
+-import { NextAuthOptions } from "next-auth";
++import { NextAuthOptions, User } from "next-auth";
+ import CredentialsProvider from "next-auth/providers/credentials";
++import { JWT } from "next-auth/jwt";
+ import bcrypt from "bcrypt";
+ import { prisma } from "./prisma";
+ 
++type AppUser = {
++  id: string;
++  email: string;
++  name: string | null;
++  role: string;
++  organizationId: string;
++};
++
++type AppToken = JWT & {
++  role?: string;
++  organizationId?: string;
++};
++
+ export const authOptions: NextAuthOptions = {
+   adapter: PrismaAdapter(prisma),
+   session: { strategy: "jwt" },
+   pages: {
+     signIn: "/login",
+   },
+   providers: [
+     CredentialsProvider({
+       name: "credentials",
+       credentials: {
+         email: { label: "Email", type: "text" },
+         password: { label: "Hasło", type: "password" },
+       },
+       async authorize(credentials) {
+         if (!credentials?.email || !credentials.password) {
+           return null;
+         }
+ 
+         const user = await prisma.user.findUnique({
+           where: { email: credentials.email.toLowerCase() },
+         });
+         if (!user) return null;
+ 
+         const ok = await bcrypt.compare(credentials.password, user.passwordHash);
+         if (!ok) return null;
+ 
+-        return {
++        const appUser: AppUser = {
+           id: user.id,
+           email: user.email,
+           name: user.name,
+           role: user.role,
+           organizationId: user.organizationId,
+-        } as any;
++        };
++
++        return appUser;
+       },
+     }),
+   ],
+   callbacks: {
+     async jwt({ token, user }) {
+-        if (user) {
+-          token.role = (user as any).role;
+-          token.organizationId = (user as any).organizationId;
+-        }
+-        return token;
++      if (user) {
++        const appUser = user as User & AppUser;
++        const appToken = token as AppToken;
++        appToken.role = appUser.role;
++        appToken.organizationId = appUser.organizationId;
++        return appToken;
++      }
++
++      return token;
+     },
+     async session({ session, token }) {
+       if (session.user) {
++        const appToken = token as AppToken;
+         session.user.id = token.sub ?? "";
+-        session.user.role = token.role as string;
+-        session.user.organizationId = token.organizationId as string;
++        session.user.role = appToken.role;
++        session.user.organizationId = appToken.organizationId;
+       }
+       return session;
+     },
+   },
+ };
+diff --git a/src/types/next-auth.d.ts b/src/types/next-auth.d.ts
+index c551c761eb566b80175f5bc474ddffc3db5cdb3e..0de8d96be9350d8a1b3e460ef9f841572af32fb7 100644
+--- a/src/types/next-auth.d.ts
++++ b/src/types/next-auth.d.ts
+@@ -1,25 +1,23 @@
+-import NextAuth from "next-auth";
+-
+ declare module "next-auth" {
+   interface Session {
+     user: {
+       id: string;
+       name?: string | null;
+       email?: string | null;
+       role?: string;
+       organizationId?: string;
+     };
+   }
+ 
+   interface User {
+     role: string;
+     organizationId: string;
+   }
+ }
+ 
+ declare module "next-auth/jwt" {
+   interface JWT {
+     role?: string;
+     organizationId?: string;
+   }
+ }
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index f8e50fcc1c63b7e5070f8599ca50e83398ffd95d..e9670008e5d3245ad5015d6020b16500d1dd4388 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -1,27 +1,28 @@
+ import type { Config } from "tailwindcss";
+ import { fontFamily } from "tailwindcss/defaultTheme";
++import tailwindcssAnimate from "tailwindcss-animate";
+ 
+ const config: Config = {
+   darkMode: ["class"],
+   content: [
+     "./src/app/**/*.{ts,tsx}",
+     "./src/components/**/*.{ts,tsx}",
+     "./src/features/**/*.{ts,tsx}",
+     "./src/lib/**/*.{ts,tsx}",
+   ],
+   theme: {
+     container: {
+       center: true,
+       padding: "2rem",
+       screens: {
+         "2xl": "1400px",
+       },
+     },
+     extend: {
+       colors: {
+         border: "hsl(var(--border))",
+         input: "hsl(var(--input))",
+         ring: "hsl(var(--ring))",
+         background: "hsl(var(--background))",
+         foreground: "hsl(var(--foreground))",
+         primary: {
+@@ -55,29 +56,29 @@ const config: Config = {
+       },
+       borderRadius: {
+         lg: "var(--radius)",
+         md: "calc(var(--radius) - 2px)",
+         sm: "calc(var(--radius) - 4px)",
+       },
+       fontFamily: {
+         sans: ["var(--font-inter)", ...fontFamily.sans],
+       },
+       keyframes: {
+         "accordion-down": {
+           from: { height: "0" },
+           to: { height: "var(--radix-accordion-content-height)" },
+         },
+         "accordion-up": {
+           from: { height: "var(--radix-accordion-content-height)" },
+           to: { height: "0" },
+         },
+       },
+       animation: {
+         "accordion-down": "accordion-down 0.2s ease-out",
+         "accordion-up": "accordion-up 0.2s ease-out",
+       },
+     },
+   },
+-  plugins: [require("tailwindcss-animate")],
++  plugins: [tailwindcssAnimate],
+ };
+ 
+ export default config;
