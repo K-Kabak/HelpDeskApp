@@ -1,12 +1,13 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { TicketPriority, TicketStatus } from "@prisma/client";
+import { Role, TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import CommentForm from "./comment-form";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import TicketActions from "./ticket-actions";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -55,6 +56,28 @@ export default async function TicketPage({
   ) {
     return notFound();
   }
+
+  const [agents, teams]: [
+    { id: string; name: string; role: Role }[],
+    { id: string; name: string }[]
+  ] =
+    session.user.role === "REQUESTER"
+      ? [[], []]
+      : await Promise.all([
+          prisma.user.findMany({
+            where: {
+              organizationId: session.user.organizationId,
+              role: { in: ["AGENT", "ADMIN"] },
+            },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true, role: true },
+          }),
+          prisma.team.findMany({
+            where: { organizationId: session.user.organizationId },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
+          }),
+        ]);
 
   const visibleComments =
     session.user.role === "REQUESTER"
@@ -108,6 +131,17 @@ export default async function TicketPage({
           </div>
         </dl>
       </div>
+
+      <TicketActions
+        ticketId={ticket.id}
+        initialStatus={ticket.status}
+        initialAssigneeTeamId={ticket.assigneeTeamId}
+        initialAssigneeUserId={ticket.assigneeUserId}
+        role={session.user.role as Role}
+        isOwner={ticket.requesterId === session.user.id}
+        agents={agents.map((agent) => ({ id: agent.id, name: agent.name }))}
+        teams={teams}
+      />
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Komentarze</h2>

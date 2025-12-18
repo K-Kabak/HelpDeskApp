@@ -1,0 +1,209 @@
+"use client";
+
+import { Role, TicketStatus } from "@prisma/client";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { FormEvent, useMemo, useState } from "react";
+import { toast } from "sonner";
+
+const statusLabels: Record<TicketStatus, string> = {
+  NOWE: "Nowe",
+  W_TOKU: "W toku",
+  OCZEKUJE_NA_UZYTKOWNIKA: "Oczekuje na użytkownika",
+  WSTRZYMANE: "Wstrzymane",
+  ROZWIAZANE: "Rozwiązane",
+  ZAMKNIETE: "Zamknięte",
+  PONOWNIE_OTWARTE: "Ponownie otwarte",
+};
+
+type Option = { id: string; name: string };
+
+type TicketActionsProps = {
+  ticketId: string;
+  initialStatus: TicketStatus;
+  initialAssigneeUserId?: string | null;
+  initialAssigneeTeamId?: string | null;
+  role: Role;
+  isOwner: boolean;
+  agents: Option[];
+  teams: Option[];
+};
+
+export default function TicketActions({
+  ticketId,
+  initialStatus,
+  initialAssigneeTeamId,
+  initialAssigneeUserId,
+  role,
+  isOwner,
+  agents,
+  teams,
+}: TicketActionsProps) {
+  const router = useRouter();
+  const [status, setStatus] = useState<TicketStatus>(initialStatus);
+  const [assigneeUserId, setAssigneeUserId] = useState(
+    initialAssigneeUserId ?? ""
+  );
+  const [assigneeTeamId, setAssigneeTeamId] = useState(
+    initialAssigneeTeamId ?? ""
+  );
+
+  const canManageStatus = role === "AGENT" || role === "ADMIN";
+  const requesterCanUpdate = role === "REQUESTER" && isOwner;
+  const canManageAssignments = canManageStatus;
+
+  const statusOptions = useMemo(() => {
+    if (canManageStatus) return Object.values(TicketStatus);
+
+    const options = new Set<TicketStatus>([initialStatus]);
+
+    if (requesterCanUpdate) {
+      if (initialStatus !== TicketStatus.ZAMKNIETE) {
+        options.add(TicketStatus.ZAMKNIETE);
+      }
+      if (
+        initialStatus === TicketStatus.ZAMKNIETE ||
+        initialStatus === TicketStatus.ROZWIAZANE
+      ) {
+        options.add(TicketStatus.PONOWNIE_OTWARTE);
+      }
+    }
+
+    return Array.from(options);
+  }, [canManageStatus, requesterCanUpdate, initialStatus]);
+
+  const mutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const res = await fetch(`/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error ?? "Nie udało się zapisać zmian");
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Zmiany zapisane");
+      router.refresh();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  const handleStatusSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!canManageStatus && !requesterCanUpdate) return;
+    mutation.mutate({ status });
+  };
+
+  const handleAssignmentSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!canManageAssignments) return;
+    mutation.mutate({
+      assigneeUserId: assigneeUserId || null,
+      assigneeTeamId: assigneeTeamId || null,
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-lg font-semibold mb-4">Akcje</h2>
+      <div className="grid gap-6 md:grid-cols-2">
+        {(canManageStatus || requesterCanUpdate) && (
+          <form className="space-y-3" onSubmit={handleStatusSubmit}>
+            <div>
+              <label className="text-sm font-semibold text-slate-700">
+                Status zgłoszenia
+              </label>
+              <select
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TicketStatus)}
+                disabled={mutation.isPending || statusOptions.length === 0}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {statusLabels[option]}
+                  </option>
+                ))}
+              </select>
+              {!canManageStatus && requesterCanUpdate && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Możesz jedynie zamykać lub ponownie otwierać własne zgłoszenie.
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={mutation.isPending || status === initialStatus}
+            >
+              {mutation.isPending ? "Zapisywanie..." : "Zapisz status"}
+            </button>
+          </form>
+        )}
+
+        {canManageAssignments && (
+          <form className="space-y-3" onSubmit={handleAssignmentSubmit}>
+            <div className="space-y-2">
+              <div>
+                <label className="text-sm font-semibold text-slate-700">
+                  Przypisany agent
+                </label>
+                <select
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+                  value={assigneeUserId}
+                  onChange={(e) => setAssigneeUserId(e.target.value)}
+                  disabled={mutation.isPending}
+                >
+                  <option value="">Brak</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-700">
+                  Przypisany zespół
+                </label>
+                <select
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+                  value={assigneeTeamId}
+                  onChange={(e) => setAssigneeTeamId(e.target.value)}
+                  disabled={mutation.isPending}
+                >
+                  <option value="">Brak</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={
+                mutation.isPending ||
+                (assigneeUserId === (initialAssigneeUserId ?? "") &&
+                  assigneeTeamId === (initialAssigneeTeamId ?? ""))
+              }
+            >
+              {mutation.isPending ? "Zapisywanie..." : "Zapisz przypisanie"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
