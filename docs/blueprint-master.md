@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Blueprint Master
 
 <<<<<<< ours
@@ -315,12 +316,15 @@ graph TD
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 # Master Blueprint
 
 ## Executive Summary
 SerwisDesk is a Next.js 16 helpdesk MVP with Prisma/PostgreSQL and NextAuth credential login. Current capabilities cover authentication, ticket CRUD (create/read/update status/assignment/priority), comments with internal visibility, tag/SLA policies, and seeded demo data. Missing source specialist documents mean this blueprint consolidates evidence from code and README only; gaps are recorded in the decision log and master audit. Target state extends the MVP with attachments, admin consoles, reporting, and hardened security/ops aligned to the dependency-ordered execution plan.
 
 ## Current State (evidence-backed, condensed)
+<<<<<<< ours
 1. Tech stack uses Next.js with Prisma, NextAuth, and Tailwind for a web helpdesk.【F:README.md†L1-L4】
 2. Requires Node 22+, pnpm, and PostgreSQL with env vars `DATABASE_URL` and `NEXTAUTH_SECRET`.【F:README.md†L16-L35】
 3. Default auth relies on NextAuth credentials with PrismaAdapter, JWT sessions, and login page at `/login`.【F:src/lib/auth.ts†L21-L80】
@@ -347,6 +351,15 @@ SerwisDesk is a Next.js 16 helpdesk MVP with Prisma/PostgreSQL and NextAuth cred
 24. Comment form permits internal comments only when allowed (non-requesters) and posts to `/api/tickets/{id}/comments` with toast feedback.【F:src/app/app/tickets/[id]/comment-form.tsx†L7-L67】
 25. Comment API blocks internal comments from requesters, marks firstResponseAt when an agent posts the first public comment.【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】
 26. README notes future work: admin panel, attachments, reporting/Kanban/dashboard, E2E/unit tests, Dockerfile/docker-compose.【F:README.md†L63-L67】
+=======
+- Core stack: Next.js app router with Prisma/PostgreSQL, NextAuth credentials auth, Tailwind UI, and seeded demo org/users.【F:README.md†L1-L4】【F:prisma/seed.js†L7-L145】
+- Roles/permissions: REQUESTER, AGENT, ADMIN roles drive JWT claims and route guards; requesters are limited to their own tickets while agents/admins manage organization-scoped tickets.【F:prisma/schema.prisma†L10-L24】【F:src/app/api/tickets/[id]/route.ts†L26-L211】
+- Ticketing: Tickets support statuses, priorities, org-scoped tags/categories, SLA due dates, assignment to users/teams, and audit logging; APIs enforce validation and record events.【F:prisma/schema.prisma†L16-L192】【F:src/app/api/tickets/route.ts†L9-L88】
+- Collaboration: Comments include `isInternal` visibility, guarded so requesters cannot post internal notes; UI form mirrors these rules.【F:prisma/schema.prisma†L123-L132】【F:src/app/app/tickets/[id]/comment-form.tsx†L7-L67】
+- Gaps: README flags missing admin panel, attachments, reporting, and automated tests; additional gaps/unknowns captured in decision log and master audit.【F:README.md†L63-L67】
+
+See `docs/current-state.md` for the full evidence-backed list of 26 current-state observations and citations.
+>>>>>>> theirs
 
 ## Target Specification
 - **Workflow:** Maintain current ticket flow with SLA timers; add triage queue, bulk actions, and escalation to teams; enable reopen with audit; enforce business rules (e.g., cannot close without public reply, block reopen if locked by admin override).
@@ -392,17 +405,27 @@ graph TD
 
 ## API Contract (high-level)
 <<<<<<< ours
+<<<<<<< ours
 =======
 - **Canonical source:** `docs/openapi.yaml` (to be recreated) defines request/response models, enums, and examples. Agent 5 contract docs are missing; recreated OpenAPI will replace them until originals surface.
+>>>>>>> theirs
+=======
+- **Canonical sources:** `docs/openapi.yaml` is the authoritative machine contract, backed by Agent 5 deliverables `docs/api-contracts-target.md`, `docs/contract-conventions.md`, and `docs/error-model.md`. Missing or changed details must be reconciled in OpenAPI first and then mirrored into implementation/tests.
 >>>>>>> theirs
 - **Auth:** POST `/api/auth/[...nextauth]` (NextAuth) with credential provider.
 - **Tickets:** GET `/api/tickets` (filtered by role); POST `/api/tickets` with validated payload; GET/PATCH `/api/tickets/{id}` for status/priority/assignments with role checks; future: DELETE (admin), bulk PATCH, SLA escalate endpoint, attachment upload endpoints.
 - **Comments:** POST `/api/tickets/{id}/comments` with `isInternal` rules; future: GET paginated comments, edit/delete by author/admin.
 - **Admin (target):** CRUD for users/teams/tags/SLA, report exports, system settings endpoints.
 <<<<<<< ours
+<<<<<<< ours
 =======
 - **Contract conventions:** JSON request/response with consistent casing; pagination via cursor + limit; filtering with explicit query params; enums match Prisma schema.
 - **Error model:** Standard envelope `{ error: { code, message, traceId, details? } }` with contract-defined codes; validation errors return `errors[]` field; never leak stack traces.
+- **Versioning/idempotency:** Default version v1 via URL prefix; breaking changes require new version and changelog. Idempotency keys required on create/bulk endpoints; retries must not duplicate work.
+>>>>>>> theirs
+=======
+- **Contract conventions:** JSON request/response with consistent casing; pagination via cursor + limit; filtering with explicit query params; enums match Prisma schema and target contract enums.
+- **Error model:** Standard envelope `{ error: { code, message, traceId, details? } }` with contract-defined codes; validation errors return `errors[]`; never leak stack traces.
 - **Versioning/idempotency:** Default version v1 via URL prefix; breaking changes require new version and changelog. Idempotency keys required on create/bulk endpoints; retries must not duplicate work.
 >>>>>>> theirs
 
@@ -427,6 +450,10 @@ graph TD
 - Non-functional: file upload size/virus-scan hooks, load tests on ticket listing, accessibility (aria labels already present on forms).【F:src/app/app/ticket-form.tsx†L88-L185】
 - CI: lint/test (Vitest/Playwright placeholders in scripts) plus Prisma migrate check and seed smoke run.【F:package.json†L6-L53】
 <<<<<<< ours
+<<<<<<< ours
+=======
+- Contract: OpenAPI validation and contract tests covering status codes, error model envelope, versioning/idempotency rules, and migration contract checks before feature merges.
+>>>>>>> theirs
 =======
 - Contract: OpenAPI validation and contract tests covering status codes, error model envelope, versioning/idempotency rules, and migration contract checks before feature merges.
 >>>>>>> theirs
@@ -453,6 +480,9 @@ graph TD
 19. Feature rollout risk — Mitigation: tasks 112 enable feature flags and checkpoints every 10–15 tasks.
 20. Data loss from purge/retention jobs — Mitigation: tasks 094, 107, 111 add dry runs and cleanup cron safeguards.
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -16,6 +16,10 @@
 ## Missing/Unknown Inputs
 - Required specialist docs (`docs/current-state.md`, `docs/api-as-is.md`, `docs/data-as-is.md`, `docs/gaps-core.md`, `docs/known-issues.md`, `docs/search-log.md`, `docs/screen-map.md`, `docs/ui-ux-spec.md`, `docs/ux-acceptance.md`, `docs/threat-model.md`, `docs/security-ops.md`, `docs/testing-ci.md`, `docs/runbooks.md`, `docs/contradictions.md`) are absent in repository.
 <<<<<<< ours
+<<<<<<< ours
+=======
+- Agent 5 deliverables (`docs/contract-conventions.md`, `docs/error-model.md`, `docs/api-contracts-as-is.md`, `docs/api-contracts-target.md`, `docs/openapi.yaml`, `docs/contract-tests.md`, `docs/migration-contracts.md`) are also missing; contract conventions and OpenAPI spec must be recreated.
+>>>>>>> theirs
 =======
 - Agent 5 deliverables (`docs/contract-conventions.md`, `docs/error-model.md`, `docs/api-contracts-as-is.md`, `docs/api-contracts-target.md`, `docs/openapi.yaml`, `docs/contract-tests.md`, `docs/migration-contracts.md`) are also missing; contract conventions and OpenAPI spec must be recreated.
 >>>>>>> theirs
@@ -27,9 +31,15 @@
 
 ## Verification Steps Planned
 <<<<<<< ours
+<<<<<<< ours
 - Execution plan includes tasks to backfill missing docs (coding standards, permission matrix), add CI pipelines, and implement attachments/admin/reporting features.
 - Once specialist docs appear, rerun discovery and update blueprint/plan (Decision Log #1).
 - Implement automated tests for role/visibility rules, SLA calculations, and sanitization as part of Phase 0/MVP tasks.
+=======
+- Execution plan includes tasks to backfill missing docs (coding standards, permission matrix), add CI pipelines, and implement attachments/admin/reporting features, plus recreate Agent 5 contracts (OpenAPI, error model, migration contracts, and contract tests).
+- Once specialist docs appear, rerun discovery and update blueprint/plan (Decision Log #1) and reconcile with recreated contract artifacts.
+- Implement automated tests for role/visibility rules, SLA calculations, sanitization, and contract conformance as part of Phase 0/MVP tasks.
+>>>>>>> theirs
 =======
 - Execution plan includes tasks to backfill missing docs (coding standards, permission matrix), add CI pipelines, and implement attachments/admin/reporting features, plus recreate Agent 5 contracts (OpenAPI, error model, migration contracts, and contract tests).
 - Once specialist docs appear, rerun discovery and update blueprint/plan (Decision Log #1) and reconcile with recreated contract artifacts.

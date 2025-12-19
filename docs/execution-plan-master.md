@@ -3,6 +3,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 Phases: Phase 0 (foundation/readiness), MVP (P0), V1 (P1), V2 (P2). Tasks are dependency-ordered; stop/go checkpoints appear every 10–15 tasks. Each task lists goal, dependencies, impacted areas, acceptance, test proof, security/edge cases, and rollback.
 
 ## Definition of Done per phase
@@ -146,10 +147,15 @@ Phases: Phase 0 (foundations), MVP (P0), V1 (P1), V2 (P2). Each task lists goal,
 ## Phase 0 – Foundations & Environment
 001. Goal: Inventory missing specialist docs and confirm scope. Deps: none. Impact: documentation. AC: list of absent inputs + owner. Test: doc review. Security/Edge: none. Rollback: N/A.
 =======
+=======
+>>>>>>> theirs
 Phases: Phase 0 (foundations/contracts), MVP (P0), V1 (P1), V2 (P2). Each task lists goal, dependencies (Deps), impacted areas, acceptance criteria (AC), test proof, security/edge cases, and rollback notes. Stop/go checkpoints appear every ~10–12 tasks.
 
 ## Phase 0 – Foundations, Contracts, Environment
 001. Goal: Inventory missing specialist + Agent 5 contract docs and confirm scope. Deps: none. Impact: documentation. AC: list of absent inputs + owner. Test: doc review. Security/Edge: none. Rollback: N/A.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 002. Goal: Create env validation script (Node 22, pnpm, Postgres). Deps: 001. Impact: devops. AC: script exits non-zero when unmet. Test: run script in CI. Security: avoid leaking secrets. Rollback: delete script.
 003. Goal: Add `.env.example` completeness check (DATABASE_URL, NEXTAUTH_SECRET). Deps: 002. Impact: config. AC: lint passes and check fails on missing vars. Test: unit for checker. Security: do not log secrets. Rollback: remove checker.
@@ -157,6 +163,7 @@ Phases: Phase 0 (foundations/contracts), MVP (P0), V1 (P1), V2 (P2). Each task l
 005. Goal: Add infra IaC stub (Docker compose for Postgres/Redis/MinIO). Deps: 002. Impact: infra. AC: `docker compose up` starts services. Test: smoke connection. Security: default creds scoped to local only. Rollback: remove compose services.
 006. Goal: CI pipeline skeleton (lint, typecheck placeholder). Deps: 003. Impact: CI. AC: pipeline runs on PR. Test: CI log. Security: mask secrets. Rollback: disable workflow.
 007. Goal: Establish coding standards doc (lint/format/commit). Deps: 004. Impact: eng. AC: doc merged. Test: review. Security: none. Rollback: revert doc.
+<<<<<<< ours
 <<<<<<< ours
 008. Goal: Introduce shared error/response schema for APIs. Deps: 006. Impact: API. AC: schema exported, used in one route. Test: unit for serializer. Security: avoid detail leakage. Rollback: revert change.
 009. Goal: Add Markdown sanitization utility. Deps: 008. Impact: security/UI. AC: sanitizer used in comment render. Test: unit with XSS strings. Security: ensure whitelist. Rollback: remove util.
@@ -288,6 +295,8 @@ Phases: Phase 0 (foundations/contracts), MVP (P0), V1 (P1), V2 (P2). Each task l
 =======
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 008. Goal: Recreate contract conventions (request/response shape, pagination, versioning, idempotency, headers). Deps: 007. Impact: API/docs. AC: conventions doc approved. Test: review. Security: avoid leaking internal codes. Rollback: supersede doc.
 009. Goal: Define shared error/response schema aligned to conventions. Deps: 008. Impact: API. AC: schema exported and reusable. Test: unit for serializer. Security: avoid detail leakage. Rollback: revert module.
 010. Goal: Recreate OpenAPI baseline in `docs/openapi.yaml` for current routes. Deps: 008-009. Impact: docs/API. AC: spec passes lint; reflects current endpoints. Test: openapi lint. Security: exclude secrets. Rollback: remove spec.
@@ -425,4 +434,7 @@ Phases: Phase 0 (foundations/contracts), MVP (P0), V1 (P1), V2 (P2). Each task l
 - **MVP (P0)**: Attachments with visibility, categories, SLA fields, admin SLA CRUD, rate limits, notification stubs, audits for files, checkpoints 3–5 approved, contract tests gating merges.
 - **V1 (P1)**: Workers running SLA/notification flows, automation rules, dashboards/widgets, audit coverage, checkpoints 6–7 approved, OpenAPI updated for automation features.
 - **V2 (P2)**: Reporting/CSAT, advanced security/perf features, localization groundwork, metrics/alerts, regression and load suites passing, checkpoints 8–11 approved, final release gate cleared.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
