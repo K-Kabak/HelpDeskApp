@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # API surface (as implemented)
 
 ## /api/auth/[...nextauth] (GET, POST)
@@ -36,6 +37,8 @@
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 # API Surface (as implemented)
 
 ## /api/auth/[...nextauth]
@@ -67,6 +70,9 @@
   - **Side effects**: Creates comment; sets `firstResponseAt` when first public agent reply on ticket without prior first response.【F:src/app/api/tickets/[id]/comments/route.ts†L41-L58】
   - **Failure modes**: 400 on validation errors; 403 on forbidden internal/public conditions; 404 when ticket not found.
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

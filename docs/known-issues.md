@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Known issues and risky patterns
 
 - **Ticket search uses missing column (runtime error):** Dashboard query references `description` which is not in Prisma schema, so requests with `q` will throw Prisma errors and break the page.  \
@@ -14,6 +15,8 @@
 - **SLA fields not updated post-create:** `firstResponseDue`/`resolveDue` are set on ticket creation, but `firstResponseAt`/`resolvedAt` are never stamped when comments or status changes occur, leaving SLA tracking inaccurate.  \
   **Reproduce/verify:** Create a ticket, change status to W_TOKU/ROZWIAZANE, and inspect DB; `firstResponseAt` remains null and `resolveDue` never adjusts.
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 # Known Issues (evidence-backed)
@@ -38,6 +41,9 @@
    - *Repro*: Submit extremely long or whitespace-only content; server accepts lengths ≥1 char even if mostly whitespace.
    - *Fix direction*: Add length limits, trim/normalize input, and sanitize Markdown server-side.
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

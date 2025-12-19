@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Core gaps toward HelpDesk baseline
 
 | Area | Gap | Why it matters | Current evidence | Suggested direction | Dependencies | Complexity | Priority |
@@ -11,6 +12,8 @@
 | Attachments | No upload/download handling or storage abstraction. | Users cannot share diagnostics; security of files undefined. | No attachment code found in app/API search. | Add attachment service (streaming upload, mime/size validation, signed download URLs) using storage provider abstraction. | Auth/session; ticket ownership checks. | L | P2 |
 | Admin setup | No admin endpoints/UI to manage teams, users, tags, SLA policies beyond seed data. | Operational setup stuck at seed defaults; cannot onboard new org data. | API folder contains only auth/tickets handlers. | Deliver admin CRUD APIs/pages with org scoping and audit logs. | Auth roles; Prisma models. | M | P2 |
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 # Core Gaps (Repo → Baseline HelpDesk)
@@ -25,6 +28,9 @@
 | P2 | Validation | Comment form lacks length/sanitization enforcement beyond min 1 char. | Risk of oversized/abusive content and inconsistent UX. | Client requires only `required`; server min length 1, no size limit.【F:src/app/app/tickets/[id]/comment-form.tsx†L14-L49】【F:src/app/api/tickets/[id]/comments/route.ts†L7-L30】 | Add stricter length limits and sanitization. | None. | S |
 | P2 | Reporting/metrics | No reporting endpoints/UI. | Missing operational insight. | No reporting code in app routes/components.【F:src/app/app/page.tsx†L25-L218】 | Define basic KPIs and endpoints later. | Depends on data completeness. | M |
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
