@@ -13,7 +13,7 @@
   - Primary actions: Filter by status/priority, text search, open ticket detail, start new ticket via button or quick form.
 - `/app/tickets/new`
   - Purpose: Compose a full ticket with Markdown description.
-  - Entry points: Dashboard “Nowe zgloszenie” button, manual URL.
+  - Entry points: Dashboard "Nowe zgloszenie" button, manual URL.
   - Required data: Session, SLA policy for due calculations (server), validation rules (title/description/priority).
   - Primary actions: Enter title/description/priority/category, toggle Markdown preview, submit or cancel via nav/back.
 - `/app/tickets/[id]`

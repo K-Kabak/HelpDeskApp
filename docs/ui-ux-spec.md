@@ -1,7 +1,7 @@
 # UI/UX Spec (HelpDesk)
 
 ## End-to-end journeys
-- Requester: Login (`/login`) -> redirected to `/app` with ticket list scoped to requester (`src/app/app/page.tsx`) -> filters/search -> open ticket detail `/app/tickets/[id]` -> add public comment (currently posts to missing API) -> close/reopen when allowed by ownership (`src/app/app/tickets/[id]/ticket-actions.tsx`) -> sign out from topbar.
+- Requester: Login (`/login`) -> redirected to `/app` with ticket list scoped to requester (`src/app/app/page.tsx`) -> apply filters/search -> open ticket detail `/app/tickets/[id]` -> add public comment (currently posts to missing API) -> close/reopen when allowed by ownership (`src/app/app/tickets/[id]/ticket-actions.tsx`) -> sign out from topbar.
 - Agent: Login -> `/app` shows org tickets with filters/search -> open ticket -> adjust status/priority/assignee (allowed for non-requesters) -> add public/internal note (API missing) -> return to list or create new ticket via dashboard CTA or quick form (`src/app/app/ticket-form.tsx`).
 - Admin (Proposed): Login -> `/app/admin` hub -> manage users/teams/tags/SLA -> return to `/app` to monitor queues -> visit `/app/reports` (Proposed) for metrics and drilldowns.
 
@@ -29,7 +29,7 @@
 ## Reporting UX (Proposed)
 - Dashboard widgets: Ticket volume by status/priority, SLA compliance, aging buckets, reopen rate, top tags.
 - Drilldowns: Clicking a widget opens a filtered ticket list preserving filters as query params.
-- Time controls: Date range picker with presets (7/30/90 days) and quick “today”.
+- Time controls: Date range picker with presets (7/30/90 days) and quick "today".
 - Exports: CSV for list, PDF for charts; require user confirmation and show progress/toast; respect current filters.
 
 ## Error / empty / loading states
@@ -37,7 +37,7 @@
 - Dashboard list: Skeleton cards while loading; empty state with CTA; error banner with retry.
 - Ticket create: Disable submit during request; show inline validation errors from server; success redirects to detail with toast.
 - Ticket detail: Skeleton for header/timeline; 404 view when unauthorized/not found; action buttons disabled while patching; comment form shows posting state.
-- Admin/reporting (Proposed): Section-level skeletons; “no data” placeholders per widget/table; explicit messaging when user lacks permission.
+- Admin/reporting (Proposed): Section-level skeletons; "no data" placeholders per widget/table; explicit messaging when user lacks permission.
 
 ## Accessibility + performance requirements
 - Keyboard: All form controls focusable; dialog/side-panel traps focus; shortcut for quick ticket (`Alt+N` Proposed).
@@ -54,6 +54,6 @@
 - Status/assignee controls fail silently -> Standardize toast/error handling and disabled states.
 - Attachments not validated (Proposed) -> Enforce MIME/size server-side, virus scanning, and signed URLs.
 - Admin actions could lock out all admins -> Prevent removing last admin and surface warning.
-- SLA clocks inaccurate -> Compute on status/comment events and show “unknown” when timestamps missing.
+- SLA clocks inaccurate -> Compute on status/comment events and show "unknown" when timestamps missing.
 - Saved views/bulk ops (Proposed) could surprise -> Require confirmation, show preview of affected count, allow undo where possible.
 - Reporting exports could include unauthorized data -> Apply org scoping and logged-in user role on export requests; include audit trail.
