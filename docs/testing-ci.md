@@ -3,6 +3,7 @@
 ## Tooling Baseline
 - Vitest and Playwright are available via scripts (`pnpm test`, `pnpm test:e2e`) in package.json.
 - Prisma models define the data surface for fixtures (prisma/schema.prisma) and demo data exists in `prisma/seed.js`.
+- Auth-dependent tests need deterministic env values: set `DATABASE_URL` for the test database and `NEXTAUTH_SECRET` so session cookies issued by `src/lib/auth.ts` remain valid across test workers.
 
 ## Unit Test Strategy (Vitest)
 - Scope: pure utilities (e.g., SLA calculators once added), role/permission helpers, React components with conditional rendering.
