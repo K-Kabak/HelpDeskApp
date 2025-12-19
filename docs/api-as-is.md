@@ -1,6 +1,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # API surface (as implemented)
 
 ## /api/auth/[...nextauth] (GET, POST)
@@ -39,6 +40,8 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 # API Surface (as implemented)
 
 ## /api/auth/[...nextauth]
@@ -71,6 +74,9 @@
   - **Failure modes**: 400 on validation errors; 403 on forbidden internal/public conditions; 404 when ticket not found.
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

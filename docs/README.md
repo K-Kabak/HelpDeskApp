@@ -1,6 +1,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Documentation Index
 
 ## Owned deliverables (UI/UX Spec - Agent 2)
@@ -24,6 +25,8 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 # Documentation Index (Repo Truth)
 
 This repository contains evidence-backed documentation owned by Agent 1 (Repo Truth + Core Backend specialist). Each file summarizes current state findings without forward-looking design.
@@ -40,6 +43,9 @@ This repository contains evidence-backed documentation owned by Agent 1 (Repo Tr
 - `docs/unknowns-to-verify.md` – Open unknowns plus step-by-step verification guidance.
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

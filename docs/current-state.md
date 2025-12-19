@@ -1,6 +1,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Current state (evidence-first)
 
 ## Stack and runtime
@@ -70,6 +71,8 @@
 20. No attachment handling code found in app or API directories.
 21. API directory only contains auth and ticket handlers; no admin or auxiliary endpoints present.
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -149,6 +152,9 @@
 20. Prisma schema defines enums for Role/TicketStatus/TicketPriority and ticket relations (requester, assignee, org, tags, comments).【F:prisma/schema.prisma†L10-L168】
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
