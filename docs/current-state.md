@@ -4,6 +4,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Current state (evidence-first)
 
 ## Stack and runtime
@@ -73,6 +74,8 @@
 20. No attachment handling code found in app or API directories.
 21. API directory only contains auth and ticket handlers; no admin or auxiliary endpoints present.
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -158,6 +161,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -199,4 +203,6 @@ This document captures the current observable behavior and configuration of the 
 25. Comment API blocks internal comments from requesters, marks firstResponseAt when an agent posts the first public comment.【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】
 26. README notes future work: admin panel, attachments, reporting/Kanban/dashboard, E2E/unit tests, Dockerfile/docker-compose.【F:README.md†L63-L67】
 
+>>>>>>> theirs
+=======
 >>>>>>> theirs
