@@ -2,6 +2,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Current state (evidence-first)
 
 ## Stack and runtime
@@ -71,6 +72,8 @@
 20. No attachment handling code found in app or API directories.
 21. API directory only contains auth and ticket handlers; no admin or auxiliary endpoints present.
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -153,6 +156,9 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
