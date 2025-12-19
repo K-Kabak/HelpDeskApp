@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 # UX Acceptance Criteria (role-based)
 
 1. Given a user enters valid credentials, when submitting `/login`, then they are redirected to `/app` and see their role in the header.
@@ -77,4 +78,57 @@
 33. **Bulk actions (Proposed)**: Given an agent selects multiple tickets in a list, when performing a bulk status change, then all selected tickets update and a summary toast appears; invalid selections are skipped with warnings.
 34. **Export feedback (Proposed)**: Given an admin triggers CSV export in reports, when processing, then a progress indicator shows and the user receives a download link or email when complete.
 35. **Accessibility focus**: Given keyboard navigation, when tabbing through controls on any form, then focus rings are visible and action buttons are reachable without a mouse.
+>>>>>>> theirs
+=======
+# UX Acceptance Criteria
+
+## Authentication & Access
+1. **Login success**: Given a user on `/login` with valid credentials, when the form is submitted, then the button shows a loading label and the user is redirected to `/app` with the top bar showing their role.
+2. **Login failure**: Given invalid credentials, when submitting `/login`, then an inline red error appears and the login button returns to normal state after the request.
+3. **Unauthorized redirect**: Given an unauthenticated visitor requesting `/app`, when the session is missing, then they are redirected to `/login` without rendering list content.
+4. **Logout flow**: Given an authenticated user, when “Wyloguj” is clicked, then they are signed out and routed to `/login`.
+5. **Unauthorized ticket access**: Given a requester trying to open another user’s `/app/tickets/[id]`, when the ticket requesterId does not match, then the response is Not Found instead of partial data.
+
+## Ticket List & Filtering
+6. **Requester scope**: Given a requester on `/app`, when tickets load, then only tickets where requesterId equals the user id are shown.
+7. **Agent/Admin scope**: Given an agent or admin on `/app`, when tickets load, then tickets from the user’s organization are shown regardless of requester.
+8. **Status filter**: Given multiple statuses exist, when a status is selected and the filter form submitted, then only tickets with that status render and the select stays highlighted.
+9. **Priority filter**: Given multiple priorities exist, when a priority is selected and applied, then only matching tickets render and the select retains the value.
+10. **Search filter**: Given tickets containing a query in title or description, when text is entered and applied, then only matching tickets (case-insensitive) are displayed.
+11. **Empty state**: Given no tickets match filters, when `/app` renders, then a dashed empty-state card appears with copy and a link to create a ticket.
+12. **Card data**: Given tickets render, when viewing a card, then it shows ticket number, title, status label, priority pill, requester, optional assignee user/team, and created timestamp.
+13. **Card navigation**: Given a ticket card is visible, when clicked, then the user navigates to `/app/tickets/[id]` for that ticket.
+14. **Proposed pagination**: Given more tickets than the page size, when pagination controls are used, then tickets load in pages without duplicating items.
+15. **Proposed saved views**: Given a user saves current filters/search as a view, when selecting that view later, then filters and search text reapply automatically.
+
+## Ticket Creation
+16. **Quick create validation**: Given the inline form on `/app`, when required fields violate length rules, then inline errors appear and submission is blocked.
+17. **Quick create success**: Given valid inputs, when submitting the inline form, then the button shows a spinner, a success toast appears, fields reset, and the list refreshes with the new ticket.
+18. **Quick create failure**: Given the API returns an error, when submitting the inline form, then an error toast appears and all user-entered values remain.
+19. **Full create navigation**: Given a user clicks “Nowe zgłoszenie”, when `/app/tickets/new` loads, then the full form displays the same fields and validation rules.
+20. **Markdown preview toggle**: Given description text exists, when toggling to preview, then markdown-rendered content appears; toggling back returns to editable textarea without loss.
+
+## Ticket Detail & Actions
+21. **Header completeness**: Given a valid ticket, when `/app/tickets/[id]` renders, then header shows number, title, created date, requester, assignee user/team, priority, and status pills.
+22. **Metadata grid**: Given ticket fields exist, when viewing metadata, then category, assignee team, assignee user, and created date display in the grid.
+23. **Requester status limits**: Given a requester viewing their own ticket, when opening status dropdown, then only Close and/or Reopen options appear based on current state.
+24. **Agent/Admin status control**: Given an agent/admin, when opening status dropdown, then all statuses are available and the save button disables while pending or unchanged.
+25. **Assignment controls visibility**: Given a requester, when viewing the actions panel, then assignment selects are hidden; given agent/admin, they are visible.
+26. **Assignment save**: Given an agent/admin selects an assignee user/team, when saving, then a success toast appears and refreshed data shows new assignee; errors surface as toasts without clearing selections.
+27. **Comment visibility by role**: Given comments exist, when a requester views them, then internal comments are absent; when an agent/admin views, internal comments display with amber styling and the “Wewnętrzny” tag.
+28. **Public comment submission**: Given any authenticated user, when submitting a public comment with text, then the button disables during submit, a success toast appears, and the comment appears in timeline after refresh.
+29. **Internal comment guard**: Given a requester, when composing, then the internal checkbox is not rendered; given agent/admin, toggling the checkbox saves the comment as internal.
+30. **Last activity indicator**: Given comments exist, when the detail page renders, then “Ostatnia aktywność” reflects the latest visible comment date or ticket update.
+31. **Empty comments state**: Given no visible comments, when the timeline renders, then the message “Brak komentarzy.” appears in the stream area.
+
+## Reporting & Admin (Proposed)
+32. **Reporting filters**: Given an admin on `/app/admin/reports`, when adjusting date/team/status filters, then all dashboard widgets update and indicate applied filters.
+33. **Export UX**: Given an admin triggers CSV export, when processing, then a progress indicator appears and a download link/email is provided on completion.
+34. **Entity delete safeguards**: Given an admin attempts to delete a team or category in use, when confirming, then the UI blocks deletion and prompts reassignment instead.
+35. **Audit visibility**: Given an admin edits a configuration item, when saved, then an audit log entry is created showing actor, time, and old/new values.
+
+## Accessibility & Resilience
+36. **Keyboard navigation**: Given keyboard-only navigation, when tabbing through forms and action buttons, then focus rings are visible and all controls are reachable without a mouse.
+37. **Error persistence**: Given a failed status/assignment/comment action, when returning to the form, then previous input selections remain for retry without refresh.
+38. **Session messaging**: Given an automatic logout (timeout), when redirected to `/login`, then the UI explains the reason and offers re-login. (Proposed)
 >>>>>>> theirs

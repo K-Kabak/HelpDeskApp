@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 # UI/UX Spec (HelpDesk)
 
 ## End-to-end journeys
@@ -135,4 +136,91 @@
 8. **Timezone ambiguity** – Display timestamps with locale string and tooltip for absolute time; **Proposed** add relative time chips.
 9. **Navigation loss after logout** – Sign-out redirects to `/login`; **Proposed** add session timeout warning before auto-logout.
 10. **Reporting overload (future)** – Provide filter presets and export queues; avoid blocking UI during heavy computations.
+>>>>>>> theirs
+=======
+# UI/UX Specification
+
+## Core Journeys
+### Create → Track → Comment → Close/Reopen (Requester)
+1. Start at `/login`, submit credentials with inline error handling and loading label; redirect to `/app` on success.  
+2. On `/app`, requester sees only own tickets (filterable by status/priority/search) and can create via quick form or the “Nowe zgłoszenie” CTA.  
+3. Quick form enforces min/max length for title/description/category, priority selection, inline errors, edit/preview toggle, and spinner while submitting.  
+4. Successful submit toasts success, resets fields to defaults, and refreshes the list; failures surface API message without clearing inputs.  
+5. Opening `/app/tickets/[id]` shows ticket metadata, markdown description, and only public comments; unauthorized access returns Not Found.  
+6. Requester can add public comments and change status only to close/reopen when allowed; helper text explains limits, buttons disable during mutation, and toasts confirm outcomes.
+
+### Triage → Assign → Internal Notes → Resolve → Close (Agent/Admin)
+1. After login, `/app` lists organization tickets with filters/search and request/assignee metadata on cards.  
+2. Detail view allows full status changes, assignment of agent or team, and viewing both public and internal comments.  
+3. Action panel uses dedicated forms for status and assignment with disabled states during save, toasts on success/error, and refreshed data.  
+4. Internal comments are flagged amber with role chips; agents/admins can toggle internal checkbox on the composer, while requesters never see the option.  
+5. Last activity indicator tracks latest visible comment or ticket update to guide follow-up.
+
+### Admin Configuration → Effects on Workflow (Proposed)
+- Add `/app/admin` with IA for Users, Teams, SLA Policies, Categories/Tags, and Audit Logs. Changes should flow into ticket creation (options in forms), assignment dropdowns, and reporting scopes. 
+- Safeguards: block deletion of entities in use, require reassignment flows, and log changes with user/time metadata.
+
+## Ticket List / Queues / Views
+- **Filters/search**: status and priority dropdowns with highlight when active, plus text search across title/description; controlled via query params so state persists on reload. 
+- **Results**: card grid shows number, priority pill, title, status, requester, optional assignee user/team, and created timestamp; click opens detail. 
+- **Empty state**: dashed card with CTA to create when no tickets match. 
+- **Quick create**: inline form at bottom of list uses same validation, markdown preview, loading/disabled controls, and success/error toasts. 
+- **Proposed**: cursor-based pagination to cap result count, bulk select for agent/admin to apply status/assignment updates, and saved views (personal/team) storing filter/search combinations.
+
+## Ticket Detail UX
+- **Header**: ticket number, title, created timestamp, requester, assignee team/user, priority pill, and status pill. 
+- **Description**: markdown rendered with GFM in a prose container. 
+- **Metadata grid**: category, assignee team/user, and created date displayed in definition list layout. 
+- **Action panel**: 
+  - Status dropdown: all statuses for agent/admin; requester (owner) limited to close or reopen options; disabled while mutation pending; helper text explains restrictions. 
+  - Assignment form: agent/admin only; separate selects for agent/team; disabled when unchanged or pending. 
+- **Timeline**: chronological comments with avatar initials, author name, role badge, timestamp, and markdown body; internal comments use amber border/background and “Wewnętrzny” chip and are hidden from requesters. 
+- **Composer**: textarea with required validation; internal checkbox visible only to agent/admin; button shows loading text and disables while posting. 
+- **Navigation**: link back to `/app` list.
+
+## Admin UX (Proposed)
+- **Information architecture**: Admin home (metrics + shortcuts) → Users → Teams → SLAs → Categories/Tags → Audit Logs → Reports. 
+- **CRUD patterns**: searchable lists with inline add/edit drawers; destructive actions require confirmation modal and block if linked to tickets; edits show optimistic UI where safe and always toast results. 
+- **Safeguards**: prevent deletion of in-use categories/teams/SLA policies; require reassignment flows; keep audit entries for user, time, previous value.
+
+## Reporting UX (Proposed)
+- Dashboard with KPIs (new/closed volume, SLA breach rate, backlog by status/priority, agent workload). 
+- Widgets drill down to filtered ticket lists; breadcrumbs allow return to dashboard. 
+- Exports (CSV) respect current filters; show progress indicator and deliver download link or email on completion.
+
+## Permission-Driven UX Rules
+- Unauthenticated users are redirected to `/login`; top bar shows current role and logout control. 
+- Requesters see only their own tickets and public comments; status control is restricted to closing/reopening own tickets. 
+- Agents/Admins can view organization tickets, manage all statuses and assignments, and post internal comments. 
+- Unauthorized ticket access returns Not Found instead of partial data. 
+- Future admin console gated to admin role; UI should state why an action is unavailable (e.g., tooltip or helper text near disabled controls).
+
+## Error, Empty, and Loading States
+- **Login**: inline red error for failed authentication; button shows loading label during request. 
+- **Ticket list**: empty-state card when no results; filter controls always available; quick form and filter submit buttons disable during submission. 
+- **Ticket detail**: Not Found for missing/unauthorized tickets; status/assignment buttons disable during mutation; comment button disables while posting; timelines show “Brak komentarzy” when empty. 
+- **API errors**: ticket creation, status/assignment updates, and comments surface toast errors without clearing user input. 
+- **Proposed**: skeleton loading for list cards/detail header and retry actions for failed API calls.
+
+## Accessibility Requirements
+- All form inputs/selects carry visible labels; validation errors connect via `aria-describedby`; focus rings maintained on interactive controls. 
+- Markdown preview toggle uses buttons; ensure keyboard operability and focus indication. 
+- Internal comment distinction uses both color and text badge; priority/status pills maintain readable contrast. 
+- **Proposed**: add skip-to-content link, aria-live region for toast messages, and keyboard shortcuts for filter submission.
+
+## Performance Requirements
+- Ticket list queries ordered by creation date; filters/search run server-side. 
+- **Proposed**: cursor pagination and caching of common list queries; debounce search input before submission; stream markdown rendering for long descriptions if needed.
+
+## Top 10 UX Risks & Mitigations
+1. **Unbounded lists causing slow loads** – add pagination and item counts; keep filters server-side. 
+2. **Requester confusion over limited status options** – show helper text near dropdown and disable unavailable statuses. 
+3. **Internal comment leakage** – keep requester views filtered to public comments and visually flag internal notes; require explicit checkbox. 
+4. **Stale assignment options** – reload agent/team options after save and on page load; surface API validation errors. 
+5. **Form abandonment after errors** – preserve inputs on failure and display specific API message; allow re-submit without refresh. 
+6. **Markdown misuse** – default to Edit mode with clear Preview toggle; include helper copy for Markdown basics. 
+7. **Accessibility regressions** – enforce labels, focus states, and aria links; add automated a11y checks in CI. 
+8. **Timezone ambiguity** – pair locale timestamps with relative-time tooltip; standardize display format. 
+9. **Navigation loss on logout** – redirect to `/login` with message; consider session timeout warning before forced logout. 
+10. **Reporting overload (future)** – offer preset filters and async export queue with progress; avoid blocking UI during heavy queries.
 >>>>>>> theirs
