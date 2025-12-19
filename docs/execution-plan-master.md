@@ -1,6 +1,7 @@
 # Execution Plan Master
 
 <<<<<<< ours
+<<<<<<< ours
 Phases: Phase 0 (foundation/readiness), MVP (P0), V1 (P1), V2 (P2). Tasks are dependency-ordered; stop/go checkpoints appear every 10–15 tasks. Each task lists goal, dependencies, impacted areas, acceptance, test proof, security/edge cases, and rollback.
 
 ## Definition of Done per phase
@@ -137,6 +138,8 @@ Phases: Phase 0 (foundation/readiness), MVP (P0), V1 (P1), V2 (P2). Tasks are de
 - P2-34 Add shared/role-based saved filter sharing with audit — deps: P1-25; impacted: UI/DB; acceptance: shareable filters with audit; test proof: integration; security/edge: org scoping; rollback: disable sharing.
 - P2-35 V2 Definition of Done review/sign-off — deps: P2-01…P2-34; impacted: release; acceptance: DoD checklist met; test proof: sign-off note; security/edge: none; rollback: reopen items.
 =======
+=======
+>>>>>>> theirs
 Phases: Phase 0 (foundations), MVP (P0), V1 (P1), V2 (P2). Each task lists goal, dependencies (Deps), impacted areas, acceptance criteria (AC), test proof, security/edge cases, and rollback notes. Stop/go checkpoints appear roughly every 10–15 tasks.
 
 ## Phase 0 – Foundations & Environment
@@ -272,4 +275,7 @@ Phases: Phase 0 (foundations), MVP (P0), V1 (P1), V2 (P2). Each task lists goal,
 - **MVP (P0)**: Attachments with visibility, categories, SLA fields, admin SLA CRUD, rate limits, audits for files, checkpoints 3–5 approved, unit/integration tests added, UI wires for new fields.
 - **V1 (P1)**: Workers running SLA/notification flows, automation rules, dashboards/widgets, contract tests, checkpoints 6–8 approved, monitoring/health checks live.
 - **V2 (P2)**: Reporting/CSAT, advanced security/perf features, localization groundwork, metrics/alerts, regression and load suites passing, checkpoints 9–12 approved.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

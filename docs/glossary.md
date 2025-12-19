@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 # Glossary (HelpDeskApp)
 
 - **Requester** — End user who opens tickets; can view/close/reopen own tickets and add public comments.
@@ -38,4 +39,25 @@
 - **Presigned URL**: Time-bound URL granting limited access to upload or download attachments from object storage.
 - **Background Worker**: Queue-driven process (e.g., BullMQ) handling SLA timers, notifications, and heavy tasks outside request lifecycle.
 - **Stop/Go Checkpoint**: Planned review to decide continuation after a task tranche based on quality and risk outcomes.
+>>>>>>> theirs
+=======
+# Glossary
+- **Requester**: End user who creates tickets; can view/update only their own tickets and post public comments.
+- **Agent**: Support staff who can view all org tickets, manage status/priority/assignment, and post public or internal comments.
+- **Admin**: Org-level administrator with agent capabilities plus management of users, teams, SLA policies, and configuration.
+- **Organization (Org)**: Tenant boundary for users, teams, tickets, tags, and policies; data is scoped per org.
+- **Team**: Group of agents within an org; tickets can be assigned to a team for queueing.
+- **Ticket**: Work item representing a support request with status, priority, category, requester, optional assignees, and SLA deadlines.
+- **Comment (Public)**: Visible to requester and staff; contributes to activity and can trigger SLA first-response.
+- **Comment (Internal)**: Visible only to agents/admins; used for internal collaboration and not shown to requesters.
+- **Attachment**: File linked to a ticket or comment, stored with metadata (name, MIME, size, uploader) and visibility scope.
+- **Tag**: Org-scoped label applied to tickets via TicketTag join table.
+- **SLA Policy**: Rule defining first-response and resolve time targets per priority (and later per category) for an org.
+- **Audit Event**: Immutable log entry capturing actor, action, timestamp, and change payload for ticket/admin actions.
+- **Dashboard**: Main ticket list view with filters/search and quick-create form.
+- **Kanban Board**: Status-grouped board for agents to drag tickets across workflow columns (target feature).
+- **Notification**: In-app or email/webhook message emitted on ticket lifecycle events according to user preferences.
+- **Canned Response**: Predefined reply template insertable into comments to speed responses.
+- **CSAT**: Customer satisfaction survey triggered after resolution/closure to measure requester feedback.
+- **Checkpoint**: Stop/Go review gate inserted every 10–15 tasks in the execution plan to assess readiness.
 >>>>>>> theirs
