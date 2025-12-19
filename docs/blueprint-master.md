@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 # Blueprint Master
 
 <<<<<<< ours
@@ -312,6 +313,8 @@ graph TD
 - Support hours/timezone for SLA calculations → gather business rules; add config in Phase P0 admin seed.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # Master Blueprint
 
 ## Executive Summary
@@ -388,10 +391,20 @@ graph TD
 - Migration plan: additive migrations per phase, backfill scripts for SLA due dates, default teams, and indexes on ticket search fields.
 
 ## API Contract (high-level)
+<<<<<<< ours
+=======
+- **Canonical source:** `docs/openapi.yaml` (to be recreated) defines request/response models, enums, and examples. Agent 5 contract docs are missing; recreated OpenAPI will replace them until originals surface.
+>>>>>>> theirs
 - **Auth:** POST `/api/auth/[...nextauth]` (NextAuth) with credential provider.
 - **Tickets:** GET `/api/tickets` (filtered by role); POST `/api/tickets` with validated payload; GET/PATCH `/api/tickets/{id}` for status/priority/assignments with role checks; future: DELETE (admin), bulk PATCH, SLA escalate endpoint, attachment upload endpoints.
 - **Comments:** POST `/api/tickets/{id}/comments` with `isInternal` rules; future: GET paginated comments, edit/delete by author/admin.
 - **Admin (target):** CRUD for users/teams/tags/SLA, report exports, system settings endpoints.
+<<<<<<< ours
+=======
+- **Contract conventions:** JSON request/response with consistent casing; pagination via cursor + limit; filtering with explicit query params; enums match Prisma schema.
+- **Error model:** Standard envelope `{ error: { code, message, traceId, details? } }` with contract-defined codes; validation errors return `errors[]` field; never leak stack traces.
+- **Versioning/idempotency:** Default version v1 via URL prefix; breaking changes require new version and changelog. Idempotency keys required on create/bulk endpoints; retries must not duplicate work.
+>>>>>>> theirs
 
 ## UX Contract (routes + key states)
 - `/login`: credential form with loading/error state.
@@ -413,6 +426,10 @@ graph TD
 - E2E: login, create ticket, comment internal/public, status transitions, assignment changes, reopen/close, filters/search, quick-create.
 - Non-functional: file upload size/virus-scan hooks, load tests on ticket listing, accessibility (aria labels already present on forms).【F:src/app/app/ticket-form.tsx†L88-L185】
 - CI: lint/test (Vitest/Playwright placeholders in scripts) plus Prisma migrate check and seed smoke run.【F:package.json†L6-L53】
+<<<<<<< ours
+=======
+- Contract: OpenAPI validation and contract tests covering status codes, error model envelope, versioning/idempotency rules, and migration contract checks before feature merges.
+>>>>>>> theirs
 
 ## Top Risks & Mitigations (mapped to Execution Plan)
 1. Missing specialist specs may misalign features — Mitigation: tasks 001, 004, 115 update docs after discovery.
@@ -435,4 +452,7 @@ graph TD
 18. Observability blind spots — Mitigation: tasks 019, 101-102, 100 add logging, metrics, alerts.
 19. Feature rollout risk — Mitigation: tasks 112 enable feature flags and checkpoints every 10–15 tasks.
 20. Data loss from purge/retention jobs — Mitigation: tasks 094, 107, 111 add dry runs and cleanup cron safeguards.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

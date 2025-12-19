@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Decision Log (Orchestrator)
 
 | Date | Decision | Rationale | Impact |
@@ -27,6 +28,8 @@
 | 7 | Added stop/go checkpoints every 10–15 tasks. | Required by brief; ensures incremental validation and scope control. | Embedded into WBS with rollback notes per task. |
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # Decision Log
 | # | Decision | Rationale | Impact | Follow-up |
 |---|-----------|-----------|--------|-----------|
@@ -35,4 +38,8 @@
 | 3 | Kept attachment/storage/reporting features as target-only, not assumed present. | README lists them as TODO; no implementation found. | Execution plan phases attachments in MVP, reporting in later phases. | Re-evaluate priorities after discovery/UX validation. |
 | 4 | Added security hardening (sanitization, rate limiting, auth guards) to MVP scope. | API/UI currently lack sanitizer/rate-limit wiring; risk of XSS/abuse. | Dedicated tasks in MVP/V1 for mitigations and tests. | Validate with security review before GA. |
 | 5 | Phased delivery (Phase 0, MVP/P0, V1/P1, V2/P2) with stop/go checkpoints every ~10 tasks. | Reduces risk given missing specs and evolving requirements. | Checkpoints embedded in execution-plan-master.md; DoD per phase defined. | Governance to enforce checkpoint reviews. |
+<<<<<<< ours
+>>>>>>> theirs
+=======
+| 6 | Agent 5 contract docs (contract conventions, error model, API contracts, OpenAPI, contract tests, migration contracts) are missing; proceeding with recreated conventions and OpenAPI as canonical sources. | Required files are absent in repo; execution plan front-loads recreation and gating contract tests before feature work. | Blueprint treats `docs/openapi.yaml` and recreated conventions as single source of truth for API; plan adds early contract tasks and CI enforcement. | Replace provisional artifacts if original Agent 5 docs appear; reconcile differences and update tests within one business day. |
 >>>>>>> theirs

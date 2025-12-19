@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Glossary (HelpDeskApp)
 
 - **Requester** — End user who opens tickets; can view/close/reopen own tickets and add public comments.
@@ -41,6 +42,8 @@
 - **Stop/Go Checkpoint**: Planned review to decide continuation after a task tranche based on quality and risk outcomes.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # Glossary
 - **Requester**: End user who creates tickets; can view/update only their own tickets and post public comments.
 - **Agent**: Support staff who can view all org tickets, manage status/priority/assignment, and post public or internal comments.
@@ -60,4 +63,7 @@
 - **Canned Response**: Predefined reply template insertable into comments to speed responses.
 - **CSAT**: Customer satisfaction survey triggered after resolution/closure to measure requester feedback.
 - **Checkpoint**: Stop/Go review gate inserted every 10–15 tasks in the execution plan to assess readiness.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
