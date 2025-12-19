@@ -292,6 +292,13 @@ paths:
   /api/tickets:
     get:
       summary: List tickets
+<<<<<<< ours
+=======
+      description: |
+        AS-IS implementation returns `{ tickets }` without pagination, filtering, or sorting and scopes results by role/organization.
+        Target behavior adds `limit`/`offset`/`sort` and optional `status`/`priority`/`q` filters plus pagination metadata.
+      x-implementation-status: "as-is (pagination/filtering not yet implemented)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -335,6 +342,13 @@ paths:
           $ref: '#/components/responses/Unauthorized'
     post:
       summary: Create ticket
+<<<<<<< ours
+=======
+      description: |
+        AS-IS returns 200 with `{ ticket }` and does not enforce idempotency. Target behavior should return 201, require an
+        `Idempotency-Key`, and include pagination-friendly metadata fields such as `etag`.
+      x-implementation-status: "as-is (idempotency + 201 response pending)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -347,8 +361,13 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/TicketCreate'
       responses:
+<<<<<<< ours
         '201':
           description: Ticket created
+=======
+        '200':
+          description: Ticket created (AS-IS returns 200; target may switch to 201)
+>>>>>>> theirs
           content:
             application/json:
               schema:
@@ -367,6 +386,13 @@ paths:
   /api/tickets/{id}:
     get:
       summary: Get ticket by id
+<<<<<<< ours
+=======
+      description: |
+        Not implemented in current code. Target behavior should return ticket details with relations when organization scope
+        matches; use 404 on scope violations.
+      x-implementation-status: "planned (no handler in code)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -393,6 +419,14 @@ paths:
           $ref: '#/components/responses/NotFound'
     patch:
       summary: Update ticket
+<<<<<<< ours
+=======
+      description: |
+        AS-IS allows status/priority/assignee updates per role constraints without `If-Match` or etag enforcement and
+        returns 200 on success or 400 on validation/no-change. Target adds optimistic locking via `If-Match` and may return
+        412 on mismatch.
+      x-implementation-status: "as-is (no etag/If-Match)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -438,6 +472,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
       summary: Replace ticket (alias for patch behavior)
+<<<<<<< ours
+=======
+      description: |
+        Mirrors PATCH. Same AS-IS behavior without `If-Match`; target may require it.
+      x-implementation-status: "as-is (no etag/If-Match)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -484,6 +524,12 @@ paths:
   /api/tickets/{id}/comments:
     get:
       summary: List comments for ticket
+<<<<<<< ours
+=======
+      description: |
+        Not implemented in current code. Target behavior paginates comments and hides internal notes from requesters.
+      x-implementation-status: "planned (no handler in code)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -522,6 +568,14 @@ paths:
           $ref: '#/components/responses/NotFound'
     post:
       summary: Create comment
+<<<<<<< ours
+=======
+      description: |
+        AS-IS accepts `bodyMd` and optional `isInternal` (default false), scopes by organization/role, stamps `firstResponseAt`
+        for first public agent comment, and returns 200 without idempotency support. Target may add optional idempotency and
+        return 201.
+      x-implementation-status: "as-is (idempotency + 201 pending)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -539,8 +593,13 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/CommentCreate'
       responses:
+<<<<<<< ours
         '201':
           description: Comment created
+=======
+        '200':
+          description: Comment created (AS-IS returns 200; target may switch to 201)
+>>>>>>> theirs
           content:
             application/json:
               schema:
@@ -563,6 +622,13 @@ paths:
   /api/tickets/{id}/attachments:
     post:
       summary: Create attachment upload request
+<<<<<<< ours
+=======
+      description: |
+        Not implemented in current code. Target behavior should validate size/MIME, issue signed upload URL, and track scan
+        status before downloads are allowed.
+      x-implementation-status: "planned (no handler in code)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
@@ -607,6 +673,13 @@ paths:
   /api/tickets/{id}/attachments/{attachmentId}:
     get:
       summary: Get attachment download link
+<<<<<<< ours
+=======
+      description: |
+        Not implemented in current code. Target behavior should enforce organization ownership and attachment scan status
+        before issuing download URLs.
+      x-implementation-status: "planned (no handler in code)"
+>>>>>>> theirs
       security:
         - cookieAuth: []
       parameters:
