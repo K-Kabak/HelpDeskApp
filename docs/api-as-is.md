@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 # API surface (as implemented)
 
 ## /api/auth/[...nextauth] (GET, POST)
@@ -33,6 +34,8 @@
 ## Not implemented but referenced
 - `/api/tickets/[id]/comments` is called by the ticket comment form but no route exists under `src/app/api`; submissions will 404.
 =======
+=======
+>>>>>>> theirs
 # API Surface (as implemented)
 
 ## /api/auth/[...nextauth]
@@ -63,4 +66,7 @@
   - **Authorization**: Allows requester or agent/admin for public comments; only agent/admin for internal comments. No organization validation on ticket lookup (risk).【F:src/app/api/tickets/[id]/comments/route.ts†L21-L39】
   - **Side effects**: Creates comment; sets `firstResponseAt` when first public agent reply on ticket without prior first response.【F:src/app/api/tickets/[id]/comments/route.ts†L41-L58】
   - **Failure modes**: 400 on validation errors; 403 on forbidden internal/public conditions; 404 when ticket not found.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

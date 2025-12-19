@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 # Current state (evidence-first)
 
 ## Stack and runtime
@@ -68,6 +69,8 @@
 20. No attachment handling code found in app or API directories.
 21. API directory only contains auth and ticket handlers; no admin or auxiliary endpoints present.
 =======
+=======
+>>>>>>> theirs
 # Current State
 
 ## Stack (evidence-backed)
@@ -141,4 +144,7 @@
 18. Comment endpoint does not enforce organization boundary on ticket fetch (no org comparison).【F:src/app/api/tickets/[id]/comments/route.ts†L21-L39】
 19. Seed script provisions demo org, users, team, SLA policies, ticket, comment, audit event.【F:prisma/seed.js†L7-L99】
 20. Prisma schema defines enums for Role/TicketStatus/TicketPriority and ticket relations (requester, assignee, org, tags, comments).【F:prisma/schema.prisma†L10-L168】
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
