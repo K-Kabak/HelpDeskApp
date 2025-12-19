@@ -1,6 +1,7 @@
 # Threat Model
 
 ## Context and Trust Boundaries
+<<<<<<< ours
 - Public internet → Next.js app router UI under `/app/*` guarded by NextAuth middleware (middleware.ts). Authenticated requests carry a session JWT with `role` and `organizationId` claims set during login (src/lib/auth.ts).
 - UI/server components call API routes that talk to Postgres via Prisma (src/app/api/tickets/route.ts; src/app/api/tickets/[id]/route.ts; prisma/schema.prisma). API routes are callable directly without middleware, so per-endpoint checks are the main barrier.
 - Background data writes come from Prisma seed/migrations (prisma/seed.js; prisma/schema.prisma).
@@ -35,3 +36,38 @@
 - **Attachments:** No upload path/policy yet (prisma/schema.prisma). Implement signed uploads with scanning and enforce on download; test with EICAR and over-limit payloads.
 - **Admin:** No admin CRUD endpoints beyond seed data (absence under src/app/api/admin). Add scoped admin APIs with audit logs; verify role-gated access via e2e.
 - **Exports:** No export endpoints exist; when added they must scope by organization and redact internal notes. Plan export module under `src/app/api/exports` with audit trails; verify with download tests that foreign org access fails.
+=======
+- **Client ↔ Next.js edge/API**: Authenticated users interact over HTTPS with Next.js middleware-protected routes under `/app` using NextAuth JWT sessions.【F:middleware.ts†L1-L5】【F:src/lib/auth.ts†L21-L80】
+- **API ↔ Database**: API route handlers call Prisma against Postgres via `DATABASE_URL` with role-based and organization-aware filters in some paths.【F:src/app/api/tickets/route.ts†L16-L88】【F:src/app/api/tickets/[id]/route.ts†L26-L211】
+- **Background/seed**: Seed script writes demo org/users/SLA/tickets directly into the DB with static passwords for local/demo use.【F:prisma/seed.js†L7-L146】【F:README.md†L42-L61】
+- **Static assets**: Public assets served by Next; attachment upload endpoints are not yet implemented (planned work).【F:README.md†L63-L66】【F:prisma/schema.prisma†L100-L158】
+
+## Assets
+- User identities, roles, and credentials (including JWT session claims and stored password hashes).【F:src/lib/auth.ts†L21-L80】【F:prisma/schema.prisma†L28-L80】
+- Organization-scoped ticket data: tickets, comments (public/internal), SLAs, tags, assignments, audit trail.【F:README.md†L51-L61】【F:prisma/schema.prisma†L100-L208】【F:src/app/api/tickets/[id]/route.ts†L84-L194】
+- Planned attachments/exports and potential markdown content rendered in UI.【F:README.md†L63-L66】【F:src/app/app/tickets/[id]/page.tsx†L131-L215】
+
+## Threats by Area
+| Area | Threats | Mitigations (current/proposed) | Verification |
+| --- | --- | --- | --- |
+| Authentication & sessions | Credential brute force, weak demo passwords, stolen JWT, lack of MFA. NextAuth credential checks with bcrypt exist but no rate-limit or MFA; demo creds published.【F:src/lib/auth.ts†L21-L80】【F:README.md†L42-L61】 | Add IP/user-based rate limiting middleware; enforce strong password policy; add optional 2FA; rotate demo creds post-install. | Pen-test login; automated rate-limit tests hitting `/api/auth/[...nextauth]`; unit tests for password policy. |
+| Org scoping | Agents from other orgs could fetch tickets by ID because detail queries lack organization filter; API PATCH enforces org match, but page fetch only checks requester ownership.【F:src/app/app/tickets/[id]/page.tsx†L30-L99】【F:src/app/api/tickets/[id]/route.ts†L35-L81】 | Add `organizationId` condition to all ticket/comment queries and middleware to assert session org; reuse same guard in pages. | Integration tests fetching ticket from another org expect 404; static analysis for missing org filters. |
+| Authorization logic | Requesters blocked from certain updates in API, but UI assumes `role` string; role tampering in client could call APIs directly. | Server-side role enforcement already in PATCH/POST; add policy helper and middleware to centralize checks; add audit for denied attempts. | API tests asserting 403 for disallowed operations; log review showing denied actions. |
+| Markdown rendering | ReactMarkdown without sanitization exposes XSS in ticket descriptions/comments.【F:src/app/app/tickets/[id]/page.tsx†L131-L215】【F:src/app/app/ticket-form.tsx†L5-L210】 | Enable `rehype-sanitize` with strict schema and content security policy; store and render sanitized HTML or escape markdown. | Unit tests rendering payload with `<script>` expecting escaping; dynamic CSP check in E2E. |
+| Attachments (planned) | Risk of malicious files, MIME spoofing, unscanned uploads, broken org scoping. Currently no upload route. | Implement upload service with signed URLs, MIME/extension allowlist, AV scanning, org ownership metadata. | Integration tests uploading blocked types, large files, cross-org access; verify AV scan hook logs. |
+| Admin/role actions | Admin endpoints not built; risk of privilege escalation when added. | Define RBAC matrix and guard all admin routes with server-side checks; protect seeds and demo accounts. | Policy unit tests on admin APIs; E2E flows verifying only admins can manage users/teams. |
+| Exports/reporting | Not built yet; risk of data exfiltration and missing scoping. | When implemented, require scoped queries, watermarks, audit logs, and signed URLs for downloadable exports. | Security review + integration tests on export endpoints. |
+| Ticket state changes | Unauthorized status changes or assignment changes; audit exists per change but integrity not enforced.【F:src/app/api/tickets/[id]/route.ts†L84-L194】 | Add immutable audit log with hash chaining and server timestamps; restrict who can set certain states (e.g., closure reason). | Unit tests validating audit hash chain; E2E ensuring requester cannot change priority/assignee. |
+| Comment visibility | Internal comments should be hidden from requesters; filter uses client-side `visibleComments` but server returns all comments before filtering.【F:src/app/app/tickets/[id]/page.tsx†L30-L99】【F:src/app/app/tickets/[id]/page.tsx†L167-L220】 | Enforce `isInternal` filter in server query for requester sessions; mask in API layer rather than UI. | Integration test: requester fetching comments never sees internal flag; snapshot of API response. |
+| SLA timers | First/resolve due computed server-side; no enforcement job; risk of missed SLA alerts.【F:src/app/api/tickets/route.ts†L52-L75】 | Add background worker to monitor SLA breaches and notify; store breach timestamps. | Job unit tests with fake clock; E2E verifying notification when SLA breached. |
+| Logging & secrets | Prisma logs queries in dev; no structured security logging; `.env` not present but README lists secrets. Risk of sensitive data in logs. | Centralize logging with PII scrubbing; restrict log levels in prod; add secret scanning in CI. | CI pipeline for secret scan; log inspection in staging ensuring no PII. |
+| Rate limiting | No rate limiting on APIs; risk of abuse/brute force. | Apply rate limiting middleware (e.g., Redis-based) on auth and ticket APIs; include user+IP keys. | Load test showing 429 responses after threshold; monitor metrics. |
+| CSRF/Session fixation | Relying on NextAuth JWT API routes; APIs accept JSON POST without CSRF token. | Use `NEXTAUTH_URL` secure cookies with `SameSite=lax` and enable CSRF for credential login routes or enforce `Authorization` header with `POST` only. | Security test submitting forged requests from third-party origin; verify failure. |
+| Dependency risk | Multiple dependencies; no SCA policy. | Add `pnpm audit`/`npm audit` gate; renovate. | CI audit step; report review. |
+| Availability | No health checks or rate limits; DB single point of failure in docker-compose. | Add `/healthz` endpoint, DB liveness probes, and horizontal scaling guidance. | Operational runbook tests; k8s/liveness checks returning 200. |
+
+## Verification Steps Summary
+- Automated: unit/integration tests for auth, org scoping, markdown sanitization, and permission enforcement; SAST/DAST (e.g., ESLint rules, Semgrep); dependency and secret scanning in CI.
+- Manual: threat hunting for XSS via markdown, privilege escalation attempts using alternate org IDs, and brute-force exercises with monitoring for rate-limit events.
+- Operational: log review for audit chain integrity and denied events; periodic rotation of demo credentials and inspection of backup/restore drills.
+>>>>>>> theirs
