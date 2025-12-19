@@ -1,6 +1,7 @@
 # Threat Model
 
 <<<<<<< ours
+<<<<<<< ours
 ## Context and Trust Boundaries
 <<<<<<< ours
 - Public internet → Next.js app router UI under `/app/*` guarded by NextAuth middleware (middleware.ts). Authenticated requests carry a session JWT with `role` and `organizationId` claims set during login (src/lib/auth.ts).
@@ -73,6 +74,8 @@
 - Operational: log review for audit chain integrity and denied events; periodic rotation of demo credentials and inspection of backup/restore drills.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 ## System & Trust Boundaries
 - **Client → Next.js app/API**: Authenticated requests flow through NextAuth middleware guarding `/app/**` and API routes use server-side session lookups.【F:middleware.ts†L1-L5】【F:src/lib/auth.ts†L21-L80】
 - **API → Database**: Route handlers access Postgres via Prisma using `DATABASE_URL`; authorization and org filters are enforced in some paths but missing in others.【F:src/app/api/tickets/route.ts†L16-L88】【F:src/app/api/tickets/[id]/route.ts†L35-L197】【F:prisma/schema.prisma†L1-L208】
@@ -120,4 +123,7 @@
 13. Lack of health checks → Implement `/healthz` DB ping → Monitor 200 response in deploy pipeline.【F:docker-compose.yml†L1-L15】
 14. Dependency vulnerabilities → Add SCA gate → CI `pnpm audit` step pass required.【F:package.json†L5-L64】
 15. Missing admin RBAC design → Define RBAC and enforce server-side → Policy tests ensuring only admins can manage admin routes (once added).【F:prisma/schema.prisma†L10-L80】
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

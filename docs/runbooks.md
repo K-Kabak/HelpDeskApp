@@ -2,6 +2,7 @@
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 ## Environment and Secrets
 - Required variables: `DATABASE_URL` (Postgres, prisma/schema.prisma datasource), `NEXTAUTH_SECRET` (NextAuth JWT), optional storage credentials for uploads (to be added with attachment API). Reference setup in README.md.
 - Local dev: `.env.local` loaded by Next.js; never reuse in staging/prod. Validate presence at boot and fail fast.
@@ -80,6 +81,8 @@
 - Post-incident: add regression tests, update threat model, rotate credentials, and communicate to stakeholders.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 ## Dev Environment Setup (repo-specific)
 1. Install deps: `pnpm install` (Node 22+); ensure Postgres reachable.
 2. Configure `.env.local` from `.env.example` once added with `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` for callbacks.【F:README.md†L16-L43】
@@ -119,4 +122,7 @@
 - **Eradicate**: patch root cause (e.g., org filter, sanitizer), add regression tests, redeploy.
 - **Recover**: restore from backups if needed; verify audit hash chain; validate health checks.
 - **Postmortem**: document timeline, impacted data, controls added; rotate credentials and update threat model.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

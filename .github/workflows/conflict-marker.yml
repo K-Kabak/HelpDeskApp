@@ -1,0 +1,21 @@
+name: Conflict Marker Guardrail
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conflict-marker:
+    name: Fail on merge conflict markers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Scan for conflict markers
+        run: |
+          if git grep -n '^[<=>]\{7\}' -- .; then
+            echo "Conflict markers detected."
+            exit 1
+          else
+            echo "No conflict markers detected."
+          fi

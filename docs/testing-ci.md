@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Testing & CI
 
 ## Tooling Baseline
@@ -74,6 +75,8 @@
 - Provide rerun command snippets in CI output; auto-collect server logs and recent audit events for debugging.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # Testing & CI Strategy
 
 ## Repository Tooling & Assumptions
@@ -105,6 +108,10 @@
 4. **Unit/Integration**: run Vitest with `DATABASE_URL` pointing to isolated DB; apply `prisma migrate deploy` before tests; collect coverage (target ≥80% lines for core API modules).
 5. **E2E smoke**: `pnpm test:e2e` with Playwright against `pnpm dev` server using seeded test DB; upload traces/screenshots as artifacts.
 6. **Artifacts & failure triage**: always upload Playwright traces, Vitest junit/coverage, Prisma query logs; on failure, surface failing stage, DB URL used, and rerun command.
+<<<<<<< ours
+=======
+7. **Guardrail: conflict marker scan**: workflow fails if any merge conflict markers exist to prevent bad commits merging; mirrors local check below.【F:.github/workflows/conflict-marker.yml†L1-L21】
+>>>>>>> theirs
 
 ## Coverage Expectations & Gates
 - Critical modules (auth, tickets API, org scoping, sanitizer, rate limiter) ≥80% line coverage before release; markdown sanitizer and org filter paths must have direct assertions.
@@ -113,4 +120,10 @@
 ## Test Data & Privacy
 - Do not reuse demo production credentials; generate unique test users per run.
 - Ensure seeded data avoids real PII; purge test databases after CI completion.
+<<<<<<< ours
+>>>>>>> theirs
+=======
+
+## Local Guardrails
+- Run conflict-marker scan before pushing: `git grep -n '^[<=>]\{7\}' -- .` (fails only on real conflict markers). Matches CI guardrail above.【F:.github/workflows/conflict-marker.yml†L1-L21】
 >>>>>>> theirs
