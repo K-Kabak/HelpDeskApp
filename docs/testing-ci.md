@@ -1,6 +1,3 @@
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 # Testing & CI
 
 ## Tooling Baseline
@@ -34,49 +31,6 @@
 - Gates (in order): `pnpm lint` → `pnpm test` (unit) → `pnpm test:e2e` (headless) → `pnpm build` for typecheck/bundle. Fail fast on lint/unit; allow e2e to retry once.
 - Artifacts: store Playwright traces/videos on failure; upload coverage from Vitest.
 - Triage: classify as flaky (retry pass) vs regression (repeatable). For regressions, link failing test to code ownership (API route or component) and open blocking issue; for flaky, quarantine and file ticket with repro steps/logs.
-=======
-# Testing & CI Strategy
-
-## Repository Tooling
-- Lint/test/e2e scripts exist: `pnpm lint`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright).【F:package.json†L5-L26】
-- Prisma seed/migrate scripts support DB fixtures for tests.【F:package.json†L5-L15】【F:prisma/seed.js†L7-L146】
-
-## Test Pyramid
-- **Unit tests** (Vitest):
-  - Pure functions (e.g., SLA due calculations when added), auth helpers, rate-limit utilities (planned `src/lib/rate-limit.ts`).
-  - Security-specific tests: markdown sanitization helper (escape scripts), audit hash chain generation.
-- **Integration tests** (Vitest + Prisma test DB):
-  - API routes for tickets/comments with org scoping and role enforcement using in-memory/test Postgres schema; run `prisma migrate deploy` against isolated DB.
-  - Auth flow: credential login success/failure, rate-limit responses.
-- **E2E (Playwright)**:
-  - Run against dev server with seeded data; use dedicated `.env.test` and Postgres schema per run to avoid leakage.
-  - Cover role-based paths and critical journeys (below).
-
-## Critical E2E Journeys
-- Requester: login → create ticket with markdown → verify only own tickets visible → attempt forbidden status change → expect error.
-- Agent: login → view org tickets → change status/assignee → add internal comment (hidden from requester) → verify SLA timestamps displayed.
-- Admin (future): user/team management once admin panel exists; verify RBAC.
-- Negative flows: XSS payload remains escaped in description/comment; cross-org ticket fetch returns 404.
-
-## Test Data & DB Isolation
-- Use Prisma seed to provision org/users/tickets; wrap tests with transaction rollback or per-test schema to isolate data.【F:prisma/seed.js†L7-L146】
-- For Playwright, run migrations to a throwaway database (`DATABASE_URL` pointing to per-run schema) and load minimal seed for deterministic IDs.
-- Provide factories for tickets/comments to avoid sharing fixtures; avoid reusing demo passwords in automated runs.
-
-## CI Pipeline & Gates
-1. **Install & build**: `pnpm install`, `pnpm lint`, typecheck if added.
-2. **Unit/Integration**: run Vitest suites against test DB (dockerized Postgres) after `prisma migrate deploy`.
-3. **E2E smoke**: start Next dev server, seed DB, run Playwright headless for critical flows.
-4. **Security gates**: add `pnpm audit`/`pnpm exec secretlint` (or trufflehog) and markdown/semgrep checks.
-5. **Artifacts & triage**: on failure, upload Playwright traces, Vitest reports, and Prisma query logs; auto-open ticket with failing step summary.
-
-## Failure Handling & Triage
-- Classify failures: **env** (DB unavailable), **data** (fixture drift), **regression** (assert failure), **flaky** (timeout). Include tags in CI annotations.
-- Provide rerun command snippets in CI output; auto-collect server logs and recent audit events for debugging.
->>>>>>> theirs
-=======
-=======
->>>>>>> theirs
 # Testing & CI Strategy
 
 ## Repository Tooling & Assumptions
@@ -108,10 +62,6 @@
 4. **Unit/Integration**: run Vitest with `DATABASE_URL` pointing to isolated DB; apply `prisma migrate deploy` before tests; collect coverage (target ≥80% lines for core API modules).
 5. **E2E smoke**: `pnpm test:e2e` with Playwright against `pnpm dev` server using seeded test DB; upload traces/screenshots as artifacts.
 6. **Artifacts & failure triage**: always upload Playwright traces, Vitest junit/coverage, Prisma query logs; on failure, surface failing stage, DB URL used, and rerun command.
-<<<<<<< ours
-=======
-7. **Guardrail: conflict marker scan**: workflow fails if any merge conflict markers exist to prevent bad commits merging; mirrors local check below.【F:.github/workflows/conflict-marker.yml†L1-L21】
->>>>>>> theirs
 
 ## Coverage Expectations & Gates
 - Critical modules (auth, tickets API, org scoping, sanitizer, rate limiter) ≥80% line coverage before release; markdown sanitizer and org filter paths must have direct assertions.
@@ -120,10 +70,3 @@
 ## Test Data & Privacy
 - Do not reuse demo production credentials; generate unique test users per run.
 - Ensure seeded data avoids real PII; purge test databases after CI completion.
-<<<<<<< ours
->>>>>>> theirs
-=======
-
-## Local Guardrails
-- Run conflict-marker scan before pushing: `git grep -n '^[<=>]\{7\}' -- .` (fails only on real conflict markers). Matches CI guardrail above.【F:.github/workflows/conflict-marker.yml†L1-L21】
->>>>>>> theirs
