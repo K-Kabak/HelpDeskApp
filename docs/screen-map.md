@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # Screen Map (by persona/role)
 
 ## Requester
@@ -104,6 +105,8 @@
 - **(Proposed) /app/admin/reports** – Reporting/dashboard view. Entry from admin console. Requires aggregated metrics and export endpoint. Primary actions: filter by date/team/status, drill into queues, export CSV.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # Screen Map by Persona/Role
 
 ## Requester
@@ -147,4 +150,7 @@
 - **/app/tickets/[id]** – same as agent with full status and assignment control.
 - **Proposed: /app/admin** – admin console landing to manage users, teams, SLAs, categories, and audit/reporting links.  
 - **Proposed: /app/admin/reports** – reporting dashboards with filters, drill-down links, and CSV export controls.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

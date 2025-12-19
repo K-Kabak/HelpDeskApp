@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # UX Acceptance Criteria (role-based)
 
 1. Given a user enters valid credentials, when submitting `/login`, then they are redirected to `/app` and see their role in the header.
@@ -80,6 +81,8 @@
 35. **Accessibility focus**: Given keyboard navigation, when tabbing through controls on any form, then focus rings are visible and action buttons are reachable without a mouse.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # UX Acceptance Criteria
 
 ## Authentication & Access
@@ -131,4 +134,7 @@
 36. **Keyboard navigation**: Given keyboard-only navigation, when tabbing through forms and action buttons, then focus rings are visible and all controls are reachable without a mouse.
 37. **Error persistence**: Given a failed status/assignment/comment action, when returning to the form, then previous input selections remain for retry without refresh.
 38. **Session messaging**: Given an automatic logout (timeout), when redirected to `/login`, then the UI explains the reason and offers re-login. (Proposed)
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

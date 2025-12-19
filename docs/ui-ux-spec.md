@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 # UI/UX Spec (HelpDesk)
 
 ## End-to-end journeys
@@ -138,6 +139,8 @@
 10. **Reporting overload (future)** – Provide filter presets and export queues; avoid blocking UI during heavy computations.
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 # UI/UX Specification
 
 ## Core Journeys
@@ -223,4 +226,7 @@
 8. **Timezone ambiguity** – pair locale timestamps with relative-time tooltip; standardize display format. 
 9. **Navigation loss on logout** – redirect to `/login` with message; consider session timeout warning before forced logout. 
 10. **Reporting overload (future)** – offer preset filters and async export queue with progress; avoid blocking UI during heavy queries.
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
