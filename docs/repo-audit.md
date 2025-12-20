@@ -4,7 +4,7 @@
 - `git grep -n "[<=>]\{7\}" -- .` -> no matches.
 
 ## Master artifact presence
-- Present under `docs/`: `current-state.md`, `blueprint-master.md`, `execution-plan-master.md`, `github-backlog.md`, `openapi.yaml`, `openapi-validation.md`, `repo-audit.md`.
+- Present under `docs/`: `current-state.md`, `blueprint-master.md`, `execution-plan-master.md`, `github-backlog.md`, `openapi.yaml`, `openapi-validation.md`, `repo-audit.md`. Missing: none detected.
 
 ## Contradictions / duplications (evidence-backed)
 - `docs/blueprint-master.md:5`, `docs/blueprint-master.md:12`, and `docs/blueprint-master.md:13` claim the comments API/endpoint is missing, but `POST /api/tickets/{id}/comments` exists and is the live path (see `src/app/api/tickets/[id]/comments/route.ts:12`). Risk register repeats the "missing comments API" claim (`docs/blueprint-master.md:149`), conflicting with the implemented handler and OpenAPI's documented `Create comment` operation (`docs/openapi.yaml:554`).
