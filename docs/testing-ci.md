@@ -1,3 +1,4 @@
+<<<<<<< ours
 # Testing & CI
 
 ## Tooling Baseline
@@ -31,6 +32,8 @@
 - Gates (in order): `pnpm lint` → `pnpm test` (unit) → `pnpm test:e2e` (headless) → `pnpm build` for typecheck/bundle. Fail fast on lint/unit; allow e2e to retry once.
 - Artifacts: store Playwright traces/videos on failure; upload coverage from Vitest.
 - Triage: classify as flaky (retry pass) vs regression (repeatable). For regressions, link failing test to code ownership (API route or component) and open blocking issue; for flaky, quarantine and file ticket with repro steps/logs.
+=======
+>>>>>>> theirs
 # Testing & CI Strategy
 
 ## Repository Tooling & Assumptions
@@ -62,6 +65,10 @@
 4. **Unit/Integration**: run Vitest with `DATABASE_URL` pointing to isolated DB; apply `prisma migrate deploy` before tests; collect coverage (target ≥80% lines for core API modules).
 5. **E2E smoke**: `pnpm test:e2e` with Playwright against `pnpm dev` server using seeded test DB; upload traces/screenshots as artifacts.
 6. **Artifacts & failure triage**: always upload Playwright traces, Vitest junit/coverage, Prisma query logs; on failure, surface failing stage, DB URL used, and rerun command.
+<<<<<<< ours
+=======
+7. **Guardrail: conflict marker scan**: workflow fails if any merge conflict markers exist (`&lt;&lt;&lt;&lt;&lt;&lt;&lt;`, `=×7`, `&gt;&gt;&gt;&gt;&gt;&gt;&gt;`) to prevent bad commits merging; mirrors local check below.【F:.github/workflows/conflict-marker.yml†L1-L21】
+>>>>>>> theirs
 
 ## Coverage Expectations & Gates
 - Critical modules (auth, tickets API, org scoping, sanitizer, rate limiter) ≥80% line coverage before release; markdown sanitizer and org filter paths must have direct assertions.
@@ -70,3 +77,9 @@
 ## Test Data & Privacy
 - Do not reuse demo production credentials; generate unique test users per run.
 - Ensure seeded data avoids real PII; purge test databases after CI completion.
+<<<<<<< ours
+=======
+
+## Local Guardrails
+- Run conflict-marker scan before pushing: `git grep -n "$(printf '%s' '<<<<<' '<<\|' '==' '=====' '\|>>>>' '>>>')" -- .` (fails on any conflict marker). Matches CI guardrail above.【F:.github/workflows/conflict-marker.yml†L1-L21】
+>>>>>>> theirs

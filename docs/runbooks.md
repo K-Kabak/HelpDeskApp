@@ -1,5 +1,6 @@
 # Runbooks
 
+<<<<<<< ours
 ## Environment and Secrets
 - Required variables: `DATABASE_URL` (Postgres, prisma/schema.prisma datasource), `NEXTAUTH_SECRET` (NextAuth JWT), optional storage credentials for uploads (to be added with attachment API). Reference setup in README.md.
 - Local dev: `.env.local` loaded by Next.js; never reuse in staging/prod. Validate presence at boot and fail fast.
@@ -35,6 +36,8 @@
 - Contain: disable offending feature flag or rate-limit path (middleware.ts matcher) if abuse; for data leak, revoke sessions (`NEXTAUTH_SECRET` rotate) and block compromised accounts.
 - Eradicate/Recover: apply hotfix or rollback; restore from DB backup if corruption; re-run migrations if necessary.
 - Lessons: record root cause, add regression tests (see docs/testing-ci.md), update runbooks and alerting thresholds.
+=======
+>>>>>>> theirs
 ## Dev Environment Setup (repo-specific)
 1. Install deps: `pnpm install` (Node 22+); ensure Postgres reachable.
 2. Configure `.env.local` from `.env.example` once added with `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` for callbacks.【F:README.md†L16-L43】

@@ -13,7 +13,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Scan for conflict markers
         run: |
+<<<<<<< ours
           if git grep -n '^[<=>]\{7\}' -- .; then
+=======
+          pattern="$(printf '%s' '<<<<<' '<<\|======' '=\|>>>>' '>>>')"
+          if git grep -n "${pattern}" -- .; then
+>>>>>>> theirs
             echo "Conflict markers detected."
             exit 1
           else

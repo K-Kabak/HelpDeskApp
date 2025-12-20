@@ -1,5 +1,6 @@
 # Security & Operations
 
+<<<<<<< ours
 ## Baseline Checklist (evidence vs gaps)
 | Area | Current state (with evidence) | Gap / priority |
 | --- | --- | --- |
@@ -29,6 +30,8 @@
 - **Logging:** Enable structured JSON logs for auth attempts, ticket writes, and rate-limit triggers; redaction of PII; ship to centralized sink. Expand Prisma client logging to include slow query thresholds in `src/lib/prisma.ts`.
 - **Audit integrity:** Add hash-chaining or signature on AuditEvent rows and store immutable copy (e.g., in object storage). Include actor, org, IP/UA for sensitive actions. Nightly job validates audit hash chain and alerts on mismatch.
 - **Verification:** CI lint checks ensure `NEXTAUTH_SECRET` and DB URLs set; staging run captures structured logs; integrity check job reports success/fail and is covered by unit test over sample audit chain.
+=======
+>>>>>>> theirs
 ## Baseline Checklist (current vs gaps)
 | Area | Exists (evidence) | Missing / Priority Gap |
 | --- | --- | --- |
@@ -46,9 +49,19 @@ Unknown items (e.g., infra firewalling, CDN settings) must be validated during d
 ## Upload Security Policy (to implement before enabling)
 - **Location**: Create API routes under `src/app/api/attachments` issuing signed URLs tied to `Attachment` records with org/ticket ownership.【F:prisma/schema.prisma†L130-L158】
 - **Controls**: MIME/extension allowlist (png,jpg,pdf,txt), max size 10MB enforced via route config and storage bucket policy; store in object storage with short-lived write/read URLs; require authenticated user with matching `organizationId`; AV scan hook before marking attachment active; retain audit entry linking uploader and checksum.
+<<<<<<< ours
 - **Checklist**: Threat review for signed URL scope, MIME sniffing disabled, server-side size validation, quarantine bucket, per-org path prefix, and authorization on every fetch.
 - **Verification**: Integration tests for disallowed MIME/oversize, cross-org access attempts, expired URL reuse; manual review of AV scan logs and audit rows.
 
+=======
+- **Checklist**: Threat review for signed URL scope, MIME sniffing disabled, server-side size validation, quarantine bucket, per-org path prefix, and authorization on every fetch—keep aligned with attachment contract (signed URLs + allowlist + size caps + AV scan + audit trail) before rollout.【F:prisma/schema.prisma†L130-L158】
+- **Verification**: Integration tests for disallowed MIME/oversize, cross-org access attempts, expired URL reuse; manual review of AV scan logs and audit rows.
+
+## Error Handling & Content Safety
+- **Error envelope standardization**: API routes currently return varied `{ error: string | object }` shapes; standardize to `{ error: { code, message } }` (and optionally `details`) to keep clients predictable and safer to log.【F:src/app/api/tickets/route.ts†L19-L88】【F:src/app/api/tickets/[id]/route.ts†L32-L196】【F:src/app/api/tickets/[id]/comments/route.ts†L18-L58】 Add contract tests to ensure consistent structure and status codes.
+- **Markdown sanitization**: Ticket page renders markdown without sanitization, enabling XSS if untrusted content is stored.【F:src/app/app/tickets/[id]/page.tsx†L131-L215】 Enforce `rehype-sanitize` (or equivalent) and CSP; add unit/E2E tests that scripts remain escaped.
+
+>>>>>>> theirs
 ## Rate Limiting Strategy
 - **Placement**: Add middleware limiter (e.g., Redis) for `/api/auth/*`, `/api/tickets*`, `/api/tickets/*/comments`, and future `/api/attachments*` endpoints.
 - **Policies**: Login 5 attempts/15m per IP+email; ticket/comment writes 60/10m per user; attachment URLs single-use, expiring in 5m; anonymous access blocked.

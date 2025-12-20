@@ -1,5 +1,6 @@
 # Threat Model
 
+<<<<<<< ours
 ## Context and Trust Boundaries
 - Public internet → Next.js app router UI under `/app/*` guarded by NextAuth middleware (middleware.ts). Authenticated requests carry a session JWT with `role` and `organizationId` claims set during login (src/lib/auth.ts).
 - UI/server components call API routes that talk to Postgres via Prisma (src/app/api/tickets/route.ts; src/app/api/tickets/[id]/route.ts; prisma/schema.prisma). API routes are callable directly without middleware, so per-endpoint checks are the main barrier.
@@ -35,6 +36,8 @@
 - **Attachments:** No upload path/policy yet (prisma/schema.prisma). Implement signed uploads with scanning and enforce on download; test with EICAR and over-limit payloads.
 - **Admin:** No admin CRUD endpoints beyond seed data (absence under src/app/api/admin). Add scoped admin APIs with audit logs; verify role-gated access via e2e.
 - **Exports:** No export endpoints exist; when added they must scope by organization and redact internal notes. Plan export module under `src/app/api/exports` with audit trails; verify with download tests that foreign org access fails.
+=======
+>>>>>>> theirs
 ## System & Trust Boundaries
 - **Client → Next.js app/API**: Authenticated requests flow through NextAuth middleware guarding `/app/**` and API routes use server-side session lookups.【F:middleware.ts†L1-L5】【F:src/lib/auth.ts†L21-L80】
 - **API → Database**: Route handlers access Postgres via Prisma using `DATABASE_URL`; authorization and org filters are enforced in some paths but missing in others.【F:src/app/api/tickets/route.ts†L16-L88】【F:src/app/api/tickets/[id]/route.ts†L35-L197】【F:prisma/schema.prisma†L1-L208】
