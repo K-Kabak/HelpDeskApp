@@ -9,6 +9,7 @@ Target-state contracts derived from current implementation and product goals, em
 - **GET /api/tickets/{id}**: No handler exists; target endpoint remains planned.
 - **POST /api/tickets/{id}/comments**: Validates `bodyMd` (min 1), optional `isInternal`, enforces role checks but does not verify organization scope, stamps `firstResponseAt` for first public agent comment, and returns 200; no idempotency or listing endpoint implemented.【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】 Target adds org scoping, optional idempotency, and comment listing.
 - **Attachments/Webhooks**: No handlers implemented; models exist only in Prisma. Target design stays marked as planned until storage/scan/webhook plumbing exists.
+- **Response fields (tags/etag/page)**: Ticket handlers return raw Prisma tickets without `etag`, `tags`, or pagination metadata; contracts mark these as target-only for future rollout.【F:src/app/api/tickets/route.ts†L16-L38】
 
 ## Goals
 - Stabilize ticketing APIs with pagination, idempotency, and org-safe access controls.

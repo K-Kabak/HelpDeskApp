@@ -162,8 +162,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
+          description: Target-only; AS-IS handlers do not include tags in responses.
         etag:
           type: string
+          description: Target-only concurrency token (hash of updatedAt); AS-IS responses omit this.
     TicketCreate:
       type: object
       required: [title, descriptionMd, priority]
@@ -186,6 +188,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TagRef'
+          description: Target-only; AS-IS creation ignores tags because handlers do not accept or persist them.
     TicketUpdate:
       type: object
       properties:
@@ -328,6 +331,7 @@ paths:
                       $ref: '#/components/schemas/Ticket'
                   page:
                     type: object
+                    description: Target-only pagination metadata; AS-IS responses omit this object.
                     properties:
                       limit:
                         type: integer

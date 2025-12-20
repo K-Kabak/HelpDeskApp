@@ -21,6 +21,10 @@
    - Evidence: Comment creation checks requester/agent roles but never verifies `organizationId` against the ticket, allowing cross-org access if ticket ID is known.【F:src/app/api/tickets/[id]/comments/route.ts†L17-L51】
    - Action: OpenAPI description now calls out missing org enforcement; target contract explicitly adds org scoping and idempotency as future work.【F:docs/openapi.yaml†L523-L561】【F:docs/api-contracts-target.md†L12-L12】
 
+4. **Ticket responses document tags/etag/page metadata not returned by code**
+   - Evidence: Ticket list handler returns `{ tickets }` without pagination metadata and does not calculate `etag` or include tags relation.【F:src/app/api/tickets/route.ts†L16-L38】
+   - Action: OpenAPI now labels tags/etag/page metadata as target-only; target contracts note these fields require future rollout before clients can rely on them.【F:docs/openapi.yaml†L68-L83】【F:docs/openapi.yaml†L322-L347】【F:docs/api-contracts-target.md†L10-L12】
+
 ## Remaining verification steps
 - Decide idempotency storage and TTL strategy before enforcing headers.
 - Define etag format (`updatedAt` hash or version) and 412 error payload before implementing optimistic locking.
