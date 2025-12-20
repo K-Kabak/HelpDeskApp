@@ -11,8 +11,8 @@
 - E2E (Playwright): Browser flows against dev server with seeded data and `.env.test`; use per-run test DB or schema to avoid leakage.
 
 ## Critical E2E Journeys (role-based)
-- Requester: login › create ticket with markdown › confirm only own tickets visible › attempt forbidden status change (expect error) › verify internal comment not visible.
-- Agent: login › view org tickets › change status/assignee › add internal comment › requester cannot see it › SLA timestamps present.
+- Requester: login > create ticket with markdown > confirm only own tickets visible > attempt forbidden status change (expect error) > verify internal comment not visible.
+- Agent: login > view org tickets > change status/assignee > add internal comment > requester cannot see it > SLA timestamps present.
 - Admin (future): manage users/teams/SLA when admin panel arrives; verify non-admin blocked.
 - Security negatives: submit markdown `<script>` and confirm sanitized; attempt cross-org ticket URL returns 404; repeated login triggers rate limit.
 
@@ -28,7 +28,7 @@
 3. Security scanning: `pnpm audit --audit-level=high`; optional secret scan (trufflehog/secretlint).
 4. Unit/Integration: run Vitest with isolated DB; apply `prisma migrate deploy` before tests; collect coverage (target ?80% lines for core API modules).
 5. E2E smoke: `pnpm test:e2e` with Playwright against `pnpm dev` server using seeded test DB; upload traces/screenshots as artifacts.
-6. Guardrail: conflict-marker scan mirroring `.github/workflows/conflict-marker.yml` to block merges with markers.
+6. Guardrail: conflict-marker scan mirroring `.github/workflows/conflict-marker.yml` to block merges when `git grep -n "[<=>]\{7\}" -- .` finds markers.
 7. Artifacts & failure triage: always upload Playwright traces, Vitest junit/coverage, Prisma query logs; on failure, surface failing stage and rerun command.
 
 ## Coverage Expectations
@@ -40,4 +40,4 @@
 - Ensure seeded data avoids real PII; purge test databases after CI completion.
 
 ## Local Guardrails
-- Run conflict-marker scan before pushing: `git grep -n '[<=>]\\{7\\}' -- .` (fails on any conflict marker).
+- Run conflict-marker scan before pushing: `git grep -n "[<=>]\{7\}" -- .` (fails on any conflict marker).
