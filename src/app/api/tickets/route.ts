@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
+import { requireAuth, ticketScope } from "@/lib/authorization";
+import { createRequestLogger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TicketPriority, TicketStatus } from "@prisma/client";
@@ -13,16 +13,20 @@ const createSchema = z.object({
   category: z.string().optional(),
 });
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(req: Request) {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/tickets",
+    method: req.method,
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
   }
 
-  const where =
-    session.user.role === "REQUESTER"
-      ? { requesterId: session.user.id }
-      : { organizationId: session.user.organizationId };
+  const where = ticketScope(auth.user);
 
   const tickets = await prisma.ticket.findMany({
     where,
@@ -34,24 +38,37 @@ export async function GET() {
     },
   });
 
+  logger.info("tickets.list.success", {
+    count: tickets.length,
+    role: auth.user.role,
+  });
+
   return NextResponse.json({ tickets });
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/tickets",
+    method: req.method,
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
   }
 
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
+    logger.warn("tickets.create.validation_failed");
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const sla = await prisma.slaPolicy.findFirst({
     where: {
-      organizationId: session.user.organizationId,
+      organizationId: auth.user.organizationId ?? "",
       priority: parsed.data.priority,
     },
   });
@@ -68,13 +85,13 @@ export async function POST(req: Request) {
       priority: parsed.data.priority,
       category: parsed.data.category,
       status: TicketStatus.NOWE,
-      requesterId: session.user.id,
-      organizationId: session.user.organizationId ?? "",
+      requesterId: auth.user.id,
+      organizationId: auth.user.organizationId ?? "",
       firstResponseDue,
       resolveDue,
       auditEvents: {
         create: {
-          actorId: session.user.id,
+          actorId: auth.user.id,
           action: "TICKET_CREATED",
           data: {
             status: TicketStatus.NOWE,
@@ -83,6 +100,11 @@ export async function POST(req: Request) {
         },
       },
     },
+  });
+
+  logger.info("tickets.create.success", {
+    ticketId: ticket.id,
+    priority: ticket.priority,
   });
 
   return NextResponse.json({ ticket });
