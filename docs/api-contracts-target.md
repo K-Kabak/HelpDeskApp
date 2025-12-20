@@ -8,6 +8,9 @@ Target-state contracts derived from current implementation and product goals, em
 - **PATCH/PUT /api/tickets/{id}**: Supports status/priority/assignee updates with role-based guards; rejects missing status for requesters, invalid assignee/team, or no changes; no `If-Match`/etag logic present (header ignored).【F:src/app/api/tickets/[id]/route.ts†L8-L197】 Target adds optimistic locking and 412 handling.
 - **GET /api/tickets/{id}**: No handler exists; target endpoint remains planned.
 - **POST /api/tickets/{id}/comments**: Validates `bodyMd` (min 1), optional `isInternal`, enforces role checks but does not verify organization scope, stamps `firstResponseAt` for first public agent comment, and returns 200; no idempotency or listing endpoint implemented.【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】 Target adds org scoping, optional idempotency, and comment listing.
+- **Error envelope**: AS-IS handlers return `{ error: string | ZodFlattenedError }` directly instead of the structured `ErrorResponse` documented in contracts.【F:src/app/api/tickets/route.ts†L17-L38】【F:src/app/api/tickets/[id]/route.ts†L25-L110】 Target keeps the normalized envelope requirement.
+- **GET /api/tickets response shape**: AS-IS payloads include expanded `requester`, `assigneeUser`, and `assigneeTeam` objects from Prisma includes, which are not modeled in the target schema.【F:src/app/api/tickets/route.ts†L20-L38】 Target keeps the flattened Ticket representation and plans to scope fields.
+- **Attachments schema gap**: Prisma model lacks `status`/`url` fields assumed by target attachment contract, and no handlers exist yet.【F:prisma/schema.prisma†L122-L140】 Target keeps the richer attachment contract pending implementation.
 - **Attachments/Webhooks**: No handlers implemented; models exist only in Prisma. Target design stays marked as planned until storage/scan/webhook plumbing exists.
 
 ## Goals

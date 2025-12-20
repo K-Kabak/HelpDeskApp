@@ -61,19 +61,19 @@ components:
             $ref: '#/components/schemas/AttachmentCreate'
   responses:
     Unauthorized:
-      description: Authentication required
+      description: Authentication required. AS-IS handlers return `{ error: "Unauthorized" }` rather than the normalized error envelope.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     Forbidden:
-      description: Forbidden
+      description: Forbidden. AS-IS handlers return `{ error: "Forbidden" }` rather than the normalized error envelope.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     NotFound:
-      description: Not found
+      description: Not found. AS-IS handlers return `{ error: "Not found" }` rather than the normalized error envelope.
       content:
         application/json:
           schema:
@@ -164,6 +164,8 @@ components:
             $ref: '#/components/schemas/Tag'
         etag:
           type: string
+          nullable: true
+          description: Target-only concurrency token; AS-IS handlers do not return or validate this field.
     TicketCreate:
       type: object
       required: [title, descriptionMd, priority]
@@ -235,6 +237,7 @@ components:
           default: false
     Attachment:
       type: object
+      description: Target attachment representation; AS-IS Prisma model lacks `status` and `url` fields and no handlers exist.
       properties:
         id:
           type: string
@@ -295,6 +298,7 @@ paths:
       description: |
         AS-IS implementation returns `{ tickets }` without pagination, filtering, or sorting and scopes results by role/organization.
         Target behavior adds `limit`/`offset`/`sort` and optional `status`/`priority`/`q` filters plus pagination metadata.
+        AS-IS payload includes expanded `requester`, `assigneeUser`, and `assigneeTeam` objects not modeled in the target schema.
       x-implementation-status: "as-is (pagination/filtering not yet implemented)"
       security:
         - cookieAuth: []
