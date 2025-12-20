@@ -4,6 +4,7 @@
 - Scripts: `pnpm lint`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright), Prisma migrate/seed helpers in package.json.
 - DB: Postgres via `DATABASE_URL`; Prisma schema defines models including attachments/audit/SLA.
 - Auth: NextAuth credentials with Prisma adapter; tests must seed users and sessions carefully.
+- Local infra: `docker compose up -d db redis minio` with env placeholders (`POSTGRES_*`, `MINIO_ROOT_*`, `MINIO_BROWSER_REDIRECT_URL`), `DATABASE_URL=postgres://postgres:postgres@localhost:5432/helpdesk`, `REDIS_URL=redis://localhost:6379`, MinIO at `http://localhost:9000`.
 
 ## Test Pyramid
 - Unit (fast, no DB): validation helpers, rate limiter utilities, markdown sanitizer, audit hash chain builder, SLA due calculators.
