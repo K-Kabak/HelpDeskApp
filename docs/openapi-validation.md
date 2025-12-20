@@ -1,32 +1,8 @@
-<<<<<<< ours
-# OpenAPI Validation Report (2025-12-19)
-=======
 # OpenAPI Validation Report (2025-12-20)
->>>>>>> theirs
 
 ## Scope validated
 - `docs/openapi.yaml`
 - `docs/api-contracts-target.md`
-<<<<<<< ours
-- Cross-referenced with conventions (`docs/contract-conventions.md`), error handling (`docs/error-model.md`), and implemented handlers (`src/app/api/tickets/route.ts`, `src/app/api/tickets/[id]/route.ts`, `src/app/api/tickets/[id]/comments/route.ts`).
-
-## Consistency observations
-- Error envelope in OpenAPI matches target error model (object with `code`, `message`, `details`, `traceId`) and aligns with conventions; AS-IS handlers still return `{ error: string | object }` noted in contracts.
-- Authentication via cookie-based NextAuth sessions is consistently documented across OpenAPI and target contracts per conventions.
-
-## Mismatches vs. code and actions taken
-1. **Ticket list lacks pagination/filters AS-IS** â€” code returns `{ tickets }` sorted by created date with role-based scoping only. Updated OpenAPI with `x-implementation-status` and description clarifying current vs target behavior.ã€F:docs/openapi.yamlâ€ L292-L360ã€‘ã€F:src/app/api/tickets/route.tsâ€ L16-L38ã€‘
-2. **Ticket creation response/idempotency gap** â€” implementation returns 200 and ignores `Idempotency-Key`. Documented current behavior and pending change in OpenAPI description and response code; target contract now highlights the gap.ã€F:docs/openapi.yamlâ€ L340-L375ã€‘ã€F:docs/api-contracts-target.mdâ€ L6-L12ã€‘ã€F:src/app/api/tickets/route.tsâ€ L40-L89ã€‘
-3. **Ticket detail endpoint missing** â€” no handler exists; OpenAPI now marks endpoint as planned with explicit note. Target contracts call out absence.ã€F:docs/openapi.yamlâ€ L375-L405ã€‘ã€F:docs/api-contracts-target.mdâ€ L9-L9ã€‘
-4. **Ticket update lacks etag/If-Match** â€” handlers allow updates with role checks but no concurrency control; OpenAPI annotated as AS-IS and target contract notes optimistic locking as future change.ã€F:docs/openapi.yamlâ€ L406-L503ã€‘ã€F:docs/api-contracts-target.mdâ€ L8-L11ã€‘ã€F:src/app/api/tickets/[id]/route.tsâ€ L8-L197ã€‘
-5. **Comments endpoint only supports POST** â€” no list endpoint and no idempotency. OpenAPI marks GET as planned and clarifies POST returns 200 without idempotency; contracts updated accordingly.ã€F:docs/openapi.yamlâ€ L504-L590ã€‘ã€F:docs/api-contracts-target.mdâ€ L10-L10ã€‘ã€F:src/app/api/tickets/[id]/comments/route.tsâ€ L7-L59ã€‘
-6. **Attachments/webhooks not implemented** â€” only Prisma models exist; OpenAPI endpoints marked planned to prevent overpromising. Contracts reiterate plan-only status.ã€F:docs/openapi.yamlâ€ L591-L677ã€‘ã€F:docs/api-contracts-target.mdâ€ L11-L11ã€‘
-
-## Remaining verification steps
-- Confirm future choices for idempotency storage and etag generation before enforcing headers in code.
-- Decide response status (200 vs 201) for create endpoints when upgrading handlers.
-- Implement pagination/sorting in ticket list and add comment list/attachment handlers; rerun validation after implementations land.
-=======
 - `docs/api-contracts-as-is.md`
 - `docs/error-model.md`
 - `docs/contract-conventions.md`
@@ -35,28 +11,28 @@
 
 ## Mismatches and actions
 1. **Idempotency header documented as required but unused in code**
-   - Evidence: Ticket creation handler never reads `Idempotency-Key`; it simply parses JSON and creates the ticket.ã€F:src/app/api/tickets/route.tsâ€ L40-L89ã€‘
-   - Action: OpenAPI keeps `Idempotency-Key` optional with AS-IS note; target contract continues to require it for future enforcement.ã€F:docs/openapi.yamlâ€ L312-L352ã€‘ã€F:docs/api-contracts-target.mdâ€ L7-L12ã€‘
+   - Evidence: Ticket creation handler never reads `Idempotency-Key`; it simply parses JSON and creates the ticket.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL40-L89ÑÇÅ
+   - Action: OpenAPI keeps `Idempotency-Key` optional with AS-IS note; target contract continues to require it for future enforcement.ÑÇÉF:docs/openapi.yamlÔÇáL312-L352ÑÇÅÑÇÉF:docs/api-contracts-target.mdÔÇáL7-L12ÑÇÅ
 
 2. **If-Match requirement not implemented**
-   - Evidence: PATCH/PUT ticket handler performs role/validation checks without reading `If-Match` or etags.ã€F:src/app/api/tickets/[id]/route.tsâ€ L8-L197ã€‘
-   - Action: OpenAPI headers remain optional with explicit AS-IS caveat; target contract keeps optimistic locking as a future change.ã€F:docs/openapi.yamlâ€ L374-L454ã€‘ã€F:docs/api-contracts-target.mdâ€ L7-L11ã€‘
+   - Evidence: PATCH/PUT ticket handler performs role/validation checks without reading `If-Match` or etags.ÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL8-L197ÑÇÅ
+   - Action: OpenAPI headers remain optional with explicit AS-IS caveat; target contract keeps optimistic locking as a future change.ÑÇÉF:docs/openapi.yamlÔÇáL374-L454ÑÇÅÑÇÉF:docs/api-contracts-target.mdÔÇáL7-L11ÑÇÅ
 
 3. **Comment endpoint lacks organization scoping**
-   - Evidence: Comment creation checks requester/agent roles but never verifies `organizationId` against the ticket, allowing cross-org access if ticket ID is known.ã€F:src/app/api/tickets/[id]/comments/route.tsâ€ L17-L51ã€‘
-   - Action: OpenAPI description calls out missing org enforcement; target contract explicitly adds org scoping and idempotency as future work.ã€F:docs/openapi.yamlâ€ L507-L561ã€‘ã€F:docs/api-contracts-target.mdâ€ L12-L12ã€‘
+   - Evidence: Comment creation checks requester/agent roles but never verifies `organizationId` against the ticket, allowing cross-org access if ticket ID is known.ÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL17-L51ÑÇÅ
+   - Action: OpenAPI description calls out missing org enforcement; target contract explicitly adds org scoping and idempotency as future work.ÑÇÉF:docs/openapi.yamlÔÇáL507-L561ÑÇÅÑÇÉF:docs/api-contracts-target.mdÔÇáL12-L12ÑÇÅ
 
 4. **Error envelope not aligned with code**
-   - Evidence: Handlers return `{ error: string | ZodFlattenedError }` instead of the documented `ErrorResponse` shape.ã€F:src/app/api/tickets/route.tsâ€ L17-L38ã€‘ã€F:src/app/api/tickets/[id]/route.tsâ€ L25-L110ã€‘
-   - Action: Shared OpenAPI responses now note the AS-IS error payloads while retaining the normalized target envelope requirement in contracts.ã€F:docs/openapi.yamlâ€ L57-L71ã€‘ã€F:docs/api-contracts-target.mdâ€ L7-L12ã€‘
+   - Evidence: Handlers return `{ error: string | ZodFlattenedError }` instead of the documented `ErrorResponse` shape.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL17-L38ÑÇÅÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL25-L110ÑÇÅ
+   - Action: Shared OpenAPI responses now note the AS-IS error payloads while retaining the normalized target envelope requirement in contracts.ÑÇÉF:docs/openapi.yamlÔÇáL57-L71ÑÇÅÑÇÉF:docs/api-contracts-target.mdÔÇáL7-L12ÑÇÅ
 
 5. **GET /api/tickets payload shape diverges from schema**
-   - Evidence: Handler includes full `requester`, `assigneeUser`, and `assigneeTeam` objects via Prisma `include`, which are not modeled in the Ticket schema.ã€F:src/app/api/tickets/route.tsâ€ L20-L38ã€‘
-   - Action: OpenAPI description now flags the expanded payload as AS-IS; target contract keeps the flattened Ticket representation and scoping requirement.ã€F:docs/openapi.yamlâ€ L275-L303ã€‘ã€F:docs/api-contracts-target.mdâ€ L7-L12ã€‘
+   - Evidence: Handler includes full `requester`, `assigneeUser`, and `assigneeTeam` objects via Prisma `include`, which are not modeled in the Ticket schema.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL20-L38ÑÇÅ
+   - Action: OpenAPI description now flags the expanded payload as AS-IS; target contract keeps the flattened Ticket representation and scoping requirement.ÑÇÉF:docs/openapi.yamlÔÇáL275-L303ÑÇÅÑÇÉF:docs/api-contracts-target.mdÔÇáL7-L12ÑÇÅ
 
 6. **Attachment contract exceeds current data model**
-   - Evidence: Prisma attachment model lacks `status` and `url` fields assumed by the target Attachment schema; no handlers exist.ã€F:prisma/schema.prismaâ€ L122-L140ã€‘
-   - Action: OpenAPI Attachment schema now explicitly notes it is target-only until storage/scan support exists; target contract notes the pending work.ã€F:docs/openapi.yamlâ€ L110-L137ã€‘ã€F:docs/api-contracts-target.mdâ€ L13-L14ã€‘
+   - Evidence: Prisma attachment model lacks `status` and `url` fields assumed by the target Attachment schema; no handlers exist.ÑÇÉF:prisma/schema.prismaÔÇáL122-L140ÑÇÅ
+   - Action: OpenAPI Attachment schema now explicitly notes it is target-only until storage/scan support exists; target contract notes the pending work.ÑÇÉF:docs/openapi.yamlÔÇáL110-L137ÑÇÅÑÇÉF:docs/api-contracts-target.mdÔÇáL13-L14ÑÇÅ
 
 ## Remaining verification steps
 - Decide idempotency storage and TTL strategy before enforcing headers.
@@ -65,4 +41,3 @@
 - Normalize error responses to the documented `ErrorResponse` envelope or update the contract if the simple `{ error }` shape is retained.
 - Confirm whether ticket list responses should include requester/assignee summaries or be flattened to IDs, then align schema and handlers accordingly.
 - Extend Prisma Attachment model (status/url) and implement upload/download handlers or revise the target attachment contract.
->>>>>>> theirs
