@@ -2,16 +2,17 @@
 
 Target-state contracts derived from current implementation and product goals, emphasizing backward-compatible evolution with explicit migrations.
 
-## Validation Findings (2025-12-19)
-- **GET /api/tickets**: Current handler returns `{ tickets }` scoped by requester/organization with no pagination, filtering, or sorting, and always 200.—«…F:src/app/api/tickets/route.ts‘«·L16-L38—«≈ Target contract adds pagination/filtering and metadata.
-- **POST /api/tickets**: Implementation validates title/description/priority/category, computes SLA due dates, writes an audit event, and returns 200 without idempotency headers.—«…F:src/app/api/tickets/route.ts‘«·L40-L89—«≈ Target requires `Idempotency-Key` and may change status code to 201.
-- **PATCH/PUT /api/tickets/{id}**: Supports status/priority/assignee updates with role-based guards; rejects missing status for requesters, invalid assignee/team, or no changes; no `If-Match`/etag logic present (header ignored).—«…F:src/app/api/tickets/[id]/route.ts‘«·L8-L197—«≈ Target adds optimistic locking and 412 handling.
+## Validation Findings (2025-12-20)
+- **GET /api/tickets**: Current handler returns `{ tickets }` scoped by requester/organization with no pagination, filtering, or sorting, and always 200.„ÄêF:src/app/api/tickets/route.ts‚Ä†L16-L38„Äë Target contract adds pagination/filtering and metadata.
+- **POST /api/tickets**: Implementation validates title/description/priority/category, computes SLA due dates, ignores any `tags` field, writes an audit event, and returns 200 without idempotency headers.„ÄêF:src/app/api/tickets/route.ts‚Ä†L9-L14„Äë„ÄêF:src/app/api/tickets/route.ts‚Ä†L52-L88„Äë Target requires `Idempotency-Key`, tag assignment, and may change status code to 201.
+- **PATCH/PUT /api/tickets/{id}**: Supports status/priority/assignee updates with role-based guards; rejects missing status for requesters, invalid assignee/team, or no changes; no `If-Match`/etag logic present (header ignored).„ÄêF:src/app/api/tickets/[id]/route.ts‚Ä†L8-L197„Äë Target adds optimistic locking and 412 handling.
 - **GET /api/tickets/{id}**: No handler exists; target endpoint remains planned.
-- **POST /api/tickets/{id}/comments**: Validates `bodyMd` (min 1), optional `isInternal`, enforces role checks but does not verify organization scope, stamps `firstResponseAt` for first public agent comment, and returns 200; no idempotency or listing endpoint implemented.—«…F:src/app/api/tickets/[id]/comments/route.ts‘«·L7-L59—«≈ Target adds org scoping, optional idempotency, and comment listing.
-- **Error envelope**: AS-IS handlers return `{ error: string | ZodFlattenedError }` directly instead of the structured `ErrorResponse` documented in contracts.—«…F:src/app/api/tickets/route.ts‘«·L17-L38—«≈—«…F:src/app/api/tickets/[id]/route.ts‘«·L25-L110—«≈ Target keeps the normalized envelope requirement.
-- **GET /api/tickets response shape**: AS-IS payloads include expanded `requester`, `assigneeUser`, and `assigneeTeam` objects from Prisma includes, which are not modeled in the target schema.—«…F:src/app/api/tickets/route.ts‘«·L20-L38—«≈ Target keeps the flattened Ticket representation and plans to scope fields.
-- **Attachments schema gap**: Prisma model lacks `status`/`url` fields assumed by target attachment contract, and no handlers exist yet.—«…F:prisma/schema.prisma‘«·L122-L140—«≈ Target keeps the richer attachment contract pending implementation.
+- **POST /api/tickets/{id}/comments**: Validates `bodyMd` (min 1), optional `isInternal`, enforces role checks but does not verify organization scope, stamps `firstResponseAt` for first public agent comment, and returns 200; no idempotency or listing endpoint implemented.„ÄêF:src/app/api/tickets/[id]/comments/route.ts‚Ä†L7-L59„Äë Target adds org scoping, optional idempotency, and comment listing.
+- **Error envelope**: AS-IS handlers return `{ error: string | ZodFlattenedError }` directly instead of the structured `ErrorResponse` documented in contracts.„ÄêF:src/app/api/tickets/route.ts‚Ä†L17-L38„Äë„ÄêF:src/app/api/tickets/[id]/route.ts‚Ä†L25-L110„Äë Target keeps the normalized envelope requirement.
+- **GET /api/tickets response shape**: AS-IS payloads include expanded `requester`, `assigneeUser`, and `assigneeTeam` objects from Prisma includes and omit `tags`, which are not modeled/populated per the target schema.„ÄêF:src/app/api/tickets/route.ts‚Ä†L20-L38„Äë Target keeps the flattened Ticket representation, tag array, and plans to scope fields.
+- **Attachments schema gap**: Prisma model lacks `status`/`url` fields assumed by target attachment contract, and no handlers exist yet.„ÄêF:prisma/schema.prisma‚Ä†L122-L140„Äë Target keeps the richer attachment contract pending implementation.
 - **Attachments/Webhooks**: No handlers implemented; models exist only in Prisma. Target design stays marked as planned until storage/scan/webhook plumbing exists.
+
 
 ## Goals
 - Stabilize ticketing APIs with pagination, idempotency, and org-safe access controls.
@@ -27,7 +28,7 @@ Target-state contracts derived from current implementation and product goals, em
 ## Endpoint Contracts (Target)
 ### `GET /api/tickets`
 - **Query**: `status`, `priority`, `q` (search `title` + `descriptionMd`), `limit` (default 20, max 100), `offset` (default 0), `sort` (e.g., `createdAt:desc`).
-- **AuthZ**: Requester ‘ÊÂ own tickets; agent/admin ‘ÊÂ organization tickets.
+- **AuthZ**: Requester -> own tickets; agent/admin -> organization tickets.
 - **Response**: `{ tickets: Ticket[], page: { limit, offset, total } }`.
 
 ### `POST /api/tickets`
@@ -55,7 +56,7 @@ Target-state contracts derived from current implementation and product goals, em
 - **Visibility**: Requesters see only public comments; agents/admins see all.
 
 ### `POST /api/tickets/{id}/attachments`
-- **Flow**: Accept metadata `{ fileName, mimeType, sizeBytes }`; validate size (‘Î•25MB) and MIME allowlist. Return signed upload URL plus attachment record in `PENDING` state.
+- **Flow**: Accept metadata `{ fileName, mimeType, sizeBytes }`; validate size (<=25MB) and MIME allowlist. Return signed upload URL plus attachment record in `PENDING` state.
 - **Access**: Organization match required; requester allowed when ticket owner; agents/admins allowed for org.
 - **Scan**: Require asynchronous AV scan hook; mark attachment status accordingly. Access to downloads only after `CLEAN`.
 
@@ -82,13 +83,13 @@ Target-state contracts derived from current implementation and product goals, em
 - Replay with same key returns original 2xx response; conflicting body returns 409 `CONFLICT_IDEMPOTENCY_BODY_MISMATCH`.
 
 ## Concurrency & Locking
-- Ticket resource returns `etag` (hash of `updatedAt`). `PATCH`/`PUT` must include `If-Match`; mismatch ‘ÊÂ 412 with error code `PRECONDITION_FAILED`.
+- Ticket resource returns `etag` (hash of `updatedAt`). `PATCH`/`PUT` must include `If-Match`; mismatch -> 412 with error code `PRECONDITION_FAILED`.
 - Comment/attachment creation unaffected by etag but should reference latest ticket state when needed.
 
 ## Attachments Contract
 - Max size 25MB; allowed MIME types: common images, PDFs, text logs, zip; block executables.
 - Storage via signed URLs (provider-agnostic). Upload URL TTL 15 minutes; download URL TTL 5 minutes.
-- Virus scanning webhook updates status `PENDING` ‘ÊÂ `CLEAN` or `REJECTED`; downloads forbidden unless `CLEAN`.
+- Virus scanning webhook updates status `PENDING` -> `CLEAN` or `REJECTED`; downloads forbidden unless `CLEAN`.
 
 ## Webhooks/Events (Future)
 - Outbound webhooks optional per organization with HMAC signature (`X-Webhook-Signature`) and retry backoff (up to 3 attempts). Event types: `ticket.created`, `ticket.updated`, `comment.created`, `attachment.created`, `sla.breached`.
@@ -118,7 +119,7 @@ Target-state contracts derived from current implementation and product goals, em
 22. Rate limit defaults (100 requests/5m per user) with 429 error; configurable. *(Design choice)*
 23. Responses use ISO timestamps and UUIDs; enums uppercase per Prisma. *(AS-IS evidence)*
 24. Pagination metadata returned with list endpoints (`page.total` optional when counting). *(Design choice)*
-25. Sorting via `field:direction`; unsupported fields ‘ÊÂ 400. *(Design choice)*
+25. Sorting via `field:direction`; unsupported fields -> 400. *(Design choice)*
 26. Requesters may view their ticket comments/attachments only; agents/admins view org-wide. *(Design choice informed by current role checks)*
 27. Audit events include actorId and before/after change set. *(AS-IS evidence for change set; design for exposure)*
 28. Admin CRUD endpoints scoped to organization, audited, and rate-limited. *(Design choice)*

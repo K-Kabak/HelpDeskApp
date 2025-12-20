@@ -186,6 +186,7 @@ components:
           nullable: true
         tags:
           type: array
+          description: Target-only tag assignment; AS-IS handler ignores this field and does not persist tags.
           items:
             $ref: '#/components/schemas/TagRef'
     TicketUpdate:
@@ -298,7 +299,7 @@ paths:
       description: |
         AS-IS implementation returns `{ tickets }` without pagination, filtering, or sorting and scopes results by role/organization.
         Target behavior adds `limit`/`offset`/`sort` and optional `status`/`priority`/`q` filters plus pagination metadata.
-        AS-IS payload includes expanded `requester`, `assigneeUser`, and `assigneeTeam` objects not modeled in the target schema.
+        AS-IS payload includes expanded `requester`, `assigneeUser`, and `assigneeTeam` objects and omits `tags`, which are not modeled/populated in the target schema.
       x-implementation-status: "as-is (pagination/filtering not yet implemented)"
       security:
         - cookieAuth: []
@@ -344,8 +345,9 @@ paths:
     post:
       summary: Create ticket
       description: |
-        AS-IS returns 200 with `{ ticket }` and does not enforce idempotency. Target behavior should return 201, require an
-        `Idempotency-Key`, and include pagination-friendly metadata fields such as `etag`.
+        AS-IS returns 200 with `{ ticket }`, ignores any provided `tags`, and does not enforce idempotency. Target behavior should
+        return 201, require an `Idempotency-Key`, include pagination-friendly metadata fields such as `etag`, and support tag
+        assignment.
       x-implementation-status: "as-is (idempotency + 201 response pending)"
       security:
         - cookieAuth: []
@@ -392,8 +394,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
       responses:
         '200':
           description: Ticket detail
