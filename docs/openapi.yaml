@@ -342,13 +342,14 @@ paths:
       description: |
         AS-IS returns 200 with `{ ticket }` and does not enforce idempotency. Target behavior should return 201, require an
         `Idempotency-Key`, and include pagination-friendly metadata fields such as `etag`.
-      x-implementation-status: "as-is (idempotency + 201 response pending)"
+      x-implementation-status: "as-is (idempotency header not enforced; 201 response pending)"
       security:
         - cookieAuth: []
       parameters:
         - name: Idempotency-Key
           in: header
-          required: true
+          required: false
+          description: Target requires and deduplicates by this key; AS-IS ignores if provided.
           schema:
             type: string
             format: uuid
@@ -409,7 +410,7 @@ paths:
         AS-IS allows status/priority/assignee updates per role constraints without `If-Match` or etag enforcement and
         returns 200 on success or 400 on validation/no-change. Target adds optimistic locking via `If-Match` and may return
         412 on mismatch.
-      x-implementation-status: "as-is (no etag/If-Match)"
+      x-implementation-status: "as-is (no etag/If-Match; header optional until implemented)"
       security:
         - cookieAuth: []
       parameters:
@@ -420,7 +421,8 @@ paths:
             type: string
         - name: If-Match
           in: header
-          required: true
+          required: false
+          description: Target will require an etag match; AS-IS ignores this header.
           schema:
             type: string
       requestBody:
@@ -457,7 +459,7 @@ paths:
       summary: Replace ticket (alias for patch behavior)
       description: |
         Mirrors PATCH. Same AS-IS behavior without `If-Match`; target may require it.
-      x-implementation-status: "as-is (no etag/If-Match)"
+      x-implementation-status: "as-is (no etag/If-Match; header optional until implemented)"
       security:
         - cookieAuth: []
       parameters:
@@ -468,7 +470,8 @@ paths:
             type: string
         - name: If-Match
           in: header
-          required: true
+          required: false
+          description: Target will require an etag match; AS-IS ignores this header.
           schema:
             type: string
       requestBody:
@@ -546,10 +549,10 @@ paths:
     post:
       summary: Create comment
       description: |
-        AS-IS accepts `bodyMd` and optional `isInternal` (default false), scopes by organization/role, stamps `firstResponseAt`
-        for first public agent comment, and returns 200 without idempotency support. Target may add optional idempotency and
-        return 201.
-      x-implementation-status: "as-is (idempotency + 201 pending)"
+        AS-IS accepts `bodyMd` and optional `isInternal` (default false), does **not** enforce organization scoping before
+        role checks (cross-org posts possible when ticket id is known), stamps `firstResponseAt` for first public agent
+        comment, and returns 200 without idempotency support. Target may add optional idempotency and return 201.
+      x-implementation-status: "as-is (org scope gap; idempotency + 201 pending)"
       security:
         - cookieAuth: []
       parameters:

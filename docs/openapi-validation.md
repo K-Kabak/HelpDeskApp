@@ -1,23 +1,18 @@
-# OpenAPI Validation Report (2025-12-19)
+# OpenAPI Validation Report (2025-12-20)
 
 ## Scope validated
-- `docs/openapi.yaml`
-- `docs/api-contracts-target.md`
-- Cross-referenced with conventions (`docs/contract-conventions.md`), error handling (`docs/error-model.md`), and implemented handlers (`src/app/api/tickets/route.ts`, `src/app/api/tickets/[id]/route.ts`, `src/app/api/tickets/[id]/comments/route.ts`).
+- `docs/openapi.yaml` against `docs/api-contracts-target.md`, `docs/api-contracts-as-is.md`, `docs/error-model.md`, and `docs/contract-conventions.md`.
+- Implemented handlers: `/api/tickets` (list/create), `/api/tickets/{id}` (patch/put), `/api/tickets/{id}/comments` (post).
 
-## Consistency observations
-- Error envelope in OpenAPI matches target error model (object with `code`, `message`, `details`, `traceId`) and aligns with conventions; AS-IS handlers still return `{ error: string | object }` noted in contracts.
-- Authentication via cookie-based NextAuth sessions is consistently documented across OpenAPI and target contracts per conventions.
-
-## Mismatches vs. code and actions taken
-1. **Ticket list lacks pagination/filters AS-IS** — code returns `{ tickets }` sorted by created date with role-based scoping only. Updated OpenAPI with `x-implementation-status` and description clarifying current vs target behavior.【F:docs/openapi.yaml†L292-L360】【F:src/app/api/tickets/route.ts†L16-L38】
-2. **Ticket creation response/idempotency gap** — implementation returns 200 and ignores `Idempotency-Key`. Documented current behavior and pending change in OpenAPI description and response code; target contract now highlights the gap.【F:docs/openapi.yaml†L340-L375】【F:docs/api-contracts-target.md†L6-L12】【F:src/app/api/tickets/route.ts†L40-L89】
-3. **Ticket detail endpoint missing** — no handler exists; OpenAPI now marks endpoint as planned with explicit note. Target contracts call out absence.【F:docs/openapi.yaml†L375-L405】【F:docs/api-contracts-target.md†L9-L9】
-4. **Ticket update lacks etag/If-Match** — handlers allow updates with role checks but no concurrency control; OpenAPI annotated as AS-IS and target contract notes optimistic locking as future change.【F:docs/openapi.yaml†L406-L503】【F:docs/api-contracts-target.md†L8-L11】【F:src/app/api/tickets/[id]/route.ts†L8-L197】
-5. **Comments endpoint only supports POST** — no list endpoint and no idempotency. OpenAPI marks GET as planned and clarifies POST returns 200 without idempotency; contracts updated accordingly.【F:docs/openapi.yaml†L504-L590】【F:docs/api-contracts-target.md†L10-L10】【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】
-6. **Attachments/webhooks not implemented** — only Prisma models exist; OpenAPI endpoints marked planned to prevent overpromising. Contracts reiterate plan-only status.【F:docs/openapi.yaml†L591-L677】【F:docs/api-contracts-target.md†L11-L11】
+## Findings and actions
+1. **Idempotency headers not enforced in code** — Create endpoints accept requests without `Idempotency-Key`. Updated OpenAPI to make the header optional with an AS-IS note and kept target contracts calling out the requirement plus the current gap; future change will flip to required once storage exists.
+2. **No etag/If-Match handling in ticket updates** — PATCH/PUT handlers ignore concurrency headers. OpenAPI now marks `If-Match` optional and documents the planned optimistic locking; target contracts continue to require it for the future state.
+3. **Comment creation misses organization scoping** — Handler only checks authentication and ticket existence, enabling cross-organization posts when IDs are known. OpenAPI description and target validation findings now flag the gap; target contract mandates org check before role rules.
+4. **Pagination/filtering still absent for ticket list** — Confirmed OpenAPI and contracts already describe pagination as target-only and document AS-IS behavior of returning `{ tickets }` without limits; no further change needed.
+5. **Error envelope difference** — Target model expects `{ error: { code, message, details?, traceId? } }`, while handlers return `{ error: string | object }`. Recorded as an implementation gap; no OpenAPI change to keep target error standard consistent with conventions.
 
 ## Remaining verification steps
-- Confirm future choices for idempotency storage and etag generation before enforcing headers in code.
-- Decide response status (200 vs 201) for create endpoints when upgrading handlers.
-- Implement pagination/sorting in ticket list and add comment list/attachment handlers; rerun validation after implementations land.
+- Add idempotency persistence (per conventions/error model), enforce required headers, and update OpenAPI to reflect implementation once shipped.
+- Introduce etag generation on tickets and enforce `If-Match` with 412 handling.
+- Add organization scoping to comment creation before role checks; retest to confirm cross-org requests are blocked.
+- Implement pagination/filtering on ticket list and rerun validation to align responses and parameter defaults.
