@@ -1,8 +1,8 @@
 # Threat Model
 
 ## System & Trust Boundaries
-- Client › Next.js app/API guarded by NextAuth middleware on `/app/**`; API routes perform their own session lookups.
-- API › Database via Prisma using `DATABASE_URL`; some routes enforce org filters while others require hardening.
+- Client > Next.js app/API guarded by NextAuth middleware on `/app/**`; API routes perform their own session lookups.
+- API > Database via Prisma using `DATABASE_URL`; some routes enforce org filters while others require hardening.
 - Content rendering boundary: user-supplied Markdown is rendered in server components today without sanitization.
 - Seed/ops boundary: seed script inserts demo users with static passwords for local use only.
 - Future storage boundary: attachment metadata exists in schema but no upload routes or storage backend are defined yet.
@@ -16,11 +16,12 @@
 | Area | Threat | Mitigation (planned/current) | Verification |
 | --- | --- | --- | --- |
 | Authentication | Credential stuffing and reuse of demo creds. | Add rate limits to auth routes; rotate/remove seed accounts outside dev; consider MFA. | Brute-force test hits 429; prod seed disabled; manual MFA check once added. |
-| Org scoping | Ticket detail page currently lacks org filter, enabling cross-org reads if IDs known. | Apply `organizationId` filters to all ticket/comment queries and centralize a guard helper. | Integration test requesting another org’s ticket returns 404; lint/semgrep rule for missing org filter. |
+| Org scoping | Ticket detail page currently lacks org filter, enabling cross-org reads if IDs known. | Apply `organizationId` filters to all ticket/comment queries and centralize a guard helper. | Integration test requesting another org's ticket returns 404; lint/semgrep rule for missing org filter. |
 | Authorization | Client role strings can be tampered; requester could attempt forbidden updates. | Keep server-side role checks; add shared policy helper and audit denied attempts. | API tests assert 403 on disallowed updates; audit log contains denied actions. |
+| Error handling | Verbose stack traces or inconsistent envelopes leak details. | Standardize responses to `{ error: { code, message } }` (plus optional details) and suppress stack traces in production. | Contract/API tests assert envelope shape; staging log review ensures no stack traces or secrets leak. |
 | Markdown/XSS | Markdown rendered without sanitization. | Enable `rehype-sanitize` (or equivalent) and add CSP. | Unit test rendering `<script>` is escaped; Playwright CSP check. |
 | Rate limiting/DoS | No limiter on auth or ticket/comment routes. | Add Redis-backed limiter in middleware and per-route guards. | Load test to 429 threshold; monitor allow/deny metrics. |
-| Attachments (future) | Malicious files, MIME spoofing, cross-org URL sharing. | Build signed URL service with org ownership, allowlist, size cap, AV scan, audit trail. | Integration tests for blocked types/oversize; cross-org attempt returns 403/404. |
+| Attachments (future) | Malicious files, MIME spoofing, cross-org URL sharing. | Build signed URL service with org ownership, allowlist, size cap, AV scan, audit trail, and follow upload security checklist before launch. | Integration tests for blocked types/oversize; cross-org attempt returns 403/404. |
 | Audit integrity | Audit events lack tamper protection. | Hash chain or append-only store with periodic verification. | Unit test of hash chain; operational integrity check script. |
 | CSRF/session fixation | Credential login uses JSON POST without CSRF token; cookies may be reused. | Enforce SameSite cookies, add anti-CSRF token for credential form, rotate session on privilege change. | Browser test sending cross-site POST fails; session ID changes after privilege elevation. |
 | Data validation | Max lengths/body size limits missing for ticket/comment payloads. | Add server-side caps and request size limits. | Integration test rejecting oversized payloads with 400/413. |
