@@ -1,67 +1,57 @@
 # SerwisDesk (MVP)
 
-Webowy helpdesk/ticketing (Next.js + Prisma + NextAuth + Tailwind).
+Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 
-## Podsumowanie zmian
-
-- Added client-side validation rules with length limits, inline error messaging, and error clearing for ticket form fields to enforce required inputs before submission.
-- Improved submission experience by disabling inputs, showing a spinner, resetting state after success, and surfacing detailed API error responses.
-- Introduced an edit/preview toggle for the Markdown description using ReactMarkdown and remarkGfm so users can see formatting before sending.
-- **Naprawa dokumentacji:** sekcja poniżej wcześniej raportowała błąd linta, choć po poprawkach w seed/auth/tailwind konfiguracja przechodzi pomyślnie.
-
-### Testy
-
-- ✅ `pnpm lint` (aktualne; wcześniejszy wpis był nieaktualny)
-
-## Wymagania
-- Node 22+ (w repo: `node-portable/node-v22.12.0-win-x64`)
-- pnpm (`npm-global/pnpm.cmd`)
-- Postgres (lokalny lub przez Docker Desktop + docker-compose)
-
-## Konfiguracja
-1. Skopiuj `.env.example` do `.env.local` i ustaw:
-   - `DATABASE_URL` (np. `postgresql://postgres:postgres@localhost:5432/serwisdesk`)
-   - `NEXTAUTH_SECRET` (silny losowy)
-2. Zainstaluj zależności (PowerShell):
+## Quick start (local)
+1) Prereqs: Node 22+, pnpm, Postgres (local or Docker). Optional: Docker Desktop for `docker compose up -d db`.
+2) Validate basics:
    ```powershell
-   $env:PATH="$PWD\node-portable\node-v22.12.0-win-x64;$PWD\npm-global;$env:PATH"
-   cd serwisdesk
-   pnpm.cmd install
+   node scripts/validate-env.mjs
    ```
-3. Migracje + seed (wymaga bazy):
+3) Create env file:
    ```powershell
-   pnpm.cmd prisma:migrate
-   pnpm.cmd prisma:seed
+   Copy-Item .env.example .env.local -Force
+   # fill DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL as needed
    ```
+4) Install deps (PowerShell):
+   ```powershell
+   pnpm install
+   ```
+5) Prepare database (requires DATABASE_URL):
+   ```powershell
+   pnpm prisma:migrate
+   pnpm prisma:seed
+   ```
+6) Run dev server:
+   ```powershell
+   pnpm dev
+   ```
+   App: http://localhost:3000  
+   Demo login: `admin@serwisdesk.local` / `Admin123!` (rotate after first run).
 
-## Uruchomienie
-```powershell
-pnpm.cmd dev
-```
-Domyślnie: http://localhost:3000  
-Logowanie demo: `admin@serwisdesk.local` / `Admin123!` (zmień po starcie).
-
-## Skrypty
-- `pnpm dev` – dev server
-- `pnpm build` / `pnpm start` – produkcja
+## Scripts
+- `pnpm check:env` - basic env validation (Node/pnpm/DATABASE_URL)
+- `pnpm check:envexample` - ensure `.env.example` has required keys
+- `pnpm dev` - dev server
+- `pnpm build` / `pnpm start` - production
 - `pnpm prisma:migrate`, `pnpm prisma:seed`
-- `pnpm test` – Vitest (do uzupełnienia)
-- `pnpm test:e2e` – Playwright (do uzupełnienia)
+- `pnpm test` - Vitest (placeholder)
+- `pnpm test:e2e` - Playwright (placeholder)
 
-## Modele (Prisma)
+## Models (Prisma)
 - Organization, User (role: REQUESTER/AGENT/ADMIN), Team, TeamMembership
-- Ticket (statusy: NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE; priorytety: NISKI, SREDNI, WYSOKI, KRYTYCZNY)
+- Ticket (statuses: NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE; priorities: NISKI, SREDNI, WYSOKI, KRYTYCZNY)
 - Comment (public/internal), Attachment, Tag, TicketTag, AuditEvent, SlaPolicy
 
-## Stan MVP
-- Logowanie (NextAuth credentials, Prisma adapter)
-- Lista ticketów (requester widzi tylko swoje)
-- Tworzenie ticketu + SLA due (first/resolve) wg SlaPolicy
-- Szczegóły ticketu, komentarze public/internal (internal tylko agent/admin)
-- Seed: org Demo, admin/requester/agent, zespół IT Support, przykładowy ticket
+## MVP status
+- Auth (NextAuth credentials, Prisma adapter)
+- Ticket list (requester scoped to own tickets)
+- Ticket create + SLA due (first/resolve) via SlaPolicy
+- Ticket detail, public/internal comments (internal for agent/admin)
+- Seed: Demo org, admin/requester/agent, IT Support team, sample ticket
 
-## Do zrobienia (kolejne iteracje)
-- Panel admin (użytkownicy/zespoły/słowniki/SLA)
-- Załączniki (upload + metadane)
-- Raporty, Kanban, dashboard KPI
-- E2E/Unit testy, Dockerfile + docker-compose
+## To do (next iterations)
+- Admin panel (users/teams/dictionaries/SLA)
+- Attachments (upload + metadata)
+- Reports, Kanban, KPI dashboard
+- E2E/Unit tests, Dockerfile + docker-compose
