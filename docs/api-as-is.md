@@ -1,3 +1,4 @@
+<<<<<<< ours
 # API surface (as implemented)
 
 ## /api/auth/[...nextauth] (GET, POST)
@@ -31,6 +32,8 @@
 
 ## Not implemented but referenced
 - `/api/tickets/[id]/comments` is called by the ticket comment form but no route exists under `src/app/api`; submissions will 404.
+=======
+>>>>>>> theirs
 # API Surface (as implemented)
 
 ## /api/auth/[...nextauth]

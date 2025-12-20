@@ -1,3 +1,4 @@
+<<<<<<< ours
 # Current state (evidence-first)
 
 ## Stack and runtime
@@ -66,6 +67,8 @@
 19. Comment form posts to `/api/tickets/{id}/comments` with optional internal flag but lacks server endpoint, leading to failure.
 20. No attachment handling code found in app or API directories.
 21. API directory only contains auth and ticket handlers; no admin or auxiliary endpoints present.
+=======
+>>>>>>> theirs
 # Current State
 
 ## Stack (evidence-backed)

@@ -1,3 +1,4 @@
+<<<<<<< ours
 # Core gaps toward HelpDesk baseline
 
 | Area | Gap | Why it matters | Current evidence | Suggested direction | Dependencies | Complexity | Priority |
@@ -8,6 +9,8 @@
 | SLA tracking | SLA due fields set on create but not updated on first response/resolution events. | SLA reports/timers will be inaccurate; cannot detect breaches. | Create sets due times; update API changes status but never sets `firstResponseAt` or recalculates due times. | Add SLA service to stamp first response/resolution timestamps and compute breach flags during comments/status changes. | Comment API; status workflow. | M | P1 |
 | Attachments | No upload/download handling or storage abstraction. | Users cannot share diagnostics; security of files undefined. | No attachment code found in app/API search. | Add attachment service (streaming upload, mime/size validation, signed download URLs) using storage provider abstraction. | Auth/session; ticket ownership checks. | L | P2 |
 | Admin setup | No admin endpoints/UI to manage teams, users, tags, SLA policies beyond seed data. | Operational setup stuck at seed defaults; cannot onboard new org data. | API folder contains only auth/tickets handlers. | Deliver admin CRUD APIs/pages with org scoping and audit logs. | Auth roles; Prisma models. | M | P2 |
+=======
+>>>>>>> theirs
 # Core Gaps (Repo → Baseline HelpDesk)
 
 | Priority | Area | Gap | Why it matters | Current evidence | Suggested direction | Dependencies | Complexity |
