@@ -2,6 +2,7 @@
 
 | Date | Decision | Rationale | Impact |
 | --- | --- | --- | --- |
+| 2025-12-20 | Pruned duplicate/contradictory blueprint content and reasserted OpenAPI/contract docs as canonical | Removed stale "Master Blueprint" section, normalized execution plan wording, and aligned phases/backlog markers to a single source of truth | Blueprint and execution plan now reference OpenAPI/contracts first; reduces drift against backlog/tasks |
 | 2025-12-19 | Use repository evidence (src/prisma/seed) as canonical current state; missing docs (`data-as-is`, `runbooks`, etc.) treated as unavailable | Only four source docs present; avoid inventing data | Blueprint current-state cites file paths; execution plan assumes gaps |
 | 2025-12-19 | Fix dashboard search to target `descriptionMd`/title and add pagination as first MVP changes | UI currently errors on missing `description` field and loads all tickets | Prioritizes stability before new features; tasks PH0-06, P0-01, P0-02, P0-09 |
 | 2025-12-19 | Deliver comments via dedicated API with org/role scoping and audits; remove client-only flow | UI posts to missing endpoint causing 404; collaboration blocked | Defines MVP core; tasks P0-03, P0-06, P0-08, P0-10 |
