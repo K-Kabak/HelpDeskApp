@@ -132,6 +132,9 @@ importers:
       vitest:
         specifier: ^4.0.16
         version: 4.0.16(@types/node@20.19.27)(jiti@2.6.1)(jsdom@27.3.0)(yaml@2.8.2)
+      yaml:
+        specifier: ^2.6.1
+        version: 2.8.2
 
 packages:
 

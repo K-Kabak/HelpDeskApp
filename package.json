@@ -12,9 +12,11 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "openapi:lint": "node scripts/validate-openapi.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:contract": "vitest run --passWithNoTests --include \"contract/**/*.test.{ts,tsx}\""
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -62,6 +64,7 @@
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
     "typescript": "^5",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "yaml": "^2.6.1"
   }
 }

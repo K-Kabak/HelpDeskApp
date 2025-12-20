@@ -5,6 +5,7 @@
 - DB: Postgres via `DATABASE_URL`; Prisma schema defines models including attachments/audit/SLA.
 - Auth: NextAuth credentials with Prisma adapter; tests must seed users and sessions carefully.
 - Local infra: `docker compose up -d db redis minio` with env placeholders (`POSTGRES_*`, `MINIO_ROOT_*`, `MINIO_BROWSER_REDIRECT_URL`), `DATABASE_URL=postgres://postgres:postgres@localhost:5432/helpdesk`, `REDIS_URL=redis://localhost:6379`, MinIO at `http://localhost:9000`.
+- Contracts: OpenAPI located at `docs/openapi.yaml`; lint via `pnpm openapi:lint`; contract tests via `pnpm test:contract` (passes with no tests present).
 
 ## Test Pyramid
 - Unit (fast, no DB): validation helpers, rate limiter utilities, markdown sanitizer, audit hash chain builder, SLA due calculators.
@@ -30,7 +31,8 @@
 4. Unit/Integration: run Vitest with isolated DB; apply `prisma migrate deploy` before tests; collect coverage (target ?80% lines for core API modules).
 5. E2E smoke: `pnpm test:e2e` with Playwright against `pnpm dev` server using seeded test DB; upload traces/screenshots as artifacts.
 6. Guardrail: conflict-marker scan mirroring `.github/workflows/conflict-marker.yml` to block merges when `git grep -n "[<=>]\{7\}" -- .` finds markers.
-7. Artifacts & failure triage: always upload Playwright traces, Vitest junit/coverage, Prisma query logs; on failure, surface failing stage and rerun command.
+7. Contract gates: `pnpm openapi:lint` on `docs/openapi.yaml` and `pnpm test:contract` (allow empty suites) run on every PR.
+8. Artifacts & failure triage: always upload Playwright traces, Vitest junit/coverage, Prisma query logs; on failure, surface failing stage and rerun command.
 
 ## Coverage Expectations
 - Critical modules (auth, tickets API, org scoping, sanitizer, rate limiter) ?80% line coverage before release; markdown sanitizer and org filter paths must have direct assertions.
