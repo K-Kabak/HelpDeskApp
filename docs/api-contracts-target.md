@@ -5,9 +5,9 @@ Target-state contracts derived from current implementation and product goals, em
 ## Validation Findings (2025-12-19)
 - **GET /api/tickets**: Current handler returns `{ tickets }` scoped by requester/organization with no pagination, filtering, or sorting, and always 200.【F:src/app/api/tickets/route.ts†L16-L38】 Target contract adds pagination/filtering and metadata.
 - **POST /api/tickets**: Implementation validates title/description/priority/category, computes SLA due dates, writes an audit event, and returns 200 without idempotency headers.【F:src/app/api/tickets/route.ts†L40-L89】 Target requires `Idempotency-Key` and may change status code to 201.
-- **PATCH/PUT /api/tickets/{id}**: Supports status/priority/assignee updates with role-based guards; rejects missing status for requesters, invalid assignee/team, or no changes; no `If-Match`/etag logic present.【F:src/app/api/tickets/[id]/route.ts†L8-L197】 Target adds optimistic locking and 412 handling.
+- **PATCH/PUT /api/tickets/{id}**: Supports status/priority/assignee updates with role-based guards; rejects missing status for requesters, invalid assignee/team, or no changes; no `If-Match`/etag logic present (header ignored).【F:src/app/api/tickets/[id]/route.ts†L8-L197】 Target adds optimistic locking and 412 handling.
 - **GET /api/tickets/{id}**: No handler exists; target endpoint remains planned.
-- **POST /api/tickets/{id}/comments**: Validates `bodyMd` (min 1), optional `isInternal`, scopes by role/org, stamps `firstResponseAt` for first public agent comment, and returns 200; no idempotency or listing endpoint implemented.【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】 Target adds optional idempotency and comment listing.
+- **POST /api/tickets/{id}/comments**: Validates `bodyMd` (min 1), optional `isInternal`, enforces role checks but does not verify organization scope, stamps `firstResponseAt` for first public agent comment, and returns 200; no idempotency or listing endpoint implemented.【F:src/app/api/tickets/[id]/comments/route.ts†L7-L59】 Target adds org scoping, optional idempotency, and comment listing.
 - **Attachments/Webhooks**: No handlers implemented; models exist only in Prisma. Target design stays marked as planned until storage/scan/webhook plumbing exists.
 
 ## Goals

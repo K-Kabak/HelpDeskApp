@@ -348,7 +348,8 @@ paths:
       parameters:
         - name: Idempotency-Key
           in: header
-          required: true
+          required: false
+          description: Target requires this idempotency key; AS-IS handlers ignore it.
           schema:
             type: string
             format: uuid
@@ -420,7 +421,8 @@ paths:
             type: string
         - name: If-Match
           in: header
-          required: true
+          required: false
+          description: Target will require etag-based updates; AS-IS ignores this header.
           schema:
             type: string
       requestBody:
@@ -468,7 +470,8 @@ paths:
             type: string
         - name: If-Match
           in: header
-          required: true
+          required: false
+          description: Target will require etag-based updates; AS-IS ignores this header.
           schema:
             type: string
       requestBody:
@@ -546,9 +549,9 @@ paths:
     post:
       summary: Create comment
       description: |
-        AS-IS accepts `bodyMd` and optional `isInternal` (default false), scopes by organization/role, stamps `firstResponseAt`
-        for first public agent comment, and returns 200 without idempotency support. Target may add optional idempotency and
-        return 201.
+        AS-IS accepts `bodyMd` and optional `isInternal` (default false), stamps `firstResponseAt` for first public agent
+        comment, and returns 200 without idempotency or organization-scope enforcement. Target adds org scoping, may add
+        optional idempotency, and return 201.
       x-implementation-status: "as-is (idempotency + 201 pending)"
       security:
         - cookieAuth: []
