@@ -22,6 +22,9 @@ export async function POST(
     where: { id: params.id },
   });
   if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (ticket.organizationId !== session.user.organizationId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
