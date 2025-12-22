@@ -39,6 +39,14 @@
 - `GET /api/tickets`: 401 missing session; 200 list with expanded requester.
 - `POST /api/tickets`: 400 validation error shape; 200 creation flow.
 - `POST /api/tickets/{id}/comments`: 404 when ticket missing; 200 creation as requester.
+- All contract tests pass locally (`cmd /c "npm run test:contract"`, 9 assertions) after this schema validation.
+
+## Fixes
+- `TicketUpdate` now keeps its `description` at the schema level so `docs/openapi.yaml` remains parseable and still communicates the requirement that updates include at least one field; `npm run openapi:lint` now succeeds for the spec.
+
+## Validation runs
+- `cmd /c "npm run openapi:lint"` (OpenAPI spec validation; successful after indentation fix)
+- `cmd /c "npm run test:contract"` (contract tests as before; 9 tests, all passing)
 
 ## Unknowns / verification steps
 - Confirm whether relation expansion should omit sensitive fields (e.g., `passwordHash`) or be limited to summaries; update handlers/OpenAPI accordingly if sanitized later.
