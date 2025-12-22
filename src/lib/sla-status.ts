@@ -7,7 +7,7 @@ export type SlaStatus = {
   label: string;
 };
 
-const closedStatuses: TicketStatus[] = [TicketStatus.ROZWIAZANE, TicketStatus.ZAMKNIETE];
+export const closedStatuses: TicketStatus[] = [TicketStatus.ROZWIAZANE, TicketStatus.ZAMKNIETE];
 
 export function getSlaStatus(ticket: Pick<Ticket, "status" | "firstResponseAt" | "firstResponseDue" | "resolveDue" | "closedAt" | "resolvedAt">): SlaStatus {
   // If ticket is closed/resolved, SLA is considered satisfied.

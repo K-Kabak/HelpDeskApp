@@ -7,6 +7,7 @@ import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
+import { getOpenTicketSlaCounts } from "@/lib/sla-summary";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -102,6 +103,8 @@ export default async function DashboardPage({
     tagIds: tagFilters,
   });
 
+  const slaCounts = getOpenTicketSlaCounts(tickets);
+
   const baseParams = new URLSearchParams();
   if (statusFilter) baseParams.set("status", statusFilter);
   if (priorityFilter) baseParams.set("priority", priorityFilter);
@@ -121,6 +124,34 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
+      <div className="grid gap-3 md:grid-cols-2">
+        {[
+          {
+            title: "Naruszone SLA",
+            value: slaCounts.breached,
+            description: "Otwarte zgloszenia z naruszeniem SLA",
+            color: "text-red-700",
+          },
+          {
+            title: "SLA w toku",
+            value: slaCounts.healthy,
+            description: "Otwarte zgloszenia bez naruszen",
+            color: "text-emerald-700",
+          },
+        ].map((card) => (
+          <div
+            key={card.title}
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {card.title}
+            </p>
+            <p className={`mt-2 text-3xl font-semibold ${card.color}`}>{card.value}</p>
+            <p className="text-xs text-slate-500">{card.description}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Zgloszenia</h1>
