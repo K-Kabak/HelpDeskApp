@@ -23,36 +23,40 @@ const priorityLabels: Record<TicketPriority, string> = {
   KRYTYCZNY: "Krytyczny",
 };
 
+type DashboardSearchParams = {
+  status?: string;
+  priority?: string;
+  q?: string;
+  cursor?: string;
+  direction?: "next" | "prev";
+};
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: {
-    status?: string;
-    priority?: string;
-    q?: string;
-    cursor?: string;
-    direction?: "next" | "prev";
-  };
+  searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
 
+  const params = (await searchParams) ?? {};
+
   const statusFilter =
-    searchParams?.status && (Object.keys(statusLabels) as string[]).includes(searchParams.status)
-      ? (searchParams.status as TicketStatus)
+    params.status && (Object.keys(statusLabels) as string[]).includes(params.status)
+      ? (params.status as TicketStatus)
       : undefined;
   const priorityFilter =
-    searchParams?.priority && (Object.keys(priorityLabels) as string[]).includes(searchParams.priority)
-      ? (searchParams.priority as TicketPriority)
+    params.priority && (Object.keys(priorityLabels) as string[]).includes(params.priority)
+      ? (params.priority as TicketPriority)
       : undefined;
-  const searchQuery = searchParams?.q?.trim();
+  const searchQuery = params.q?.trim();
 
   const { tickets, nextCursor, prevCursor } = await getTicketPage(session.user, {
     status: statusFilter,
     priority: priorityFilter,
     search: searchQuery,
-    cursor: searchParams?.cursor,
-    direction: searchParams?.direction === "prev" ? "prev" : "next",
+    cursor: params.cursor,
+    direction: params.direction === "prev" ? "prev" : "next",
     limit: 10,
   });
 

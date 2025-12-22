@@ -109,42 +109,57 @@ async function main() {
     { priority: TicketPriority.KRYTYCZNY, firstResponseHours: 1, resolveHours: 8 },
   ];
   for (const entry of slaData) {
-    await prisma.slaPolicy.upsert({
+    const existing = await prisma.slaPolicy.findFirst({
       where: {
-        organizationId_priority_categoryId: {
-          organizationId: org.id,
-          priority: entry.priority,
-          categoryId: null,
-        },
-      },
-      update: {},
-      create: {
         organizationId: org.id,
         priority: entry.priority,
-        firstResponseHours: entry.firstResponseHours,
-        resolveHours: entry.resolveHours,
+        categoryId: null,
       },
     });
+    if (existing) {
+      await prisma.slaPolicy.update({
+        where: { id: existing.id },
+        data: {
+          firstResponseHours: entry.firstResponseHours,
+          resolveHours: entry.resolveHours,
+        },
+      });
+    } else {
+      await prisma.slaPolicy.create({
+        data: {
+          organizationId: org.id,
+          priority: entry.priority,
+          firstResponseHours: entry.firstResponseHours,
+          resolveHours: entry.resolveHours,
+        },
+      });
+    }
   }
 
   if (networkingCategory) {
-    await prisma.slaPolicy.upsert({
+    const existingNetworking = await prisma.slaPolicy.findFirst({
       where: {
-        organizationId_priority_categoryId: {
-          organizationId: org.id,
-          priority: TicketPriority.WYSOKI,
-          categoryId: networkingCategory.id,
-        },
-      },
-      update: {},
-      create: {
         organizationId: org.id,
         priority: TicketPriority.WYSOKI,
         categoryId: networkingCategory.id,
-        firstResponseHours: 2,
-        resolveHours: 12,
       },
     });
+    if (existingNetworking) {
+      await prisma.slaPolicy.update({
+        where: { id: existingNetworking.id },
+        data: { firstResponseHours: 2, resolveHours: 12 },
+      });
+    } else {
+      await prisma.slaPolicy.create({
+        data: {
+          organizationId: org.id,
+          priority: TicketPriority.WYSOKI,
+          categoryId: networkingCategory.id,
+          firstResponseHours: 2,
+          resolveHours: 12,
+        },
+      });
+    }
   }
 
   const demoTicket = await prisma.ticket.create({
