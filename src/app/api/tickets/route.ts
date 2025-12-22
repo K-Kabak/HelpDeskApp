@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, ticketScope } from "@/lib/authorization";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
+import { sanitizeMarkdown } from "@/lib/sanitize";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TicketPriority, TicketStatus } from "@prisma/client";
@@ -80,6 +81,8 @@ export async function POST(req: Request) {
     },
   });
 
+  const sanitizedDescription = sanitizeMarkdown(parsed.data.descriptionMd);
+
   const firstResponseDue = sla
     ? addHours(new Date(), sla.firstResponseHours)
     : null;
@@ -88,7 +91,7 @@ export async function POST(req: Request) {
   const ticket = await prisma.ticket.create({
     data: {
       title: parsed.data.title,
-      descriptionMd: parsed.data.descriptionMd,
+      descriptionMd: sanitizedDescription,
       priority: parsed.data.priority,
       category: parsed.data.category,
       status: TicketStatus.NOWE,

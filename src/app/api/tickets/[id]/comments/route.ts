@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
+import { sanitizeMarkdown } from "@/lib/sanitize";
 import {
   isAgentOrAdmin,
   isSameOrganization,
@@ -60,12 +61,14 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const sanitizedBody = sanitizeMarkdown(parsed.data.bodyMd);
+
   const comment = await prisma.comment.create({
     data: {
       ticketId: ticket.id,
       authorId: auth.user.id,
       isInternal: parsed.data.isInternal,
-      bodyMd: parsed.data.bodyMd,
+      bodyMd: sanitizedBody,
     },
   });
 

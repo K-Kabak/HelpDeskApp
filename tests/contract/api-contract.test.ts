@@ -169,6 +169,46 @@ describe("POST /api/tickets", () => {
     expect(res.status).toBe(200);
     expect(body.ticket.id).toBe("t1");
   });
+
+  test("sanitizes markdown before storing ticket", async () => {
+    mockGetServerSession.mockResolvedValueOnce(makeSession("REQUESTER"));
+    mockPrisma.slaPolicy.findFirst.mockResolvedValueOnce(null);
+    mockPrisma.ticket.create.mockResolvedValueOnce({
+      id: "t2",
+      number: 2,
+      title: "Another",
+      descriptionMd: "clean content",
+      status: "NOWE",
+      priority: "SREDNI",
+      category: null,
+      requesterId: "user-1",
+      assigneeUserId: null,
+      assigneeTeamId: null,
+      organizationId: "org-1",
+      firstResponseAt: null,
+      firstResponseDue: null,
+      resolveDue: null,
+      resolvedAt: null,
+      closedAt: null,
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
+    });
+
+    const req = new Request("http://localhost/api/tickets", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "Another",
+        descriptionMd: "<script>alert(1)</script>clean content",
+        priority: "SREDNI",
+      }),
+    });
+
+    const res = await createTicket(req);
+    expect(res.status).toBe(200);
+    const createArgs = mockPrisma.ticket.create.mock.calls[0]?.[0];
+    expect(createArgs?.data?.descriptionMd).toBe("clean content");
+  });
 });
 
 describe("POST /api/tickets/{id}/comments", () => {
@@ -214,5 +254,34 @@ describe("POST /api/tickets/{id}/comments", () => {
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.comment.id).toBe("c1");
+  });
+
+  test("sanitizes comment body on ingest", async () => {
+    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT"));
+    mockPrisma.ticket.findUnique.mockResolvedValueOnce({
+      id: "t1",
+      requesterId: "user-1",
+      organizationId: "org-1",
+      firstResponseAt: null,
+    });
+    mockPrisma.comment.create.mockResolvedValueOnce({
+      id: "c2",
+      ticketId: "t1",
+      authorId: "user-1",
+      isInternal: false,
+      bodyMd: "hello",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+    });
+
+    const req = new Request("http://localhost/api/tickets/t1/comments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ bodyMd: "<img src=\"javascript:1\" onerror=\"x\" />hello" }),
+    });
+
+    const res = await createComment(req, { params: { id: "t1" } });
+    expect(res.status).toBe(200);
+    const createArgs = mockPrisma.comment.create.mock.calls[0]?.[0];
+    expect(createArgs?.data?.bodyMd).toBe('<img src="1" />hello');
   });
 });
