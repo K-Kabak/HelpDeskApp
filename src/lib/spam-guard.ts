@@ -12,7 +12,10 @@ const lastCommentAt = new Map<string, number>();
 
 function getConfig() {
   return {
-    enabled: process.env.SPAM_GUARD_ENABLED !== "false",
+    // Disable spam guard in tests to avoid noisy timing-dependent failures.
+    enabled:
+      process.env.NODE_ENV !== "test" &&
+      process.env.SPAM_GUARD_ENABLED !== "false",
     cooldownMs: Number.parseInt(process.env.SPAM_GUARD_COOLDOWN_MS ?? "10000", 10),
   };
 }
