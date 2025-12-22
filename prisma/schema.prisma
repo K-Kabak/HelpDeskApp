@@ -132,6 +132,8 @@ model Ticket {
   slaPausedAt      DateTime?
   slaResumedAt     DateTime?
   slaPauseTotalSeconds Int    @default(0)
+  lastReopenedAt   DateTime?
+  csatRequest      CsatRequest?
 
   @@index([organizationId, title, descriptionMd, category], name: "Ticket_search_idx")
 }
@@ -266,6 +268,13 @@ model NotificationPreference {
   inAppCommentUpdates Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+model CsatRequest {
+  id        String   @id @default(uuid())
+  ticketId  String   @unique
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 // NextAuth adapter models
