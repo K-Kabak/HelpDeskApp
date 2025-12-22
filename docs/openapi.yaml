@@ -398,3 +398,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+    WorkerQueueJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        jobType:
+          type: string
+          description: |-
+            Worker queue job type (e.g., `slaBreach`, `slaReminder`, `notificationDispatch`).
+        ticketId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        dueAt:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+      example:
+        jobId: 123e4567-e89b-12d3-a456-426655440000
+        jobType: slaBreach
+        ticketId: 111e4567-e89b-12d3-a456-426655440001
+        priority: WYSOKI
+        dueAt: 2025-12-22T10:00:00Z
+        payload:
+          breachType: resolve
+
+    WorkerEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [slaBreach, slaReminder, notificationSent]
+        occurredAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+        job:
+          $ref: '#/components/schemas/WorkerQueueJob'
+      example:
+        eventId: 223e4567-e89b-12d3-a456-426655440002
+        eventType: slaBreach
+        occurredAt: 2025-12-22T10:05:00Z
+        metadata:
+          breachedDurationSeconds: 3600
+        job:
+          jobId: 123e4567-e89b-12d3-a456-426655440000
+          jobType: slaBreach
+
+    NotificationEnvelope:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [email, inApp]
+        recipientId:
+          type: string
+          format: uuid
+        subject:
+          type: string
+        body:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      example:
+        channel: email
+        recipientId: 333e4567-e89b-12d3-a456-426655440003
+        subject: "Ticket SLA reminder"
+        body: "SLA breach is imminent; please respond."
+        metadata:
+          ticketId: 111e4567-e89b-12d3-a456-426655440001
