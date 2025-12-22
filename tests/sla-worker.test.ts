@@ -17,6 +17,9 @@ const mockTicket = {
   resolveDue: new Date(Date.now() - 1000),
   resolvedAt: null,
   closedAt: null,
+  slaPausedAt: null,
+  slaResumedAt: null,
+  slaPauseTotalSeconds: 0,
 };
 
 const prismaMock = {
@@ -43,7 +46,7 @@ describe("SLA worker", () => {
       jobType: "resolve",
       ticketId: mockTicket.id,
       organizationId: mockTicket.organizationId,
-      dueAt: new Date(Date.now() - 1000).toISOString(),
+      dueAt: mockTicket.resolveDue.toISOString(),
       priority: TicketPriority.SREDNI,
     });
 
@@ -71,7 +74,7 @@ describe("SLA worker", () => {
       jobType: "first-response",
       ticketId: mockTicket.id,
       organizationId: mockTicket.organizationId,
-      dueAt: new Date(Date.now() - 1000).toISOString(),
+      dueAt: mockTicket.firstResponseDue!.toISOString(),
       priority: TicketPriority.SREDNI,
     });
 
@@ -79,6 +82,32 @@ describe("SLA worker", () => {
 
     expect(result.skipped).toBe(true);
     expect(result.reason).toBe("first response already recorded");
+    expect(notifier.send).not.toHaveBeenCalled();
+  });
+
+  it("skips when ticket is waiting on requester", async () => {
+    const waitingTicket = {
+      ...mockTicket,
+      status: TicketStatus.OCZEKUJE_NA_UZYTKOWNIKA,
+      slaPausedAt: new Date(Date.now() - 5000),
+    };
+    prismaMock.ticket.findUnique.mockResolvedValueOnce(waitingTicket);
+    const notifier: NotificationService = {
+      send: vi.fn(),
+    };
+
+    const payload = createSlaJobPayload({
+      jobType: "resolve",
+      ticketId: mockTicket.id,
+      organizationId: mockTicket.organizationId,
+      dueAt: waitingTicket.resolveDue!.toISOString(),
+      priority: TicketPriority.SREDNI,
+    });
+
+    const result = await handleSlaJob(payload, { notifier, client: prismaMock, now: new Date() });
+
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toBe("waiting on requester");
     expect(notifier.send).not.toHaveBeenCalled();
   });
 });

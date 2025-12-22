@@ -52,12 +52,28 @@ export async function handleSlaJob(payload: SlaJobPayload, options: WorkerOption
   if (Number.isNaN(dueMs)) {
     return { skipped: true, reason: "invalid due date" };
   }
-  if (dueMs > now) {
-    return { skipped: true, reason: "due date not reached" };
-  }
 
   if (closedStatuses.includes(ticket.status) || ticket.closedAt || ticket.resolvedAt) {
     return { skipped: true, reason: "ticket closed/resolved" };
+  }
+
+  if (ticket.status === TicketStatus.OCZEKUJE_NA_UZYTKOWNIKA) {
+    return { skipped: true, reason: "waiting on requester" };
+  }
+
+  const targetDueDate =
+    parsed.jobType === "first-response" ? ticket.firstResponseDue : ticket.resolveDue;
+  const targetDueMs = targetDueDate ? targetDueDate.getTime() : null;
+  if (!targetDueMs) {
+    return { skipped: true, reason: "no active due date" };
+  }
+
+  if (targetDueMs !== dueMs) {
+    return { skipped: true, reason: "due rescheduled" };
+  }
+
+  if (dueMs > now) {
+    return { skipped: true, reason: "due date not reached" };
   }
 
   if (parsed.jobType === "first-response" && ticket.firstResponseAt) {
