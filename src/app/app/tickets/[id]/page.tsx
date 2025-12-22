@@ -5,9 +5,8 @@ import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import CommentForm from "./comment-form";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import TicketActions from "./ticket-actions";
+import { SafeMarkdown } from "@/components/safe-markdown";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -129,9 +128,7 @@ export default async function TicketPage({
           </div>
         </div>
         <div className="mt-4 prose prose-sm max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {ticket.descriptionMd}
-          </ReactMarkdown>
+          <SafeMarkdown>{ticket.descriptionMd}</SafeMarkdown>
         </div>
         <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
           <div>
@@ -209,9 +206,7 @@ export default async function TicketPage({
                     </span>
                   </div>
                   <div className="prose prose-sm mt-3 max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {comment.bodyMd}
-                    </ReactMarkdown>
+                    <SafeMarkdown>{comment.bodyMd}</SafeMarkdown>
                   </div>
                 </div>
               </div>

@@ -3,9 +3,8 @@
 import { TicketPriority } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
+import { SafeMarkdown } from "@/components/safe-markdown";
 
 export default function TicketForm() {
   const router = useRouter();
@@ -148,9 +147,9 @@ export default function TicketForm() {
           />
         ) : (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 prose prose-sm max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <SafeMarkdown>
               {descriptionMd || "Podgląd pojawi się po wpisaniu treści."}
-            </ReactMarkdown>
+            </SafeMarkdown>
           </div>
         )}
         {errors.descriptionMd && (
