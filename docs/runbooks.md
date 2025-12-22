@@ -11,6 +11,11 @@
 - Rollback: prefer forward fixes; emergency: restore from backup and run `prisma migrate resolve --applied` to mark bad migration; document incidents.
 - Verification: after deploy, run smoke query (ticket count) and Playwright smoke (ticket create/view/comment).
 
+### Ticket search index (title/description/category)
+- Purpose: speed up ticket search/filtering on text fields; migration `202512221438_ticket_search_index`.
+- Apply: `pnpm prisma:migrate` locally, `prisma migrate deploy` in envs. Expect new index `Ticket_search_idx` on `Ticket(organizationId,title,descriptionMd,category)`.
+- Rollback: `DROP INDEX IF EXISTS "Ticket_search_idx";` (note: may require `SET lock_timeout` in prod). Re-run `prisma migrate resolve --applied 202512221438_ticket_search_index` to keep history consistent.
+
 ## Seeding Strategy
 - Dev/local: use full seed (demo admin/agent/requester, SLA policies). Rotate/change passwords after first run if exposed.
 - CI/Test: minimal deterministic seed per test DB or factories; avoid shipping static passwords outside CI.
