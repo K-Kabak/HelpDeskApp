@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { getAllowedStatuses, canUpdateStatus } from "@/lib/ticket-policy";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -53,24 +54,12 @@ export default function TicketActions({
   const canManageAssignments = canManageStatus;
 
   const statusOptions = useMemo(() => {
-    if (canManageStatus) return Object.values(TicketStatus);
-
-    const options = new Set<TicketStatus>([initialStatus]);
-
-    if (requesterCanUpdate) {
-      if (initialStatus !== TicketStatus.ZAMKNIETE) {
-        options.add(TicketStatus.ZAMKNIETE);
-      }
-      if (
-        initialStatus === TicketStatus.ZAMKNIETE ||
-        initialStatus === TicketStatus.ROZWIAZANE
-      ) {
-        options.add(TicketStatus.PONOWNIE_OTWARTE);
-      }
-    }
-
-    return Array.from(options);
-  }, [canManageStatus, requesterCanUpdate, initialStatus]);
+    return getAllowedStatuses({
+      role,
+      isOwner,
+      currentStatus: initialStatus,
+    });
+  }, [role, isOwner, initialStatus]);
 
   const mutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
@@ -99,6 +88,15 @@ export default function TicketActions({
   const handleStatusSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!canManageStatus && !requesterCanUpdate) return;
+    if (
+      !canUpdateStatus(
+        { role, isOwner, currentStatus: initialStatus },
+        status
+      )
+    ) {
+      toast.error("Nie możesz ustawić tego statusu.");
+      return;
+    }
     mutation.mutate({ status });
   };
 

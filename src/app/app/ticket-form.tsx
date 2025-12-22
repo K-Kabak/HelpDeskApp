@@ -201,7 +201,9 @@ export default function TicketForm() {
       </div>
       <div className="grid gap-1">
         <div className="flex items-center justify-between">
-          <label className="text-sm text-slate-700">Opis (Markdown)</label>
+          <label className="text-sm text-slate-700" htmlFor="description">
+            Opis (Markdown)
+          </label>
           <div className="flex gap-2 text-xs font-semibold text-slate-600">
             <button
               type="button"
@@ -223,6 +225,7 @@ export default function TicketForm() {
         </div>
         {previewMode === "edit" ? (
           <textarea
+            id="description"
             className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${errors.descriptionMd ? "border-red-500" : "border-slate-300"}`}
             rows={4}
             value={descriptionMd}
@@ -251,8 +254,11 @@ export default function TicketForm() {
         )}
       </div>
       <div className="grid gap-1">
-        <label className="text-sm text-slate-700">Priorytet</label>
+        <label className="text-sm text-slate-700" htmlFor="priority">
+          Priorytet
+        </label>
         <select
+          id="priority"
           className={`rounded-lg border px-3 py-2 ${errors.priority ? "border-red-500" : "border-slate-300"}`}
           value={priority}
           onChange={(e) => {
@@ -275,7 +281,9 @@ export default function TicketForm() {
         )}
       </div>
       <div className="grid gap-1">
-        <label className="text-sm text-slate-700">Kategoria</label>
+        <label className="text-sm text-slate-700" htmlFor="category">
+          Kategoria
+        </label>
         {categoriesStatus === "loading" && (
           <p className="text-xs text-slate-500">Ładowanie listy kategorii...</p>
         )}
@@ -286,6 +294,7 @@ export default function TicketForm() {
         )}
         {categoriesStatus === "ready" && categoryMode === "select" && (
           <select
+            id="category"
             className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
             value={selectedCategoryId}
             onChange={(e) => {
