@@ -1,6 +1,8 @@
 import { authOptions } from "@/lib/auth";
 import { getTicketPage } from "@/lib/ticket-list";
 import { getSlaStatus } from "@/lib/sla-status";
+import { parseMultiParam, appendMultiParam } from "@/lib/search-filters";
+import { prisma } from "@/lib/prisma";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
@@ -29,6 +31,8 @@ type DashboardSearchParams = {
   q?: string;
   cursor?: string;
   direction?: "next" | "prev";
+  category?: string;
+  tags?: string | string[];
 };
 
 export default async function DashboardPage({
@@ -50,6 +54,42 @@ export default async function DashboardPage({
       ? (params.priority as TicketPriority)
       : undefined;
   const searchQuery = params.q?.trim();
+  const categoryFilter = params.category?.trim();
+  const tagFilters = parseMultiParam(params.tags);
+
+  let categoryOptions: { id: string; name: string }[] = [];
+  let tagOptions: { id: string; name: string }[] = [];
+  let categoryError: string | null = null;
+  let tagsError: string | null = null;
+  let categoryLoading = true;
+  let tagsLoading = true;
+  try {
+    categoryOptions = await prisma.category.findMany({
+      where: { organizationId: session.user.organizationId ?? "" },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+  } catch {
+    categoryError = "Nie udało się pobrać kategorii.";
+    categoryOptions = [];
+  } finally {
+    categoryLoading = false;
+  }
+  try {
+    tagOptions = await prisma.tag.findMany({
+      where: { organizationId: session.user.organizationId ?? "" },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+  } catch {
+    tagsError = "Nie udało się pobrać tagów.";
+    tagOptions = [];
+  } finally {
+    tagsLoading = false;
+  }
+
+  const categoriesLoaded = !categoryLoading;
+  const tagsLoaded = !tagsLoading;
 
   const { tickets, nextCursor, prevCursor } = await getTicketPage(session.user, {
     status: statusFilter,
@@ -58,12 +98,16 @@ export default async function DashboardPage({
     cursor: params.cursor,
     direction: params.direction === "prev" ? "prev" : "next",
     limit: 10,
+    category: categoryFilter,
+    tagIds: tagFilters,
   });
 
   const baseParams = new URLSearchParams();
   if (statusFilter) baseParams.set("status", statusFilter);
   if (priorityFilter) baseParams.set("priority", priorityFilter);
   if (searchQuery) baseParams.set("q", searchQuery);
+  if (categoryFilter) baseParams.set("category", categoryFilter);
+  appendMultiParam(baseParams, "tags", tagFilters);
   const nextParams = new URLSearchParams(baseParams.toString());
   if (nextCursor) {
     nextParams.set("cursor", nextCursor);
@@ -158,15 +202,96 @@ export default async function DashboardPage({
               />
             </div>
           </div>
+        </div>
 
+        <div className="grid gap-3 md:grid-cols-2">
+          <div
+            className={`flex flex-col rounded-lg border p-3 shadow-sm ${
+              categoryFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
+            }`}
+          >
+            <label htmlFor="category" className="text-xs font-semibold text-slate-600">
+              Kategoria
+            </label>
+            {categoryError && (
+              <p className="text-xs text-red-600">{categoryError}</p>
+            )}
+            {!categoriesLoaded && !categoryError && (
+              <p className="text-xs text-slate-500">Ładowanie kategorii...</p>
+            )}
+            {categoriesLoaded && (categoryOptions.length === 0 && !categoryError) && (
+              <p className="text-xs text-slate-500">Brak kategorii dla organizacji.</p>
+            )}
+            <select
+              id="category"
+              name="category"
+              defaultValue={categoryFilter ?? ""}
+              className="mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
+            >
+              <option value="">Wszystkie kategorie</option>
+              {(categoryOptions ?? []).map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div
+            className={`flex flex-col rounded-lg border p-3 shadow-sm ${
+              tagFilters.length > 0 ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
+            }`}
+          >
+            <label htmlFor="tags" className="text-xs font-semibold text-slate-600">
+              Tagi
+            </label>
+            {tagsError && <p className="text-xs text-red-600">{tagsError}</p>}
+            {!tagsLoaded && !tagsError && (
+              <p className="text-xs text-slate-500">Ładowanie tagów...</p>
+            )}
+            {tagsLoaded && (tagOptions.length === 0 && !tagsError) && (
+              <p className="text-xs text-slate-500">Brak tagów dla organizacji.</p>
+            )}
+            <select
+              id="tags"
+              name="tags"
+              defaultValue={tagFilters}
+              multiple
+              size={4}
+              className="mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
+            >
+              {(tagOptions ?? []).map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500">
+              Przytrzymaj Ctrl/Cmd, aby zaznaczyć wiele tagów.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            className="self-end rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
           >
             Zastosuj
           </button>
+          <Link
+            className="text-sm font-semibold text-slate-600 underline"
+            href="/app"
+          >
+            Wyczyść filtry
+          </Link>
+          {tagFilters.length > 0 && (
+            <span className="text-xs text-slate-500">
+              Wybrane tagi: {tagFilters.length}
+            </span>
+          )}
         </div>
-      </form>
+     </form>
 
       {tickets.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">

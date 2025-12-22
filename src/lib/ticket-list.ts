@@ -17,6 +17,8 @@ export type TicketListOptions = {
   status?: TicketStatus;
   priority?: TicketPriority;
   search?: string;
+  category?: string;
+  tagIds?: string[];
 };
 
 export type TicketListResult = {
@@ -61,6 +63,16 @@ export async function getTicketPage(
             { title: { contains: options.search, mode: "insensitive" } },
             { descriptionMd: { contains: options.search, mode: "insensitive" } },
           ],
+        }
+      : {}),
+    ...(options.category ? { category: options.category } : {}),
+    ...(options.tagIds && options.tagIds.length
+      ? {
+          tags: {
+            some: {
+              tagId: { in: options.tagIds },
+            },
+          },
         }
       : {}),
   };
