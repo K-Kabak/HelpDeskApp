@@ -46,4 +46,21 @@ describe("enqueue helper stub", () => {
     expect(result.deduped).toBe(false);
     expect(result.jobType).toBe("resolve");
   });
+
+  it("dedupes on matching idempotency key", async () => {
+    const payload = createSlaJobPayload({
+      jobType: "resolve",
+      ticketId: "00000000-0000-0000-0000-000000000000",
+      organizationId: "org",
+      dueAt: new Date().toISOString(),
+      priority: "SREDNI",
+      idempotencyKey: "job-1",
+    });
+
+    const first = await enqueueSlaJob(payload);
+    const second = await enqueueSlaJob(payload);
+
+    expect(second.deduped).toBe(true);
+    expect(second.jobId).toBe(first.jobId);
+  });
 });

@@ -6,6 +6,7 @@ import { sanitizeMarkdown } from "@/lib/sanitize";
 import { getTicketPage } from "@/lib/ticket-list";
 import { findSlaPolicyForTicket } from "@/lib/sla-policy";
 import { computeSlaDueDates } from "@/lib/sla-preview";
+import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TicketPriority, TicketStatus } from "@prisma/client";
@@ -128,6 +129,14 @@ export async function POST(req: Request) {
   logger.info("tickets.create.success", {
     ticketId: ticket.id,
     priority: ticket.priority,
+  });
+
+  await scheduleSlaJobsForTicket({
+    id: ticket.id,
+    organizationId: ticket.organizationId,
+    priority: ticket.priority,
+    firstResponseDue: ticket.firstResponseDue,
+    resolveDue: ticket.resolveDue,
   });
 
   return NextResponse.json({ ticket });
