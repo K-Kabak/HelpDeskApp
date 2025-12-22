@@ -5,15 +5,15 @@ export type RetryDecision =
 
 export function decideRetry(attemptsMade: number, maxAttempts: number, backoffMs: number): RetryDecision {
   const attempt = Number.isFinite(attemptsMade) ? attemptsMade : 0;
-  const allowed = Math.max(1, maxAttempts);
+  const allowed = Number.isFinite(maxAttempts) ? Math.max(0, maxAttempts) : 0;
+
+  if (allowed === 0) {
+    return { action: "drop" };
+  }
 
   if (attempt < allowed - 1) {
     return { action: "retry", delayMs: Math.max(0, backoffMs) };
   }
 
-  if (allowed > 0) {
-    return { action: "dlq" };
-  }
-
-  return { action: "drop" };
+  return { action: "dlq" };
 }
