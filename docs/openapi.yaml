@@ -185,6 +185,146 @@ components:
         isInternal:
           type: boolean
           default: false
+    AdminAuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [CREATE, UPDATE, DELETE]
+        resource:
+          type: string
+          enum: [USER, TEAM, TAG, SLA]
+        resourceId:
+          type: string
+        actorId:
+          type: string
+          format: uuid
+        actor:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              format: email
+        data:
+          type: object
+          nullable: true
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    PageInfo:
+      type: object
+      properties:
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+    WorkerQueueJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        jobType:
+          type: string
+          description: |-
+            Worker queue job type (e.g., `slaBreach`, `slaReminder`, `notificationDispatch`).
+        ticketId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        dueAt:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+      example:
+        jobId: 123e4567-e89b-12d3-a456-426655440000
+        jobType: slaBreach
+        ticketId: 111e4567-e89b-12d3-a456-426655440001
+        priority: WYSOKI
+        dueAt: 2025-12-22T10:00:00Z
+        payload:
+          breachType: resolve
+    WorkerEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [slaBreach, slaReminder, notificationSent]
+        occurredAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+        job:
+          $ref: '#/components/schemas/WorkerQueueJob'
+      example:
+        eventId: 223e4567-e89b-12d3-a456-426655440002
+        eventType: slaBreach
+        occurredAt: 2025-12-22T10:05:00Z
+        metadata:
+          breachedDurationSeconds: 3600
+        job:
+          jobId: 123e4567-e89b-12d3-a456-426655440000
+          jobType: slaBreach
+    NotificationEnvelope:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [email, inApp]
+        recipientId:
+          type: string
+          format: uuid
+        subject:
+          type: string
+        body:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      example:
+        channel: email
+        recipientId: 333e4567-e89b-12d3-a456-426655440003
+        subject: "Ticket SLA reminder"
+        body: "SLA breach is imminent; please respond."
+        metadata:
+          ticketId: 111e4567-e89b-12d3-a456-426655440001
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
 paths:
   /api/tickets:
     get:
@@ -423,84 +563,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
-    WorkerQueueJob:
-      type: object
-      properties:
-        jobId:
-          type: string
-          format: uuid
-        jobType:
-          type: string
-          description: |-
-            Worker queue job type (e.g., `slaBreach`, `slaReminder`, `notificationDispatch`).
-        ticketId:
-          type: string
-          format: uuid
-        priority:
-          type: string
-          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
-        dueAt:
-          type: string
-          format: date-time
-        payload:
-          type: object
-          additionalProperties: true
-      example:
-        jobId: 123e4567-e89b-12d3-a456-426655440000
-        jobType: slaBreach
-        ticketId: 111e4567-e89b-12d3-a456-426655440001
-        priority: WYSOKI
-        dueAt: 2025-12-22T10:00:00Z
-        payload:
-          breachType: resolve
-
-    WorkerEvent:
-      type: object
-      properties:
-        eventId:
-          type: string
-          format: uuid
-        eventType:
-          type: string
-          enum: [slaBreach, slaReminder, notificationSent]
-        occurredAt:
-          type: string
-          format: date-time
-        metadata:
-          type: object
-          additionalProperties: true
-        job:
-          $ref: '#/components/schemas/WorkerQueueJob'
-      example:
-        eventId: 223e4567-e89b-12d3-a456-426655440002
-        eventType: slaBreach
-        occurredAt: 2025-12-22T10:05:00Z
-        metadata:
-          breachedDurationSeconds: 3600
-        job:
-          jobId: 123e4567-e89b-12d3-a456-426655440000
-          jobType: slaBreach
-
-    NotificationEnvelope:
-      type: object
-      properties:
-        channel:
-          type: string
-          enum: [email, inApp]
-        recipientId:
-          type: string
-          format: uuid
-        subject:
-          type: string
-        body:
-          type: string
-        metadata:
-          type: object
-          additionalProperties: true
-      example:
-        channel: email
-        recipientId: 333e4567-e89b-12d3-a456-426655440003
-        subject: "Ticket SLA reminder"
-        body: "SLA breach is imminent; please respond."
-        metadata:
-          ticketId: 111e4567-e89b-12d3-a456-426655440001
+  /api/admin/audit-events:
+    get:
+      summary: List admin audit events
+      description: Returns paginated admin audit events for the organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: resourceId
+          in: query
+          schema:
+            type: string
+          description: Filter by resource ID
+        - name: actorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by actor user ID
+      responses:
+        '200':
+          description: Audit events list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminAuditEvent'
+                  page:
+                    $ref: '#/components/schemas/PageInfo'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
