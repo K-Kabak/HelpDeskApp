@@ -45,3 +45,47 @@ Defines objective Go/No-Go gates for early delivery waves. Commands assume Power
   - Halt before merging Phase 0 outputs; fix failing stage and rerun full gate list.
   - For test failures, prioritize sanitizer/auth/rate-limit coverage updates, then rerun `pnpm test`.
   - If OpenAPI lint fails, reconcile handlers vs `docs/openapi.yaml` and rerun lint + contract tests before resuming.
+
+## Checkpoint 3 (tasks 025-035)
+- **Scope covered:** attachments metadata/visibility migration + seed (025-026), upload API/presign + AV hook (027-028), attachment UI picker (029), rate limiting wiring (030), category taxonomy + seeds (031), category on ticket form (032), SLA pause fields placeholder (033), notification preferences schema + service stub (034-035), Stop/Go gate.
+- **Must-pass commands (PowerShell examples):**
+  - `pnpm check:env` and `pnpm check:envexample`
+  - `pnpm lint`
+  - `pnpm test` (unit/integration covering attachment validation/AV stub/category UI if present)
+  - `pnpm test:contract` (contract harness present)
+  - `pnpm openapi:lint`
+  - DB migration smoke: `pnpm prisma:migrate` (local) and `pnpm prisma:seed` (verifies attachment/category seeds)
+  - Conflict scan: `git grep -n "[<=>]\\{7\\}" -- .`
+- **Expected outputs:**
+  - Migrations apply without drift; seed populates categories and sample attachments metadata.
+  - Upload API tests (if present) pass; AV stub records status.
+  - UI build renders attachment picker/category field with no type errors.
+  - Lint/tests/contract/OpenAPI gates exit 0.
+- **Go / No-Go:**
+  - **Go** if migrations + seeds succeed, all commands above exit 0, and attachment/category features are documented in `docs/contract-conventions.md`/OpenAPI where applicable.
+  - **No-Go** if migrations fail, lint/tests/contract/OpenAPI fail, or conflict markers exist. Also No-Go if attachment org/visibility rules are undocumented or untested.
+- **Rollback guidance:**
+  - If migrations fail, fix schema files, reset local DB (`pnpm prisma migrate reset`), and rerun migrate/seed before retrying.
+  - If AV/attachment tests fail, disable the new route behind a feature flag or revert the route change before proceeding.
+  - Hold merge until all gates are green; re-run full gate list after fixes.
+
+## Checkpoint 4 (tasks 037-047)
+- **Scope covered:** comment spam guard (037), sanitize on ingest (038), SLA policy admin CRUD + UI (039-041), SLA breach indicators (042), shared policy module for transitions (043), org/role helper on comments (044), ticket search index (045), cursor pagination (046), attachment audit logging (047), Stop/Go gate.
+- **Must-pass commands (PowerShell examples):**
+  - `pnpm check:env` and `pnpm check:envexample`
+  - `pnpm lint`
+  - `pnpm test` (includes sanitizer/auth/rate-limit/attachment audit tests and pagination helpers)
+  - `pnpm test:contract`
+  - `pnpm openapi:lint`
+  - Conflict scan: `git grep -n "[<=>]\\{7\\}" -- .`
+- **Expected outputs:**
+  - Tests cover sanitizer ingest, comment org guard, spam guard, SLA indicator helpers, pagination helpers, and attachment audit hooks; all pass.
+  - OpenAPI/contract docs updated for comment org rules, pagination params, SLA policy endpoints, attachment audit if exposed.
+  - Lint/typecheck clean; no missing scripts.
+- **Go / No-Go:**
+  - **Go** if all commands exit 0, pagination/guard rails reflected in docs, and audit/logging/guards are covered by tests.
+  - **No-Go** if any gate fails, if pagination/sanitizer/audit changes are undocumented, or conflict markers exist.
+- **Rollback guidance:**
+  - Fix failing tests or doc/spec mismatches, then rerun the full gate list.
+  - If pagination breaks UI, revert to previous list query or hide pagination behind a flag until fixed.
+  - Do not merge partial checkpoint work without green gates.
