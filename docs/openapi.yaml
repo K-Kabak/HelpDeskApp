@@ -192,6 +192,31 @@ paths:
       description: Returns all tickets scoped by role/organization. No server-side pagination, filtering, or sorting is applied.
       security:
         - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category name.
+        - name: tags
+          in: query
+          description: Tag IDs (comma-separated or repeated values).
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: Tickets list
