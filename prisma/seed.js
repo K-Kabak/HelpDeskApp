@@ -88,6 +88,11 @@ async function main() {
     skipDuplicates: true,
   });
 
+  const networkingCategory = await prisma.category.findFirst({
+    where: { organizationId: org.id, name: "Networking" },
+    select: { id: true },
+  });
+
   const slaData = [
     { priority: TicketPriority.NISKI, firstResponseHours: 24, resolveHours: 72 },
     { priority: TicketPriority.SREDNI, firstResponseHours: 8, resolveHours: 48 },
@@ -97,9 +102,10 @@ async function main() {
   for (const entry of slaData) {
     await prisma.slaPolicy.upsert({
       where: {
-        organizationId_priority: {
+        organizationId_priority_categoryId: {
           organizationId: org.id,
           priority: entry.priority,
+          categoryId: null,
         },
       },
       update: {},
@@ -108,6 +114,26 @@ async function main() {
         priority: entry.priority,
         firstResponseHours: entry.firstResponseHours,
         resolveHours: entry.resolveHours,
+      },
+    });
+  }
+
+  if (networkingCategory) {
+    await prisma.slaPolicy.upsert({
+      where: {
+        organizationId_priority_categoryId: {
+          organizationId: org.id,
+          priority: TicketPriority.WYSOKI,
+          categoryId: networkingCategory.id,
+        },
+      },
+      update: {},
+      create: {
+        organizationId: org.id,
+        priority: TicketPriority.WYSOKI,
+        categoryId: networkingCategory.id,
+        firstResponseHours: 2,
+        resolveHours: 12,
       },
     });
   }
