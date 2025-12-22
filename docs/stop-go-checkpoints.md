@@ -99,22 +99,29 @@ Defines objective Go/No-Go gates for early delivery waves. Commands assume Power
   - `pnpm test:contract`
   - `pnpm openapi:lint`
   - Conflict scan: `git grep -n "[<=>]\{7\}" -- .`
-- **Checklist + acceptance:**
-  - Task 062 (admin audit coverage) is done; admin CRUD writes audit rows as shown in #97/#139.
-  - Task 063 (audit viewer UI) is blocked and tracked in #63.
-  - Tasks 064–071 (auto-suggest, filters, reopen/throttle, download logging, worker infra, SLA timer/job schema, scheduling) remain blocked awaiting #64–#71.
-  - Task 072 (SLA breach worker) is done and emits audit + notification events (#107/#128).
-  - Task 073 (SLA pause/resume handling) remains blocked pending #73.
-- **Status:**
-  - Done: #97/#139, #107/#128.
-  - Blocked: #63, #64, #65, #66, #67, #68, #69, #70, #71, #73.
+- **Checklist + acceptance criteria:**
+  - **Task 062** (admin audit coverage): Admin CRUD operations for users/teams/tags/SLA write audit rows. AC: audit rows created on create/update/delete. Evidence: #97, #139. **Status: Done**
+  - **Task 063** (audit viewer UI): Paginated audit list filterable by actor/date/action for admins. AC: UI renders audit entries with filters. Evidence: #63. **Status: Blocked**
+  - **Task 064** (assignment auto-suggest): Load-based assignment suggestions in TicketActions. AC: suggestion displayed based on workload. Evidence: #64. **Status: Blocked**
+  - **Task 065** (search filters): Enhanced search with tag/category filters. AC: filters applied to search results. Evidence: #65. **Status: Blocked**
+  - **Task 066** (reopen reason form): Reopen reason capture form on ticket reopen. AC: reason saved on reopen action. Evidence: #66. **Status: Blocked**
+  - **Task 067** (reopen throttling): Cooldown period for repeated reopen attempts. AC: repeated reopen blocked within cooldown window. Evidence: #67. **Status: Blocked**
+  - **Task 068** (attachment download logging): Audit logging on attachment download. AC: audit row created on download with actor info. Evidence: #68. **Status: Blocked**
+  - **Task 069** (Redis/BullMQ worker): Worker service connects to Redis and processes dummy job. AC: worker connects and processes test job. Evidence: #69. **Status: Blocked**
+  - **Task 070** (SLA timer job schema): Queue job schema for SLA timers (first response/resolve). AC: job payload defined with org validation. Evidence: #70. **Status: Blocked**
+  - **Task 071** (SLA job scheduling): SLA jobs enqueued on ticket creation/update. AC: jobs enqueued with due timestamps. Evidence: #71. **Status: Blocked**
+  - **Task 072** (SLA breach worker): Worker processes SLA breach and emits audit + notification events. AC: breach sets flag and sends notification. Evidence: #107, #128. **Status: Done**
+  - **Task 073** (SLA pause/resume): SLA pause/resume handling in worker (waiting on requester). AC: clock stops/starts on status change. Evidence: #73. **Status: Blocked**
+- **Status summary:**
+  - **Done:** #97, #139 (Task 062), #107, #128 (Task 072)
+  - **Blocked:** #63 (Task 063), #64 (Task 064), #65 (Task 065), #66 (Task 066), #67 (Task 067), #68 (Task 068), #69 (Task 069), #70 (Task 070), #71 (Task 071), #73 (Task 073)
 - **Go / No-Go:**
-  - **Go** when the listed commands pass, the audit/worker evidence (#97, #139, #107, #128) is included, and outstanding blockers (#63–#71, #73) are documented.
+  - **Go** when the listed commands pass, the audit/worker evidence (#97, #139, #107, #128) is included, and outstanding blockers (#63, #64, #65, #66, #67, #68, #69, #70, #71, #73) are documented.
   - **No-Go** if any command fails, audit/worker regressions appear, or conflict markers exist.
 - **Rollback guidance:**
   - Revert admin audit hooks if they introduce regressions; rerun `pnpm test`.
   - Pause the worker and fix queue logic if duplicates or missing notifications occur, then rerun the gate list.
-  - Keep this checkpoint open until blockers (#63–#71, #73) are resolved.
+  - Keep this checkpoint open until blockers (#63, #64, #65, #66, #67, #68, #69, #70, #71, #73) are resolved.
 
 ## Checkpoint 7 (tasks 075-085)
 - **Scope covered:** notification worker readiness (075), queue health endpoints (076), SLA dashboard widgets (077), automation rule engine (078), job retries/DLQ (079), worker runbook (080), SLA reminders (081), CSAT trigger (082), notification preference enforcement (083), SLA escalation logic (084), OpenAPI updates for worker-driven events/contracts (085). Related issues: #65, #69, #47, #115.
