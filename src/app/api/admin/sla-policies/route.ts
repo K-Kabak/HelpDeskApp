@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { recordAdminAudit } from "@/lib/admin-audit";
 import { requireAuth } from "@/lib/authorization";
 import { TicketPriority } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -98,6 +99,20 @@ export async function POST(req: Request) {
     },
     include: {
       category: { select: { id: true, name: true } },
+    },
+  });
+
+  await recordAdminAudit({
+    actorId: auth.user.id,
+    organizationId: orgId,
+    resource: "SLA",
+    resourceId: policy.id,
+    action: "CREATE",
+    data: {
+      priority: policy.priority,
+      categoryId: policy.categoryId,
+      firstResponseHours: policy.firstResponseHours,
+      resolveHours: policy.resolveHours,
     },
   });
 
