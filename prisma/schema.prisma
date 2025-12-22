@@ -30,6 +30,11 @@ enum TicketPriority {
   KRYTYCZNY
 }
 
+enum AttachmentVisibility {
+  INTERNAL
+  PUBLIC
+}
+
 model Organization {
   id        String   @id @default(uuid())
   name      String   @unique
@@ -141,6 +146,8 @@ model Attachment {
   filePath   String
   mimeType   String
   sizeBytes  Int
+  visibility AttachmentVisibility @default(INTERNAL)
+  metadata   Json?
   createdAt  DateTime @default(now())
 }
 
