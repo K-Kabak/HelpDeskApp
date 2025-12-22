@@ -136,6 +136,55 @@ export default async function DashboardPage({
         </Link>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia z naruszonym SLA</p>
+              <p className="mt-2 text-3xl font-bold text-red-700">{slaCounts.breached}</p>
+            </div>
+            <div className="rounded-full bg-red-100 p-3">
+              <svg
+                className="h-6 w-6 text-red-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia zgodne z SLA</p>
+              <p className="mt-2 text-3xl font-bold text-emerald-700">{slaCounts.healthy}</p>
+            </div>
+            <div className="rounded-full bg-emerald-100 p-3">
+              <svg
+                className="h-6 w-6 text-emerald-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
