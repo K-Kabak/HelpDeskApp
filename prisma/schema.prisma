@@ -69,6 +69,7 @@ model User {
   memberships    TeamMembership[]
   accounts       Account[]
   sessions       Session[]
+  notificationPreference NotificationPreference?
 }
 
 model Team {
@@ -217,6 +218,18 @@ model SlaPolicy {
   updatedAt           DateTime       @updatedAt
 
   @@unique([organizationId, priority, categoryId])
+}
+
+model NotificationPreference {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id])
+  emailTicketUpdates  Boolean  @default(true)
+  emailCommentUpdates Boolean  @default(true)
+  inAppTicketUpdates  Boolean  @default(true)
+  inAppCommentUpdates Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // NextAuth adapter models
