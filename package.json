@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:contract": "vitest run --passWithNoTests --include \"contract/**/*.test.{ts,tsx}\""
+    "test:contract": "vitest run --passWithNoTests tests/contract"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

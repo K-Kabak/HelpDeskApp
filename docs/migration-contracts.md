@@ -22,7 +22,8 @@ Guidance to move from AS-IS to Target contracts with minimal disruption.
 - Integrate attachment upload using signed URLs and scan status polling.
 
 ## Data Migration Notes
-- No schema changes required initially; consider adding attachment status enum and audit indexes when implementing new features.
+- Add attachment visibility/metadata columns via `prisma migrate dev --name attach_visibility_metadata` (applies migration `202512220156_attach_visibility_metadata`). Defaults are safe (`visibility` defaults to `INTERNAL`, `metadata` nullable).
+- Verify with `\d "Attachment"` or `SELECT visibility, metadata FROM "Attachment" LIMIT 5;` after migration.
 - SLA recalculations may need backfill for existing tickets once logic added.
 
 ## Observability & Rollout
