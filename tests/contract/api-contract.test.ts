@@ -3,7 +3,7 @@ import { describe, expect, beforeEach, vi, test } from "vitest";
 import { GET as listTickets, POST as createTicket } from "@/app/api/tickets/route";
 import { POST as createComment } from "@/app/api/tickets/[id]/comments/route";
 
-const mockPrisma = {
+const mockPrisma = vi.hoisted(() => ({
   ticket: {
     findMany: vi.fn(),
     create: vi.fn(),
@@ -25,7 +25,7 @@ const mockPrisma = {
   comment: {
     create: vi.fn(),
   },
-};
+}));
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
