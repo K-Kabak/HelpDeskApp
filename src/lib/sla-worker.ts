@@ -109,6 +109,9 @@ export async function handleSlaJob(payload: SlaJobPayload, options: WorkerOption
       dueAt: parsed.dueAt,
     },
     idempotencyKey: `sla-breach:${ticket.id}:${parsed.jobType}`,
+    metadata: {
+      notificationType: "ticketUpdate",
+    },
   });
 
   return {

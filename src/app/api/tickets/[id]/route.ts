@@ -268,6 +268,9 @@ async function updateTicket(
           ticketId: updatedTicket.id,
           ticketNumber: updatedTicket.number,
         },
+        metadata: {
+          notificationType: "ticketUpdate",
+        },
       });
     }
   }

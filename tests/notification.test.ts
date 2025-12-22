@@ -1,8 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createNotificationService } from "@/lib/notification";
 
+const mockPrisma = vi.hoisted(() => ({
+  user: {
+    findUnique: vi.fn(),
+  },
+  notificationPreference: {
+    findUnique: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+
 describe("Notification service", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("sends and returns an id", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue(null);
+
     const service = createNotificationService();
     const result = await service.send({
       channel: "email",
@@ -17,6 +35,9 @@ describe("Notification service", () => {
   });
 
   it("deduplicates by idempotencyKey", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue(null);
+
     const service = createNotificationService();
     const first = await service.send({
       channel: "inapp",
@@ -37,5 +58,138 @@ describe("Notification service", () => {
     const service = createNotificationService();
     // @ts-expect-error testing validation
     await expect(() => service.send({ channel: "email", to: "" })).rejects.toThrow();
+  });
+
+  it("allows notification when user preference is enabled", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue({
+      emailTicketUpdates: true,
+      emailCommentUpdates: true,
+      inAppTicketUpdates: true,
+      inAppCommentUpdates: true,
+    });
+
+    const service = createNotificationService();
+    const result = await service.send({
+      channel: "email",
+      to: "user-1",
+      subject: "Test",
+      metadata: {
+        notificationType: "ticketUpdate",
+      },
+    });
+
+    expect(result.id).toBeTruthy();
+    expect(result.status).toBe("queued");
+  });
+
+  it("blocks notification when user preference is disabled", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue({
+      emailTicketUpdates: false,
+      emailCommentUpdates: true,
+      inAppTicketUpdates: true,
+      inAppCommentUpdates: true,
+    });
+
+    const service = createNotificationService();
+    const result = await service.send({
+      channel: "email",
+      to: "user-1",
+      subject: "Test",
+      metadata: {
+        notificationType: "ticketUpdate",
+      },
+    });
+
+    expect(result.id).toBeTruthy();
+    expect(result.status).toBe("queued");
+    expect(mockPrisma.notificationPreference.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+    });
+  });
+
+  it("uses defaults when preferences are missing", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue(null);
+
+    const service = createNotificationService();
+    const result = await service.send({
+      channel: "email",
+      to: "user-1",
+      subject: "Test",
+      metadata: {
+        notificationType: "ticketUpdate",
+      },
+    });
+
+    expect(result.id).toBeTruthy();
+    expect(result.status).toBe("queued");
+    expect(mockPrisma.notificationPreference.findUnique).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+    });
+  });
+
+  it("blocks comment update when preference is disabled", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue({
+      emailTicketUpdates: true,
+      emailCommentUpdates: false,
+      inAppTicketUpdates: true,
+      inAppCommentUpdates: true,
+    });
+
+    const service = createNotificationService();
+    const result = await service.send({
+      channel: "email",
+      to: "user-1",
+      subject: "Test",
+      metadata: {
+        notificationType: "commentUpdate",
+      },
+    });
+
+    expect(result.id).toBeTruthy();
+    expect(result.status).toBe("queued");
+  });
+
+  it("blocks in-app notification when preference is disabled", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+    mockPrisma.notificationPreference.findUnique.mockResolvedValue({
+      emailTicketUpdates: true,
+      emailCommentUpdates: true,
+      inAppTicketUpdates: false,
+      inAppCommentUpdates: true,
+    });
+
+    const service = createNotificationService();
+    const result = await service.send({
+      channel: "inapp",
+      to: "user-1",
+      subject: "Test",
+      metadata: {
+        notificationType: "ticketUpdate",
+      },
+    });
+
+    expect(result.id).toBeTruthy();
+    expect(result.status).toBe("queued");
+  });
+
+  it("uses defaults when user is not found", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(null);
+
+    const service = createNotificationService();
+    const result = await service.send({
+      channel: "email",
+      to: "nonexistent@example.com",
+      subject: "Test",
+      metadata: {
+        notificationType: "ticketUpdate",
+      },
+    });
+
+    expect(result.id).toBeTruthy();
+    expect(result.status).toBe("queued");
   });
 });

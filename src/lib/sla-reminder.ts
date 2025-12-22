@@ -34,6 +34,9 @@ export async function handleSlaReminder(
       priority: payload.priority,
     },
     idempotencyKey: `sla-reminder-notif:${payload.ticketId}:${reminderFor}`,
+    metadata: {
+      notificationType: "ticketUpdate",
+    },
   });
 
   return { skipped: false, notificationId: notification.id };
