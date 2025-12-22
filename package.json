@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "test:contract": "vitest run --passWithNoTests tests/contract",
     "worker:start": "ts-node src/worker/index.ts",
-    "worker:smoke": "ts-node src/worker/index.ts --dry-run"
+    "worker:smoke": "ts-node src/worker/index.ts --dry-run",
+    "worker:health": "ts-node src/worker/health.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
