@@ -16,3 +16,7 @@ export function createPresignedUpload(fileName: string, visibility: "public" | "
   // In a real integration this would include signed query params and limited TTL.
   return { uploadUrl, storagePath };
 }
+
+export function resolveDownloadUrl(storagePath: string) {
+  return `${baseUrl}/${storagePath}`;
+}

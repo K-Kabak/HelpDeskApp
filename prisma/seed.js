@@ -78,6 +78,20 @@ async function main() {
     },
   });
 
+  const managementTeam = await prisma.team.upsert({
+    where: {
+      organizationId_name: {
+        organizationId: org.id,
+        name: "IT Managers",
+      },
+    },
+    update: {},
+    create: {
+      name: "IT Managers",
+      organizationId: org.id,
+    },
+  });
+
   await prisma.tag.createMany({
     data: [
       { name: "VPN", organizationId: org.id },
@@ -161,6 +175,26 @@ async function main() {
       });
     }
   }
+
+  await prisma.slaEscalationLevel.createMany({
+    data: [
+      {
+        organizationId: org.id,
+        priority: TicketPriority.WYSOKI,
+        categoryId: networkingCategory?.id ?? null,
+        level: 1,
+        teamId: team.id,
+      },
+      {
+        organizationId: org.id,
+        priority: TicketPriority.WYSOKI,
+        categoryId: networkingCategory?.id ?? null,
+        level: 2,
+        teamId: managementTeam.id,
+      },
+    ],
+    skipDuplicates: true,
+  });
 
   const demoTicket = await prisma.ticket.create({
     data: {
