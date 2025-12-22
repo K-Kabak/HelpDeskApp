@@ -88,4 +88,27 @@ Defines objective Go/No-Go gates for early delivery waves. Commands assume Power
 - **Rollback guidance:**
   - Fix failing tests or doc/spec mismatches, then rerun the full gate list.
   - If pagination breaks UI, revert to previous list query or hide pagination behind a flag until fixed.
-  - Do not merge partial checkpoint work without green gates.
+- Do not merge partial checkpoint work without green gates.
+
+## Checkpoint 7 (tasks 075-085)
+- **Scope covered:** notification worker readiness (075), queue health endpoints (076), SLA dashboard widgets (077), automation rule engine (078), job retries/DLQ (079), worker runbook (080), SLA reminders (081), CSAT trigger (082), notification preference enforcement (083), SLA escalation logic (084), OpenAPI updates for worker-driven events/contracts (085). Related issues: #65, #69, #47, #115.
+- **Must-pass commands:**
+  - `pnpm check:env` and `pnpm check:envexample`
+  - `pnpm lint`
+  - `pnpm test` (ensure automation/worker/SLA/notification suites pass)
+  - `pnpm test:contract`
+  - `pnpm openapi:lint`
+  - Conflict scan: `git grep -n "[<=>]\\{7\\}" -- .`
+  - Worker health verification: `node scripts/worker-health.js` (BullMQ connection/drain check)
+- **Expected outputs / acceptance:**
+  - Env scripts exit 0; warnings allowed only for package-manager detection.
+  - Lint/tests/contract/OpenAPI gates exit 0 with coverage for automation, SLA, notification, and audit hooks.
+  - Worker health script reports ready queues and successful Redis heartbeat (see `docs/worker-deployment-runbook.md`).
+  - Documentation links referencing #115 and automation changes are present.
+- **Go / No-Go:**
+  - **Go** if all checks pass, worker health is verified, docs updated, and relevant issues (#65, #69, #47, #115) are linked in the PR.
+  - **No-Go** if any command fails, worker health script reports errors, tests are missing for automation/audit logic, or conflict markers exist.
+- **Rollback guidance:**
+  - Revert to prior worker artifact/tag, rerun health checks, and ensure automation jobs are disabled (`WORKER_DISABLE_AUTOMATIONS=true`) before reopening gate.
+  - If automation or notification jobs deliver duplicates, pause the worker, inspect `tests/automation.test.ts`, and rerun `pnpm test:contract`.
+  - Record the rollback in issue #121 and reschedule the gate once the fix is verified.
