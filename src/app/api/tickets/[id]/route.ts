@@ -4,6 +4,7 @@ import { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 
 const updateSchema = z
   .object({
@@ -192,6 +193,14 @@ async function updateTicket(
       },
     }),
   ]);
+
+  await scheduleSlaJobsForTicket({
+    id: updatedTicket.id,
+    organizationId: updatedTicket.organizationId,
+    priority: updatedTicket.priority,
+    firstResponseDue: updatedTicket.firstResponseDue,
+    resolveDue: updatedTicket.resolveDue,
+  });
 
   return NextResponse.json({ ticket: updatedTicket });
 }

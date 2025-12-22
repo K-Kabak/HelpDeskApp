@@ -14,6 +14,7 @@ export const slaJobPayloadSchema = z.object({
   priority: z.string(),
   categoryId: z.string().uuid().nullable(),
   metadata: z.record(z.unknown()).optional(),
+  idempotencyKey: z.string().min(1).optional(),
 });
 
 export type SlaJobPayload = z.infer<typeof slaJobPayloadSchema>;
@@ -27,17 +28,34 @@ export const slaJobResultSchema = z.object({
 
 export type SlaJobResult = z.infer<typeof slaJobResultSchema>;
 
+const jobDedupe = new Map<string, SlaJobResult>();
+
 export async function enqueueSlaJob(
   payload: SlaJobPayload
 ): Promise<SlaJobResult> {
-  const parsed = slaJobPayloadSchema.parse(payload);
-  // stub: future implementation will push into queue/storage.
-  return {
-    jobId: parsed.jobId,
+  if (payload.idempotencyKey) {
+    const cached = jobDedupe.get(payload.idempotencyKey);
+    if (cached) {
+      return { ...cached, deduped: true };
+    }
+  }
+
+  const result: SlaJobResult = {
+    jobId: payload.jobId,
     enqueued: true,
     deduped: false,
-    jobType: parsed.jobType,
+    jobType: payload.jobType,
   };
+
+  if (payload.idempotencyKey) {
+    jobDedupe.set(payload.idempotencyKey, result);
+  }
+
+  return result;
+}
+
+export function resetSlaJobDedupe() {
+  jobDedupe.clear();
 }
 
 export function createSlaJobPayload(init: {
@@ -48,6 +66,7 @@ export function createSlaJobPayload(init: {
   priority: string;
   categoryId?: string | null;
   metadata?: Record<string, unknown>;
+  idempotencyKey?: string;
 }): SlaJobPayload {
   const payload: SlaJobPayload = {
     jobId: randomUUID(),
@@ -58,8 +77,8 @@ export function createSlaJobPayload(init: {
     priority: init.priority,
     categoryId: init.categoryId ?? null,
     metadata: init.metadata,
+    idempotencyKey: init.idempotencyKey,
   };
 
-  slaJobPayloadSchema.parse(payload);
   return payload;
 }
