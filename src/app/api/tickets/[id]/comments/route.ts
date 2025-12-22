@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { checkCommentCooldown } from "@/lib/spam-guard";
 import { createRequestLogger } from "@/lib/logger";
 import { sanitizeMarkdown } from "@/lib/sanitize";
 import {
@@ -36,6 +37,9 @@ export async function POST(
     identifier: auth.user.id,
   });
   if (!rate.allowed) return rate.response;
+
+  const cooldown = checkCommentCooldown(auth.user.id, logger);
+  if (!cooldown.allowed) return cooldown.response;
 
   const ticket = await prisma.ticket.findUnique({
     where: { id: params.id },
