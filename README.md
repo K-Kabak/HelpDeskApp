@@ -38,6 +38,9 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 - `pnpm test` - Vitest (placeholder)
 - `pnpm test:e2e` - Playwright (placeholder)
 
+## SLA indicators
+- Dashboard ticket list shows SLA status badges: red when `firstResponseDue`/`resolveDue` are past due and not resolved, green countdown when upcoming.
+
 ## Models (Prisma)
 - Organization, User (role: REQUESTER/AGENT/ADMIN), Team, TeamMembership
 - Ticket (statuses: NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE; priorities: NISKI, SREDNI, WYSOKI, KRYTYCZNY)
