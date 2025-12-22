@@ -7,6 +7,8 @@ import Link from "next/link";
 import CommentForm from "./comment-form";
 import TicketActions from "./ticket-actions";
 import { SafeMarkdown } from "@/components/safe-markdown";
+import { AttachmentPicker } from "./attachment-picker";
+import { AttachmentVisibility } from "@prisma/client";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -57,6 +59,10 @@ export default async function TicketPage({
         include: { author: true },
         orderBy: { createdAt: "asc" },
       },
+      attachments: {
+        include: { uploader: true },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -98,6 +104,28 @@ export default async function TicketPage({
   const lastActivityDate = (
     visibleComments[visibleComments.length - 1]?.createdAt ?? ticket.updatedAt
   ).toLocaleString();
+
+  const canSeeInternal = session.user.role !== "REQUESTER";
+
+  const visibleAttachments =
+    session.user.role === "REQUESTER"
+      ? ticket.attachments.filter(
+          (att) => att.visibility === AttachmentVisibility.PUBLIC
+        )
+      : ticket.attachments;
+
+  const attachmentItems = visibleAttachments.map((att) => ({
+    id: att.id,
+    fileName: att.fileName,
+    mimeType: att.mimeType,
+    sizeBytes: att.sizeBytes,
+    visibility: att.visibility,
+    createdAt: att.createdAt.toISOString(),
+    uploaderName: att.uploader?.name ?? "Nieznany",
+  }));
+
+  const attachmentsEnabled =
+    process.env.NEXT_PUBLIC_ATTACHMENTS_ENABLED !== "false";
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -159,6 +187,14 @@ export default async function TicketPage({
         isOwner={ticket.requesterId === session.user.id}
         agents={agents.map((agent) => ({ id: agent.id, name: agent.name }))}
         teams={teams}
+      />
+
+      <AttachmentPicker
+        ticketId={ticket.id}
+        initialAttachments={attachmentItems}
+        canUploadInternal={session.user.role !== "REQUESTER"}
+        canSeeInternal={canSeeInternal}
+        attachmentsEnabled={attachmentsEnabled}
       />
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
