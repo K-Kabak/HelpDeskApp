@@ -52,6 +52,15 @@ async function main() {
     },
   });
 
+  await prisma.notificationPreference.createMany({
+    data: [
+      { userId: admin.id },
+      { userId: requester.id },
+      { userId: agent.id },
+    ],
+    skipDuplicates: true,
+  });
+
   const team = await prisma.team.upsert({
     where: {
       organizationId_name: {
