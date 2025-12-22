@@ -90,6 +90,32 @@ Defines objective Go/No-Go gates for early delivery waves. Commands assume Power
   - If pagination breaks UI, revert to previous list query or hide pagination behind a flag until fixed.
 - Do not merge partial checkpoint work without green gates.
 
+## Checkpoint 6 (tasks 062-073)
+- **Scope covered:** admin audit coverage for users/teams/tags/SLA, audit viewer surface, assignment auto-suggest/search filters, reopen reason + throttling workflows, attachment download logging, Redis/BullMQ worker plumbing, SLA timer/job schema and scheduling, SLA breach worker, and the SLA pause/resume guardrail that bundles these changes.
+- **Must-pass commands:**
+  - `pnpm check:env` and `pnpm check:envexample`
+  - `pnpm lint`
+  - `pnpm test`
+  - `pnpm test:contract`
+  - `pnpm openapi:lint`
+  - Conflict scan: `git grep -n "[<=>]\{7\}" -- .`
+- **Checklist + acceptance:**
+  - Task 062 (admin audit coverage) is done; admin CRUD writes audit rows as shown in #97/#139.
+  - Task 063 (audit viewer UI) is blocked and tracked in #63.
+  - Tasks 064–071 (auto-suggest, filters, reopen/throttle, download logging, worker infra, SLA timer/job schema, scheduling) remain blocked awaiting #64–#71.
+  - Task 072 (SLA breach worker) is done and emits audit + notification events (#107/#128).
+  - Task 073 (SLA pause/resume handling) remains blocked pending #73.
+- **Status:**
+  - Done: #97/#139, #107/#128.
+  - Blocked: #63, #64, #65, #66, #67, #68, #69, #70, #71, #73.
+- **Go / No-Go:**
+  - **Go** when the listed commands pass, the audit/worker evidence (#97, #139, #107, #128) is included, and outstanding blockers (#63–#71, #73) are documented.
+  - **No-Go** if any command fails, audit/worker regressions appear, or conflict markers exist.
+- **Rollback guidance:**
+  - Revert admin audit hooks if they introduce regressions; rerun `pnpm test`.
+  - Pause the worker and fix queue logic if duplicates or missing notifications occur, then rerun the gate list.
+  - Keep this checkpoint open until blockers (#63–#71, #73) are resolved.
+
 ## Checkpoint 7 (tasks 075-085)
 - **Scope covered:** notification worker readiness (075), queue health endpoints (076), SLA dashboard widgets (077), automation rule engine (078), job retries/DLQ (079), worker runbook (080), SLA reminders (081), CSAT trigger (082), notification preference enforcement (083), SLA escalation logic (084), OpenAPI updates for worker-driven events/contracts (085). Related issues: #65, #69, #47, #115.
 - **Must-pass commands:**
