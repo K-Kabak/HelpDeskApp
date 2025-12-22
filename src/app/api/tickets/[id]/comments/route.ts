@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { createRequestLogger } from "@/lib/logger";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -17,6 +19,18 @@ export async function POST(
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const logger = createRequestLogger({
+    route: `/api/tickets/${params.id}/comments`,
+    method: req.method,
+    userId: session.user.id,
+  });
+
+  const rate = checkRateLimit(req, "comments:create", {
+    logger,
+    identifier: session.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   const ticket = await prisma.ticket.findUnique({
     where: { id: params.id },

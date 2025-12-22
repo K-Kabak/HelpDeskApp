@@ -9,36 +9,72 @@ type CheckResult =
   | { allowed: true }
   | { allowed: false; response: NextResponse };
 
+type RateLimitLogger = {
+  info?: (message: string, meta?: Record<string, unknown>) => void;
+  warn?: (message: string, meta?: Record<string, unknown>) => void;
+};
+
+type CheckOptions = {
+  identifier?: string;
+  logger?: RateLimitLogger;
+};
+
 const buckets = new Map<string, Bucket>();
 
-const envEnabled = process.env.RATE_LIMIT_ENABLED === "true";
-const windowMs = Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? "60000", 10);
-const maxRequests = Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS ?? "100", 10);
-const disabledRoutes = (process.env.RATE_LIMIT_DISABLED_ROUTES ?? "")
-  .split(",")
-  .map((r) => r.trim())
-  .filter(Boolean);
+function getConfig() {
+  return {
+    enabled: process.env.RATE_LIMIT_ENABLED === "true",
+    windowMs: Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? "60000", 10),
+    maxRequests: Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS ?? "20", 10),
+    disabledRoutes: (process.env.RATE_LIMIT_DISABLED_ROUTES ?? "")
+      .split(",")
+      .map((r) => r.trim())
+      .filter(Boolean),
+  };
+}
 
-export function checkRateLimit(req: NextRequest, routeId: string): CheckResult {
-  if (!envEnabled || disabledRoutes.includes(routeId)) {
+function getIdentifier(req: Request | NextRequest) {
+  const xf = req.headers.get("x-forwarded-for");
+  if ("ip" in req && typeof req.ip === "string" && req.ip) {
+    return req.ip;
+  }
+  if (xf) {
+    return xf.split(",")[0]?.trim() || "unknown";
+  }
+
+  return "unknown";
+}
+
+export function resetRateLimitBuckets() {
+  buckets.clear();
+}
+
+export function checkRateLimit(req: Request | NextRequest, routeId: string, options?: CheckOptions): CheckResult {
+  const { enabled, windowMs, maxRequests, disabledRoutes } = getConfig();
+
+  if (!enabled || disabledRoutes.includes(routeId)) {
     return { allowed: true };
   }
 
-  const identifier =
-    req.ip ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown";
+  const identifier = options?.identifier ?? getIdentifier(req);
+  const key = `${routeId}:${identifier}`;
 
   const now = Date.now();
-  const existing = buckets.get(identifier);
+  const existing = buckets.get(key);
 
   if (!existing || existing.resetAt <= now) {
-    buckets.set(identifier, { count: 1, resetAt: now + windowMs });
+    buckets.set(key, { count: 1, resetAt: now + windowMs });
     return { allowed: true };
   }
 
   if (existing.count >= maxRequests) {
     const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
+    options?.logger?.warn?.("rate_limit.blocked", {
+      routeId,
+      identifier,
+      retryAfterSeconds,
+      resetAt: existing.resetAt,
+    });
     return {
       allowed: false,
       response: NextResponse.json(
@@ -49,6 +85,7 @@ export function checkRateLimit(req: NextRequest, routeId: string): CheckResult {
             "Retry-After": `${retryAfterSeconds}`,
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Reset": `${existing.resetAt}`,
+            "X-RateLimit-Limit": `${maxRequests}`,
           },
         }
       ),
@@ -56,6 +93,6 @@ export function checkRateLimit(req: NextRequest, routeId: string): CheckResult {
   }
 
   existing.count += 1;
-  buckets.set(identifier, existing);
+  buckets.set(key, existing);
   return { allowed: true };
 }
