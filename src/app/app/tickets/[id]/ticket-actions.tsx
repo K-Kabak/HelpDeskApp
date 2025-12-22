@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getAllowedStatuses, canUpdateStatus } from "@/lib/ticket-policy";
+import { needsReopenReason, validateReopenReason } from "@/lib/reopen-reason";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -48,6 +49,8 @@ export default function TicketActions({
   const [assigneeTeamId, setAssigneeTeamId] = useState(
     initialAssigneeTeamId ?? ""
   );
+  const [reopenReason, setReopenReason] = useState("");
+  const [reasonError, setReasonError] = useState("");
 
   const canManageStatus = role === "AGENT" || role === "ADMIN";
   const requesterCanUpdate = role === "REQUESTER" && isOwner;
@@ -88,6 +91,13 @@ export default function TicketActions({
   const handleStatusSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!canManageStatus && !requesterCanUpdate) return;
+    const needReason = needsReopenReason(status);
+    const validation = needReason ? validateReopenReason(reopenReason) : { valid: true, message: "" };
+    if (needReason && !validation.valid) {
+      setReasonError(validation.message);
+      toast.error(validation.message);
+      return;
+    }
     if (
       !canUpdateStatus(
         { role, isOwner, currentStatus: initialStatus },
@@ -97,7 +107,11 @@ export default function TicketActions({
       toast.error("Nie możesz ustawić tego statusu.");
       return;
     }
-    mutation.mutate({ status });
+    const payload: Record<string, unknown> = { status };
+    if (needReason) {
+      payload.reopenReason = reopenReason.trim();
+    }
+    mutation.mutate(payload);
   };
 
   const handleAssignmentSubmit = (e: FormEvent) => {
@@ -114,37 +128,75 @@ export default function TicketActions({
       <h2 className="text-lg font-semibold mb-4">Akcje</h2>
       <div className="grid gap-6 md:grid-cols-2">
         {(canManageStatus || requesterCanUpdate) && (
-          <form className="space-y-3" onSubmit={handleStatusSubmit}>
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Status zgłoszenia
-              </label>
-              <select
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as TicketStatus)}
-                disabled={mutation.isPending || statusOptions.length === 0}
-              >
-                {statusOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {statusLabels[option]}
-                  </option>
-                ))}
-              </select>
-              {!canManageStatus && requesterCanUpdate && (
-                <p className="mt-1 text-xs text-slate-500">
-                  Możesz jedynie zamykać lub ponownie otwierać własne zgłoszenie.
-                </p>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={mutation.isPending || status === initialStatus}
+        <form className="space-y-3" onSubmit={handleStatusSubmit}>
+          <div>
+            <label className="text-sm font-semibold text-slate-700">
+              Status zgłoszenia
+            </label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+              value={status}
+              onChange={(e) => {
+                const next = e.target.value as TicketStatus;
+                setStatus(next);
+                if (!needsReopenReason(next)) {
+                  setReopenReason("");
+                  setReasonError("");
+                }
+              }}
+              disabled={mutation.isPending || statusOptions.length === 0}
             >
-              {mutation.isPending ? "Zapisywanie..." : "Zapisz status"}
-            </button>
-          </form>
+              {statusOptions.map((option) => (
+                <option key={option} value={option}>
+                  {statusLabels[option]}
+                </option>
+              ))}
+            </select>
+            {needsReopenReason(status) && (
+              <div className="mt-3 space-y-1">
+                <label className="text-sm font-semibold text-slate-700">
+                  Powód ponownego otwarcia
+                </label>
+                <textarea
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                    reasonError ? "border-red-500" : "border-slate-200"
+                  }`}
+                  rows={3}
+                  value={reopenReason}
+                  onChange={(e) => {
+                    setReopenReason(e.target.value);
+                    if (reasonError) setReasonError("");
+                  }}
+                  placeholder="Opisz powód ponownego otwarcia zgłoszenia (min. 10 znaków)."
+                  disabled={mutation.isPending}
+                />
+                {reasonError && (
+                  <p className="text-xs text-red-600">{reasonError}</p>
+                )}
+                <p className="text-xs text-slate-500">
+                  Historia zmian pomaga zespołowi zrozumieć kontekst ponownego
+                  otwarcia.
+                </p>
+              </div>
+            )}
+            {!canManageStatus && requesterCanUpdate && (
+              <p className="mt-1 text-xs text-slate-500">
+                Możesz jedynie zamykać lub ponownie otwierać własne zgłoszenie.
+              </p>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={
+              mutation.isPending ||
+              status === initialStatus ||
+              (needsReopenReason(status) && !validateReopenReason(reopenReason).valid)
+            }
+          >
+            {mutation.isPending ? "Zapisywanie..." : "Zapisz status"}
+          </button>
+        </form>
         )}
 
         {canManageAssignments && (
