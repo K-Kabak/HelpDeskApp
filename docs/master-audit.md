@@ -14,16 +14,14 @@
 - package.json (scripts, dependencies including testing tools).
 
 ## Missing/Unknown Inputs
-- Required specialist docs (`docs/current-state.md`, `docs/api-as-is.md`, `docs/data-as-is.md`, `docs/gaps-core.md`, `docs/known-issues.md`, `docs/search-log.md`, `docs/screen-map.md`, `docs/ui-ux-spec.md`, `docs/ux-acceptance.md`, `docs/threat-model.md`, `docs/security-ops.md`, `docs/testing-ci.md`, `docs/runbooks.md`, `docs/contradictions.md`) are absent in repository.
-- Agent 5 deliverables (`docs/contract-conventions.md`, `docs/error-model.md`, `docs/api-contracts-as-is.md`, `docs/api-contracts-target.md`, `docs/openapi.yaml`, `docs/contract-tests.md`, `docs/migration-contracts.md`) are also missing; contract conventions and OpenAPI spec must be recreated.
-- No explicit threat model, search logs, or UX acceptance criteria available.
-- No existing runbooks beyond README install notes; backup/restore not described.
-- No documented testing matrix or CI pipelines; scripts exist but no config checked in.
+- Specialist docs inventoried in `docs/specialist-inventory.md`; none missing as of 2025-12-22. Keep owners in that doc current when scope expands.
+- Agent 5 contract deliverables present (`docs/contract-conventions.md`, `docs/error-model.md`, `docs/api-contracts-as-is.md`, `docs/api-contracts-target.md`, `docs/openapi.yaml`, `docs/contract-tests.md`, `docs/migration-contracts.md`); updates must track OpenAPI and contract tests.
+- CI workflow exists (`.github/workflows/ci.yml`) and `docs/testing-ci.md` covers expectations; broaden matrix as new suites land.
 - No attachment implementation in code; only schema table exists without routes/UI.
 - Reporting/analytics, Kanban, admin consoles not present beyond TODOs.
 
 ## Verification Steps Planned
 - Execution plan includes tasks to backfill missing docs (coding standards, permission matrix), add CI pipelines, and implement attachments/admin/reporting features.
-- Once specialist docs appear, rerun discovery and update blueprint/plan (Decision Log #1).
+- Once specialist docs evolve, rerun discovery and update blueprint/plan (Decision Log #1).
 - Implement automated tests for role/visibility rules, SLA calculations, and sanitization as part of Phase 0/MVP tasks.
 - Conduct stop/go checkpoints at defined intervals to ensure unknowns are resolved before progressing.
