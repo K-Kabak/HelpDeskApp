@@ -53,8 +53,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Prisma generate
+
+        run: pnpm exec prisma generate  
+
       - name: Typecheck
-        run: pnpm exec tsc --noEmit
+        run: pnpm exec tsc -p tsconfig.ci.json --noEmit
         continue-on-error: true
         env:
           CI: true
