@@ -198,6 +198,7 @@ async function updateTicket(
     id: updatedTicket.id,
     organizationId: updatedTicket.organizationId,
     priority: updatedTicket.priority,
+    requesterId: updatedTicket.requesterId,
     firstResponseDue: updatedTicket.firstResponseDue,
     resolveDue: updatedTicket.resolveDue,
   });

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
-export const slaJobTypeSchema = z.enum(["first-response", "resolve"]);
+export const slaJobTypeSchema = z.enum(["first-response", "resolve", "reminder"]);
 
 export const slaJobPayloadSchema = z.object({
   jobId: z.string().uuid(),

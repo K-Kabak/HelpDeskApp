@@ -5,11 +5,15 @@ type DueField = {
   dueAt: string | Date | null | undefined;
 };
 
+const getReminderLeadMs = () =>
+  Math.max(0, Number(process.env.SLA_REMINDER_LEAD_MINUTES ?? 30)) * 60_000;
+
 export type TicketSlaSchedule = {
   id: string;
   organizationId: string;
   priority: string;
   categoryId?: string | null;
+  requesterId: string;
   firstResponseDue?: string | Date | null;
   resolveDue?: string | Date | null;
 };
@@ -49,5 +53,46 @@ export async function scheduleSlaJobsForTicket(ticket: TicketSlaSchedule): Promi
     results.push(result);
   }
 
+  await scheduleSlaReminderForTicket(ticket);
   return results;
+}
+
+export async function scheduleSlaReminderForTicket(ticket: TicketSlaSchedule): Promise<SlaJobResult[]> {
+  const reminderLeadMs = getReminderLeadMs();
+  if (reminderLeadMs <= 0) {
+    return [];
+  }
+
+  const dueFields: DueField[] = [
+    { jobType: "first-response", dueAt: ticket.firstResponseDue },
+    { jobType: "resolve", dueAt: ticket.resolveDue },
+  ];
+
+  const now = Date.now();
+  const reminderResults: SlaJobResult[] = [];
+
+  for (const field of dueFields) {
+    const dueIso = toIso(field.dueAt);
+    if (!dueIso) continue;
+    const dueMs = Date.parse(dueIso);
+    if (Number.isNaN(dueMs)) continue;
+
+    const reminderTime = dueMs - reminderLeadMs;
+    if (reminderTime <= now) continue;
+
+    const payload = createSlaJobPayload({
+      jobType: "reminder",
+      ticketId: ticket.id,
+      organizationId: ticket.organizationId,
+      dueAt: new Date(reminderTime).toISOString(),
+      priority: ticket.priority,
+      categoryId: ticket.categoryId ?? null,
+      metadata: { reminderFor: field.jobType, requesterId: ticket.requesterId },
+      idempotencyKey: `sla-reminder:${ticket.id}:${field.jobType}`,
+    });
+
+    reminderResults.push(await enqueueSlaJob(payload));
+  }
+
+  return reminderResults;
 }

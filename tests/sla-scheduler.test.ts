@@ -1,5 +1,6 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
+import { describe, expect, it, beforeEach, vi } from "vitest";
+import * as slaJobs from "@/lib/sla-jobs";
+import { scheduleSlaJobsForTicket, scheduleSlaReminderForTicket } from "@/lib/sla-scheduler";
 import { resetSlaJobDedupe } from "@/lib/sla-jobs";
 
 beforeEach(() => {
@@ -14,6 +15,7 @@ describe("SLA scheduler", () => {
       priority: "SREDNI",
       firstResponseDue: new Date(Date.now() + 60000).toISOString(),
       resolveDue: new Date(Date.now() - 60000).toISOString(),
+      requesterId: "user-1",
     };
 
     const result = await scheduleSlaJobsForTicket(ticket);
@@ -28,6 +30,7 @@ describe("SLA scheduler", () => {
       priority: "WYSOKI",
       firstResponseDue: new Date(Date.now() + 60000).toISOString(),
       resolveDue: null,
+      requesterId: "user-1",
     };
 
     const first = await scheduleSlaJobsForTicket(ticket);
@@ -35,5 +38,54 @@ describe("SLA scheduler", () => {
 
     expect(first[0].deduped).toBe(false);
     expect(second[0].deduped).toBe(true);
+  });
+
+  describe("SLA reminders", () => {
+    const enqueueSpy = vi.spyOn(slaJobs, "enqueueSlaJob");
+
+    afterEach(() => {
+      enqueueSpy.mockReset();
+      delete process.env.SLA_REMINDER_LEAD_MINUTES;
+    });
+
+    it("schedules a reminder before due when lead time configured", async () => {
+      process.env.SLA_REMINDER_LEAD_MINUTES = "20";
+      const ticket = {
+        id: "77777777-7777-7777-7777-777777777777",
+        organizationId: "org",
+        priority: "SREDNI",
+        requesterId: "user-1",
+        firstResponseDue: new Date(Date.now() + 3_600_000).toISOString(),
+        resolveDue: null,
+      };
+
+      const result = await scheduleSlaReminderForTicket(ticket);
+      expect(result).toHaveLength(1);
+      expect(enqueueSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jobType: "reminder",
+          metadata: expect.objectContaining({
+            reminderFor: "first-response",
+            requesterId: "user-1",
+          }),
+        }),
+      );
+    });
+
+    it("does not schedule reminder when due is within lead time", async () => {
+      process.env.SLA_REMINDER_LEAD_MINUTES = "60";
+      const ticket = {
+        id: "88888888-8888-8888-8888-888888888888",
+        organizationId: "org",
+        priority: "SREDNI",
+        requesterId: "user-1",
+        firstResponseDue: new Date(Date.now() + 60000).toISOString(),
+        resolveDue: null,
+      };
+
+      const result = await scheduleSlaReminderForTicket(ticket);
+      expect(result).toHaveLength(0);
+      expect(enqueueSpy).not.toHaveBeenCalled();
+    });
   });
 });

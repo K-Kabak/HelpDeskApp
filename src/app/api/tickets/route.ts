@@ -135,6 +135,7 @@ export async function POST(req: Request) {
     id: ticket.id,
     organizationId: ticket.organizationId,
     priority: ticket.priority,
+    requesterId: ticket.requesterId,
     firstResponseDue: ticket.firstResponseDue,
     resolveDue: ticket.resolveDue,
   });
