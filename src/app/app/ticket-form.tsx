@@ -1,10 +1,16 @@
 "use client";
 
 import { TicketPriority } from "@prisma/client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SafeMarkdown } from "@/components/safe-markdown";
+
+type CategoryOption = {
+  id: string;
+  name: string;
+  description?: string | null;
+};
 
 export default function TicketForm() {
   const router = useRouter();
@@ -12,6 +18,10 @@ export default function TicketForm() {
   const [descriptionMd, setDescription] = useState("");
   const [priority, setPriority] = useState<TicketPriority>(TicketPriority.SREDNI);
   const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoryMode, setCategoryMode] = useState<"select" | "custom">("custom");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [categoriesStatus, setCategoriesStatus] = useState<"loading" | "ready" | "empty" | "error">("loading");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [previewMode, setPreviewMode] = useState<"edit" | "preview">("edit");
@@ -24,6 +34,38 @@ export default function TicketForm() {
     }),
     [],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCategories = async () => {
+      setCategoriesStatus("loading");
+      try {
+        const res = await fetch("/api/categories");
+        if (!res.ok) throw new Error("fail");
+        const data = await res.json();
+        const options: CategoryOption[] = data.categories ?? [];
+        if (cancelled) return;
+        if (options.length === 0) {
+          setCategoriesStatus("empty");
+          setCategoryMode("custom");
+          return;
+        }
+        setCategories(options);
+        setCategoriesStatus("ready");
+        setCategoryMode("select");
+        setSelectedCategoryId(options[0].id);
+        setCategory(options[0].name);
+      } catch {
+        if (cancelled) return;
+        setCategoriesStatus("error");
+        setCategoryMode("custom");
+      }
+    };
+    loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const validate = () => {
     const nextErrors: { [key: string]: string } = {};
@@ -184,20 +226,71 @@ export default function TicketForm() {
       </div>
       <div className="grid gap-1">
         <label className="text-sm text-slate-700">Kategoria</label>
-        <input
-          className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
-          value={category}
-          onChange={(e) => {
-            setCategory(e.target.value);
-            if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
-          }}
-          placeholder="np. Sieć"
-          minLength={validationRules.category.min}
-          maxLength={validationRules.category.max}
-          disabled={loading}
-          aria-invalid={!!errors.category}
-          aria-describedby="category-error"
-        />
+        {categoriesStatus === "loading" && (
+          <p className="text-xs text-slate-500">Ładowanie listy kategorii...</p>
+        )}
+        {categoriesStatus === "error" && (
+          <p className="text-xs text-amber-600">
+            Nie udało się pobrać kategorii. Możesz wpisać własną.
+          </p>
+        )}
+        {categoriesStatus === "ready" && categoryMode === "select" && (
+          <select
+            className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
+            value={selectedCategoryId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedCategoryId(id);
+              const match = categories.find((c) => c.id === id);
+              const name = match?.name ?? "";
+              setCategory(name);
+              if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
+              if (!id) {
+                setCategoryMode("custom");
+              }
+            }}
+            disabled={loading}
+            aria-invalid={!!errors.category}
+            aria-describedby="category-error"
+          >
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+            <option value="">Wpisz ręcznie…</option>
+          </select>
+        )}
+        {(categoryMode === "custom" || categoriesStatus !== "ready" || selectedCategoryId === "") && (
+          <input
+            className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
+            }}
+            placeholder="np. Sieć"
+            minLength={validationRules.category.min}
+            maxLength={validationRules.category.max}
+            disabled={loading}
+            aria-invalid={!!errors.category}
+            aria-describedby="category-error"
+          />
+        )}
+        {categoriesStatus === "ready" && categoryMode === "select" && (
+          <button
+            type="button"
+            className="text-xs font-semibold text-sky-700 underline"
+            onClick={() => {
+              setCategoryMode("custom");
+              setSelectedCategoryId("");
+              setCategory("");
+            }}
+            disabled={loading}
+          >
+            Wpisz kategorię ręcznie
+          </button>
+        )}
         {errors.category && (
           <p id="category-error" className="text-xs text-red-600">
             {errors.category}
