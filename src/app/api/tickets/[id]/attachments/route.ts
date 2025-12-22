@@ -1,5 +1,6 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { runAttachmentScan } from "@/lib/av-scanner";
 import { createPresignedUpload } from "@/lib/storage";
 import {
   isMimeAllowed,
@@ -70,6 +71,8 @@ export async function POST(
       sizeBytes: payload.sizeBytes,
     },
   });
+
+  await runAttachmentScan(attachment.id, storagePath);
 
   return NextResponse.json(
     {

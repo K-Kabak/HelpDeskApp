@@ -13,11 +13,11 @@ const createSchema = z.object({
   category: z.string().optional(),
 });
 
-export async function GET(req: Request) {
+export async function GET(req?: Request) {
   const auth = await requireAuth();
   const logger = createRequestLogger({
     route: "/api/tickets",
-    method: req.method,
+    method: req?.method ?? "GET",
     userId: auth.ok ? auth.user.id : undefined,
   });
 
