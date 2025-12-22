@@ -8,6 +8,7 @@
 - Contracts: OpenAPI located at `docs/openapi.yaml`; lint via `pnpm openapi:lint`; contract tests via `pnpm test:contract` (passes with no tests present).
 - Rate limiting: toggle with `RATE_LIMIT_ENABLED=true`; defaults `RATE_LIMIT_MAX_REQUESTS=20` and `RATE_LIMIT_WINDOW_MS=60000`, per-route disable list via `RATE_LIMIT_DISABLED_ROUTES`.
 - Comment spam guard: `SPAM_GUARD_ENABLED` (default true) and `SPAM_GUARD_COOLDOWN_MS` (default 10000) throttle rapid comment posts per user.
+- Worker smoke: `pnpm worker:smoke` (dry-run; no Redis needed) to validate BullMQ config; `pnpm worker:start` runs the worker against `REDIS_URL` with `BULLMQ_QUEUE`, `BULLMQ_PREFIX`, `WORKER_CONCURRENCY`.
 
 ## Test Pyramid
 - Unit (fast, no DB): validation helpers, rate limiter utilities, markdown sanitizer, audit hash chain builder, SLA due calculators.

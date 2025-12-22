@@ -16,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:contract": "vitest run --passWithNoTests tests/contract"
+    "test:contract": "vitest run --passWithNoTests tests/contract",
+    "worker:start": "ts-node src/worker/index.ts",
+    "worker:smoke": "ts-node src/worker/index.ts --dry-run"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -42,7 +44,8 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
-    "zod": "^4.2.1"
+    "zod": "^4.2.1",
+    "bullmq": "^5.23.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
