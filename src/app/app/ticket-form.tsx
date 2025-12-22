@@ -25,6 +25,13 @@ export default function TicketForm() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [previewMode, setPreviewMode] = useState<"edit" | "preview">("edit");
+  const [slaPreview, setSlaPreview] = useState<{
+    status: "idle" | "loading" | "ready" | "missing" | "error";
+    firstResponseDue?: string | null;
+    resolveDue?: string | null;
+    firstResponseHours?: number | null;
+    resolveHours?: number | null;
+  }>({ status: "idle" });
 
   const validationRules = useMemo(
     () => ({
@@ -95,6 +102,49 @@ export default function TicketForm() {
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPreview = async () => {
+      setSlaPreview((prev) => ({ ...prev, status: "loading" }));
+      try {
+        const res = await fetch("/api/sla/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            priority,
+            category: category.trim() || undefined,
+          }),
+        });
+        if (!res.ok) throw new Error("preview failed");
+        const data = await res.json();
+        if (cancelled) return;
+        setSlaPreview({
+          status: data.policy ? "ready" : "missing",
+          firstResponseDue: data.preview?.firstResponseDue ?? null,
+          resolveDue: data.preview?.resolveDue ?? null,
+          firstResponseHours: data.policy?.firstResponseHours ?? null,
+          resolveHours: data.policy?.resolveHours ?? null,
+        });
+      } catch {
+        if (cancelled) return;
+        setSlaPreview({ status: "error" });
+      }
+    };
+
+    fetchPreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [priority, category]);
+
+  const formatDue = (iso?: string | null) => {
+    if (!iso) return "Brak terminu";
+    return new Date(iso).toLocaleString("pl-PL", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -295,6 +345,35 @@ export default function TicketForm() {
           <p id="category-error" className="text-xs text-red-600">
             {errors.category}
           </p>
+        )}
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-800">Podgląd SLA</p>
+          <p className="text-xs text-slate-500">Aktualizuje się po zmianie priorytetu/kategorii</p>
+        </div>
+        {slaPreview.status === "loading" || slaPreview.status === "idle" ? (
+          <p className="text-xs text-slate-600">Ładowanie podglądu SLA...</p>
+        ) : null}
+        {slaPreview.status === "error" && (
+          <p className="text-xs text-amber-700">Nie udało się pobrać podglądu SLA.</p>
+        )}
+        {slaPreview.status === "missing" && (
+          <p className="text-xs text-slate-600">Brak polityki SLA dla wybranego priorytetu lub kategorii.</p>
+        )}
+        {slaPreview.status === "ready" && (
+          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+            <li>
+              <span className="font-semibold">Odpowiedź:</span>{" "}
+              {slaPreview.firstResponseDue ? formatDue(slaPreview.firstResponseDue) : "Brak terminu"}{" "}
+              {typeof slaPreview.firstResponseHours === "number" && `(~${slaPreview.firstResponseHours}h)`}
+            </li>
+            <li>
+              <span className="font-semibold">Rozwiązanie:</span>{" "}
+              {slaPreview.resolveDue ? formatDue(slaPreview.resolveDue) : "Brak terminu"}{" "}
+              {typeof slaPreview.resolveHours === "number" && `(~${slaPreview.resolveHours}h)`}
+            </li>
+          </ul>
         )}
       </div>
       <button

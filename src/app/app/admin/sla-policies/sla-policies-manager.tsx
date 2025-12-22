@@ -3,7 +3,7 @@
 import { TicketPriority } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { slaPolicySchema, validateSlaInput } from "./validation";
+import { validateSlaInput } from "./validation";
 
 type SlaPolicyRow = {
   id: string;
