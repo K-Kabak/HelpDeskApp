@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { recordAdminAudit } from "@/lib/admin-audit";
 import { requireAuth } from "@/lib/authorization";
 import { TicketPriority, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -76,16 +77,20 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const categoryCheck = await validateCategory(parsed.data.categoryId, policy.organizationId);
-  if (!categoryCheck.ok) return categoryCheck.response;
-  const nextCategoryId = categoryCheck.categoryId ?? policy.categoryId;
+  let normalizedCategoryId: string | null | undefined;
+  if (parsed.data.categoryId !== undefined) {
+    const categoryCheck = await validateCategory(parsed.data.categoryId, policy.organizationId);
+    if (!categoryCheck.ok) return categoryCheck.response;
+    normalizedCategoryId = categoryCheck.categoryId;
+  }
+
   const nextPriority = parsed.data.priority ?? policy.priority;
 
   const duplicate = await prisma.slaPolicy.findFirst({
     where: {
       organizationId: policy.organizationId,
       priority: nextPriority,
-      categoryId: nextCategoryId ?? null,
+      categoryId: (normalizedCategoryId ?? policy.categoryId) ?? null,
       NOT: { id: policy.id },
     },
   });
@@ -94,17 +99,40 @@ export async function PATCH(
   }
 
   const updateData: Prisma.SlaPolicyUpdateInput = {};
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
+
   if (parsed.data.priority !== undefined) {
     updateData.priority = parsed.data.priority;
+    if (parsed.data.priority !== policy.priority) {
+      changes.priority = { from: policy.priority, to: parsed.data.priority };
+    }
   }
+
   if (parsed.data.categoryId !== undefined) {
-    updateData.categoryId = parsed.data.categoryId;
+    updateData.categoryId = normalizedCategoryId;
+    if (normalizedCategoryId !== policy.categoryId) {
+      changes.categoryId = { from: policy.categoryId, to: normalizedCategoryId };
+    }
   }
+
   if (parsed.data.firstResponseHours !== undefined) {
     updateData.firstResponseHours = parsed.data.firstResponseHours;
+    if (parsed.data.firstResponseHours !== policy.firstResponseHours) {
+      changes.firstResponseHours = {
+        from: policy.firstResponseHours,
+        to: parsed.data.firstResponseHours,
+      };
+    }
   }
+
   if (parsed.data.resolveHours !== undefined) {
     updateData.resolveHours = parsed.data.resolveHours;
+    if (parsed.data.resolveHours !== policy.resolveHours) {
+      changes.resolveHours = {
+        from: policy.resolveHours,
+        to: parsed.data.resolveHours,
+      };
+    }
   }
 
   const updated = await prisma.slaPolicy.update({
@@ -114,6 +142,31 @@ export async function PATCH(
       category: { select: { id: true, name: true } },
     },
   });
+
+  if (Object.keys(changes).length > 0) {
+    await recordAdminAudit({
+      actorId: auth.user.id,
+      organizationId: policy.organizationId,
+      resource: "SLA",
+      resourceId: policy.id,
+      action: "UPDATE",
+      data: {
+        changes,
+        previous: {
+          priority: policy.priority,
+          categoryId: policy.categoryId,
+          firstResponseHours: policy.firstResponseHours,
+          resolveHours: policy.resolveHours,
+        },
+        next: {
+          priority: updated.priority,
+          categoryId: updated.categoryId,
+          firstResponseHours: updated.firstResponseHours,
+          resolveHours: updated.resolveHours,
+        },
+      },
+    });
+  }
 
   return NextResponse.json({ policy: updated });
 }
@@ -127,7 +180,14 @@ export async function DELETE(
 
   const policy = await prisma.slaPolicy.findUnique({
     where: { id: params.id },
-    select: { id: true, organizationId: true },
+    select: {
+      id: true,
+      organizationId: true,
+      priority: true,
+      categoryId: true,
+      firstResponseHours: true,
+      resolveHours: true,
+    },
   });
 
   if (!policy || policy.organizationId !== (auth.user.organizationId ?? "")) {
@@ -135,5 +195,19 @@ export async function DELETE(
   }
 
   await prisma.slaPolicy.delete({ where: { id: policy.id } });
+
+  await recordAdminAudit({
+    actorId: auth.user.id,
+    organizationId: policy.organizationId,
+    resource: "SLA",
+    resourceId: policy.id,
+    action: "DELETE",
+    data: {
+      priority: policy.priority,
+      categoryId: policy.categoryId,
+      firstResponseHours: policy.firstResponseHours,
+      resolveHours: policy.resolveHours,
+    },
+  });
   return NextResponse.json({ ok: true });
 }
