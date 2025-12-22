@@ -220,6 +220,22 @@ model SlaPolicy {
   @@unique([organizationId, priority, categoryId])
 }
 
+model SlaEscalationLevel {
+  id             String         @id @default(uuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  priority       TicketPriority
+  categoryId     String?
+  category       Category?      @relation(fields: [categoryId], references: [id])
+  level          Int
+  teamId         String
+  team           Team           @relation(fields: [teamId], references: [id])
+  createdAt      DateTime       @default(now())
+
+  @@index([organizationId, priority, categoryId, level])
+  @@unique([organizationId, priority, categoryId, level])
+}
+
 model NotificationPreference {
   id                  String   @id @default(uuid())
   userId              String   @unique
