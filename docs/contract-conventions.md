@@ -20,8 +20,8 @@ These conventions describe how the HelpDesk API behaves today and what clients s
 - **Error envelope**: AS-IS handlers return `{ error: string | object }`. Target/desired shape is `{ error: { code, message, details?, traceId? } }` (see `docs/error-model.md`).
 
 ## Pagination, Filtering, Sorting
-- **AS-IS**: GET `/api/tickets` returns all scoped tickets with no server-side pagination, sorting, or filtering beyond role/organization.
-- **Planned**: Add `limit`, `offset`, `sort`, and filters (`status`, `priority`, `q`) with documented bounds before enabling server-side pagination.
+- **AS-IS**: GET `/api/tickets` supports cursor pagination with `limit` (default 10, max 50), `cursor` (base64 payload of `id` + `createdAt`), and `direction` (`next` default, `prev`), plus optional filters `status`, `priority`, `q` (title/descriptionMd contains).
+- **Planned**: Add stable total counts and sort options; align cursor format with OpenAPI and expose pagination metadata in responses.
 
 ## Idempotency & Concurrency
 - **AS-IS**: No idempotency headers or deduplication; repeated POSTs create duplicates. No ETag/If-Match enforcement; updates are last-write-wins.

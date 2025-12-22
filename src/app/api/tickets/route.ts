@@ -3,6 +3,7 @@ import { requireAuth, ticketScope } from "@/lib/authorization";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
 import { sanitizeMarkdown } from "@/lib/sanitize";
+import { getTicketPage } from "@/lib/ticket-list";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TicketPriority, TicketStatus } from "@prisma/client";
@@ -13,6 +14,15 @@ const createSchema = z.object({
   descriptionMd: z.string().min(3),
   priority: z.nativeEnum(TicketPriority),
   category: z.string().optional(),
+});
+
+const querySchema = z.object({
+  limit: z.coerce.number().min(1).max(50).optional(),
+  cursor: z.string().optional(),
+  direction: z.enum(["next", "prev"]).optional(),
+  status: z.nativeEnum(TicketStatus).optional(),
+  priority: z.nativeEnum(TicketPriority).optional(),
+  q: z.string().optional(),
 });
 
 export async function GET(req?: Request) {
@@ -28,24 +38,32 @@ export async function GET(req?: Request) {
     return auth.response;
   }
 
-  const where = ticketScope(auth.user);
+  const url = req ? new URL(req.url) : null;
+  const parsedQuery = url
+    ? querySchema.safeParse(Object.fromEntries(url.searchParams.entries()))
+    : { success: true, data: {} as Record<string, unknown> };
 
-  const tickets = await prisma.ticket.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    include: {
-      requester: true,
-      assigneeUser: true,
-      assigneeTeam: true,
-    },
+  if (!parsedQuery.success) {
+    return NextResponse.json({ error: parsedQuery.error.flatten() }, { status: 400 });
+  }
+
+  const { limit, cursor, direction, status, priority, q } = parsedQuery.data;
+
+  const page = await getTicketPage(auth.user, {
+    limit,
+    cursor,
+    direction,
+    status,
+    priority,
+    search: q?.trim() || undefined,
   });
 
   logger.info("tickets.list.success", {
-    count: tickets.length,
+    count: page.tickets.length,
     role: auth.user.role,
   });
 
-  return NextResponse.json({ tickets });
+  return NextResponse.json(page);
 }
 
 export async function POST(req: Request) {

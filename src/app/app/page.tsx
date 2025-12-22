@@ -1,23 +1,23 @@
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getTicketPage } from "@/lib/ticket-list";
+import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
-import { TicketStatus, TicketPriority } from "@prisma/client";
 import TicketForm from "./ticket-form";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
   W_TOKU: "W toku",
-  OCZEKUJE_NA_UZYTKOWNIKA: "Oczekuje na użytkownika",
+  OCZEKUJE_NA_UZYTKOWNIKA: "Oczekuje na uzytkownika",
   WSTRZYMANE: "Wstrzymane",
-  ROZWIAZANE: "Rozwiązane",
-  ZAMKNIETE: "Zamknięte",
+  ROZWIAZANE: "Rozwiazane",
+  ZAMKNIETE: "Zamkniete",
   PONOWNIE_OTWARTE: "Ponownie otwarte",
 };
 
 const priorityLabels: Record<TicketPriority, string> = {
   NISKI: "Niski",
-  SREDNI: "Średni",
+  SREDNI: "Sredni",
   WYSOKI: "Wysoki",
   KRYTYCZNY: "Krytyczny",
 };
@@ -29,6 +29,8 @@ export default async function DashboardPage({
     status?: string;
     priority?: string;
     q?: string;
+    cursor?: string;
+    direction?: "next" | "prev";
   };
 }) {
   const session = await getServerSession(authOptions);
@@ -44,47 +46,44 @@ export default async function DashboardPage({
       : undefined;
   const searchQuery = searchParams?.q?.trim();
 
-  const baseWhere =
-    session.user.role === "REQUESTER"
-      ? { requesterId: session.user.id }
-      : { organizationId: session.user.organizationId };
-
-  const tickets = await prisma.ticket.findMany({
-    where: {
-      ...baseWhere,
-      ...(statusFilter ? { status: statusFilter } : {}),
-      ...(priorityFilter ? { priority: priorityFilter } : {}),
-      ...(searchQuery
-        ? {
-            OR: [
-              { title: { contains: searchQuery, mode: "insensitive" } },
-              { description: { contains: searchQuery, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      requester: true,
-      assigneeUser: true,
-      assigneeTeam: true,
-    },
+  const { tickets, nextCursor, prevCursor } = await getTicketPage(session.user, {
+    status: statusFilter,
+    priority: priorityFilter,
+    search: searchQuery,
+    cursor: searchParams?.cursor,
+    direction: searchParams?.direction === "prev" ? "prev" : "next",
+    limit: 10,
   });
+
+  const baseParams = new URLSearchParams();
+  if (statusFilter) baseParams.set("status", statusFilter);
+  if (priorityFilter) baseParams.set("priority", priorityFilter);
+  if (searchQuery) baseParams.set("q", searchQuery);
+  const nextParams = new URLSearchParams(baseParams.toString());
+  if (nextCursor) {
+    nextParams.set("cursor", nextCursor);
+    nextParams.set("direction", "next");
+  }
+  const prevParams = new URLSearchParams(baseParams.toString());
+  if (prevCursor) {
+    prevParams.set("cursor", prevCursor);
+    prevParams.set("direction", "prev");
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Zgłoszenia</h1>
+          <h1 className="text-2xl font-semibold">Zgloszenia</h1>
           <p className="text-sm text-slate-600">
-            Role: {session.user.role} · Wyświetlane {tickets.length} zgłoszeń
+            Role: {session.user.role} - Wyswietlane {tickets.length} zgloszenia
           </p>
         </div>
         <Link
           href="/app/tickets/new"
           className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
         >
-          Nowe zgłoszenie
+          Nowe zgloszenie
         </Link>
       </div>
 
@@ -149,7 +148,7 @@ export default async function DashboardPage({
                 id="q"
                 name="q"
                 defaultValue={searchQuery ?? ""}
-                placeholder="Tytuł lub opis"
+                placeholder="Tytul lub opis"
                 className="mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
             </div>
@@ -166,13 +165,13 @@ export default async function DashboardPage({
 
       {tickets.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Brak zgłoszeń</h2>
-          <p className="mt-1 text-sm text-slate-600">Brak zgłoszeń – utwórz pierwsze.</p>
+          <h2 className="text-lg font-semibold text-slate-900">Brak zgloszen</h2>
+          <p className="mt-1 text-sm text-slate-600">Brak zgloszen - utworz pierwsze.</p>
           <Link
             href="/app/tickets/new"
             className="mt-4 inline-flex rounded-lg border border-sky-600 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
           >
-            Utwórz zgłoszenie
+            Utworz zgloszenie
           </Link>
         </div>
       ) : (
@@ -184,36 +183,60 @@ export default async function DashboardPage({
               className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">
-                  #{ticket.number}
-                </span>
+                <span className="text-xs font-semibold text-slate-500">#{ticket.number}</span>
                 <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
                   {priorityLabels[ticket.priority]}
                 </span>
               </div>
-              <h3 className="line-clamp-2 font-semibold text-slate-900">
-                {ticket.title}
-              </h3>
+              <h3 className="line-clamp-2 font-semibold text-slate-900">{ticket.title}</h3>
               <p className="mt-1 text-xs text-slate-600">{statusLabels[ticket.status]}</p>
-              <p className="mt-2 text-xs text-slate-500">
-                Zgłaszający: {ticket.requester.name}
-              </p>
+              <p className="mt-2 text-xs text-slate-500">Zglaszajacy: {ticket.requester.name}</p>
               {ticket.assigneeUser && (
                 <p className="text-xs text-slate-500">Przypisany: {ticket.assigneeUser.name}</p>
               )}
               {ticket.assigneeTeam && (
-                <p className="text-xs text-slate-500">Zespół: {ticket.assigneeTeam.name}</p>
+                <p className="text-xs text-slate-500">Zespol: {ticket.assigneeTeam.name}</p>
               )}
-              <p className="mt-2 text-[11px] text-slate-400">
-                Utworzono: {ticket.createdAt.toLocaleString()}
-              </p>
+              <p className="mt-2 text-[11px] text-slate-400">Utworzono: {ticket.createdAt.toLocaleString()}</p>
             </Link>
           ))}
         </div>
       )}
 
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">
+          Wyswietlane: {tickets.length} {nextCursor ? "+" : ""} zgloszenia
+        </p>
+        <div className="flex items-center gap-2">
+          <Link
+            aria-disabled={!prevCursor}
+            tabIndex={!prevCursor ? -1 : undefined}
+            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+              prevCursor
+                ? "border-slate-300 text-slate-700 hover:border-sky-500 hover:text-sky-700"
+                : "cursor-not-allowed border-slate-200 text-slate-400"
+            }`}
+            href={prevCursor ? `/app?${prevParams.toString()}` : "#"}
+          >
+            Poprzednie
+          </Link>
+          <Link
+            aria-disabled={!nextCursor}
+            tabIndex={!nextCursor ? -1 : undefined}
+            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+              nextCursor
+                ? "border-sky-600 text-sky-700 hover:bg-sky-50"
+                : "cursor-not-allowed border-slate-200 text-slate-400"
+            }`}
+            href={nextCursor ? `/app?${nextParams.toString()}` : "#"}
+          >
+            Nastepne
+          </Link>
+        </div>
+      </div>
+
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold mb-2">Szybkie zgłoszenie</h2>
+        <h2 className="text-lg font-semibold mb-2">Szybkie zgloszenie</h2>
         <TicketForm />
       </div>
     </div>
