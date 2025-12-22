@@ -124,6 +124,9 @@ model Ticket {
   firstResponseAt  DateTime?
   firstResponseDue DateTime?
   resolveDue       DateTime?
+  slaPausedAt      DateTime?
+  slaResumedAt     DateTime?
+  slaPauseTotalSeconds Int    @default(0)
 }
 
 model Comment {
