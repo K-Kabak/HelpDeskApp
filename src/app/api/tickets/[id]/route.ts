@@ -4,6 +4,7 @@ import { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 
 const updateSchema = z
@@ -56,6 +57,7 @@ async function updateTicket(
   }
 
   const payload = parsed.data;
+  const now = new Date();
 
   if (isRequester) {
     if (payload.priority !== undefined || payload.assigneeUserId !== undefined || payload.assigneeTeamId !== undefined) {
@@ -90,13 +92,25 @@ async function updateTicket(
     changes.status = { from: ticket.status, to: payload.status };
 
     if (payload.status === TicketStatus.ROZWIAZANE) {
-      updates.resolvedAt = new Date();
+      updates.resolvedAt = now;
       updates.closedAt = null;
     } else if (payload.status === TicketStatus.ZAMKNIETE) {
-      updates.closedAt = new Date();
+      updates.closedAt = now;
     } else {
       updates.resolvedAt = null;
       updates.closedAt = null;
+    }
+
+    const slaPauseUpdates = deriveSlaPauseUpdates(ticket, payload.status, now);
+    if (Object.keys(slaPauseUpdates).length > 0) {
+      Object.assign(updates, slaPauseUpdates);
+      for (const [key, value] of Object.entries(slaPauseUpdates)) {
+        if (value === undefined) continue;
+        changes[key] = {
+          from: (ticket as Record<string, unknown>)[key],
+          to: value,
+        };
+      }
     }
   }
 
