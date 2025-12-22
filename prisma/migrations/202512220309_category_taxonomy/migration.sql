@@ -1,6 +1,9 @@
+-- Ensure UUID generation is available without external extensions being pre-installed
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- Category taxonomy table for ticket classification
 CREATE TABLE "Category" (
-    "id" TEXT PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
     "name" TEXT NOT NULL,
     "description" TEXT,
     "organizationId" TEXT NOT NULL,
