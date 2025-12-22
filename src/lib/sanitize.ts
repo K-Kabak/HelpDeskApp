@@ -3,9 +3,8 @@ const DANGEROUS_TAGS = /<\/?(?:style|iframe|object|embed|link|meta|svg|math)[^>]
 const EVENT_HANDLERS = /\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
 const JS_PROTOCOL = /javascript:/gi;
 
-/**
- * Removes common XSS vectors from markdown-derived HTML strings.
- */
+// Removes common XSS vectors from markdown-derived HTML strings.
+// Blocks: <script>, style/iframe/object/embed/link/meta/svg/math tags, inline event handlers, javascript: URLs.
 export function sanitizeMarkdown(input: string) {
   let output = input;
   output = output.replace(SCRIPT_BLOCK, "");
