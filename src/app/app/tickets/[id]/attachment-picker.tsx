@@ -140,7 +140,7 @@ export function AttachmentPicker({
       setFile(null);
       toast.success("Plik przesłany.");
       router.refresh();
-    } catch (err) {
+    } catch {
       // Attempt cleanup of orphaned attachment entry
       await fetch(`/api/tickets/${ticketId}/attachments`, {
         method: "DELETE",

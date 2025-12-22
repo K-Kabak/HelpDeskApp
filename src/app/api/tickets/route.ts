@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { requireAuth, ticketScope } from "@/lib/authorization";
+import { requireAuth } from "@/lib/authorization";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
 import { sanitizeMarkdown } from "@/lib/sanitize";
 import { getTicketPage } from "@/lib/ticket-list";
+import { findSlaPolicyForTicket } from "@/lib/sla-policy";
+import { computeSlaDueDates } from "@/lib/sla-preview";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TicketPriority, TicketStatus } from "@prisma/client";
-import { addHours } from "date-fns";
 
 const createSchema = z.object({
   title: z.string().min(3),
@@ -92,19 +93,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const sla = await prisma.slaPolicy.findFirst({
-    where: {
-      organizationId: auth.user.organizationId ?? "",
-      priority: parsed.data.priority,
-    },
-  });
-
   const sanitizedDescription = sanitizeMarkdown(parsed.data.descriptionMd);
-
-  const firstResponseDue = sla
-    ? addHours(new Date(), sla.firstResponseHours)
-    : null;
-  const resolveDue = sla ? addHours(new Date(), sla.resolveHours) : null;
+  const sla = await findSlaPolicyForTicket(
+    auth.user.organizationId ?? "",
+    parsed.data.priority,
+    parsed.data.category,
+  );
+  const { firstResponseDue, resolveDue } = computeSlaDueDates(sla);
 
   const ticket = await prisma.ticket.create({
     data: {

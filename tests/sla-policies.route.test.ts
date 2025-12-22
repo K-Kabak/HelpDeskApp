@@ -80,7 +80,7 @@ describe("SLA policy admin API", () => {
       }),
     });
 
-    const res = await POST(req);
+    await POST(req);
     const lastCall = mocks.jsonMock.mock.calls.at(-1)!;
     if (lastCall[1]?.status !== 201) {
       throw new Error(`unexpected status ${lastCall[1]?.status}: ${JSON.stringify(lastCall[0])}`);

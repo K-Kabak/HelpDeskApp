@@ -64,8 +64,6 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const isAgent =
-    session.user.role === "AGENT" || session.user.role === "ADMIN";
   const isRequester = session.user.role === "REQUESTER";
 
   if (isRequester && ticket.requesterId !== session.user.id) {
