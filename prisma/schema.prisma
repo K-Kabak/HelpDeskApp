@@ -45,6 +45,7 @@ model Organization {
   teams     Team[]
   tickets   Ticket[]
   tags      Tag[]
+  categories Category[]
   slaPolicy SlaPolicy[]
 }
 
@@ -160,6 +161,18 @@ model Tag {
   updatedAt      DateTime @updatedAt
 
   tickets TicketTag[]
+
+  @@unique([organizationId, name])
+}
+
+model Category {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([organizationId, name])
 }

@@ -78,6 +78,16 @@ async function main() {
     skipDuplicates: true,
   });
 
+
+  await prisma.category.createMany({
+    data: [
+      { name: "Networking", description: "Connectivity, VPN, Wi-Fi, firewalls", organizationId: org.id },
+      { name: "Hardware", description: "Laptops, peripherals, printers", organizationId: org.id },
+      { name: "Software", description: "Applications, licensing, configuration", organizationId: org.id },
+    ],
+    skipDuplicates: true,
+  });
+
   const slaData = [
     { priority: TicketPriority.NISKI, firstResponseHours: 24, resolveHours: 72 },
     { priority: TicketPriority.SREDNI, firstResponseHours: 8, resolveHours: 48 },
