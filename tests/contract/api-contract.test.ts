@@ -46,9 +46,13 @@ function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  Object.values(mockPrisma).forEach((group: any) => {
-    if (typeof group === "object") {
-      Object.values(group).forEach((fn: any) => fn.mockReset?.());
+  Object.values(mockPrisma).forEach((group) => {
+    if (typeof group === "object" && group !== null) {
+      Object.values(group).forEach((fn) => {
+        if (typeof fn === "function" && "mockReset" in fn) {
+          (fn as { mockReset: () => void }).mockReset();
+        }
+      });
     }
   });
 });
