@@ -7,6 +7,8 @@ import {
   isSizeAllowed,
   uploadRequestSchema,
 } from "@/lib/attachment-validation";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { createRequestLogger } from "@/lib/logger";
 import { Attachment } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
@@ -19,6 +21,18 @@ export async function POST(
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const logger = createRequestLogger({
+    route: `/api/tickets/${params.id}/attachments`,
+    method: req.method,
+    userId: session.user.id,
+  });
+
+  const rate = checkRateLimit(req, "attachments:create", {
+    logger,
+    identifier: session.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   const body = await req.json();
   const parsed = uploadRequestSchema.safeParse(body);

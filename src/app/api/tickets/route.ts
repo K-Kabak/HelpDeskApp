@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth, ticketScope } from "@/lib/authorization";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -58,6 +59,12 @@ export async function POST(req: Request) {
     logger.warn("auth.required");
     return auth.response;
   }
+
+  const rate = checkRateLimit(req, "tickets:create", {
+    logger,
+    identifier: auth.ok ? auth.user.id : undefined,
+  });
+  if (!rate.allowed) return rate.response;
 
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
