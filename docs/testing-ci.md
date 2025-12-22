@@ -10,6 +10,7 @@
 - Comment spam guard: `SPAM_GUARD_ENABLED` (default true) and `SPAM_GUARD_COOLDOWN_MS` (default 10000) throttle rapid comment posts per user.
 - Worker smoke: `pnpm worker:smoke` (dry-run; no Redis needed) to validate BullMQ config; `pnpm worker:start` runs the worker against `REDIS_URL` with `BULLMQ_QUEUE`, `BULLMQ_PREFIX`, `WORKER_CONCURRENCY`.
 - Worker health: `pnpm worker:health --dry-run` for config-only check; real health requires `REDIS_URL` and queries counts/failures.
+- Worker retry/DLQ: configure `WORKER_MAX_ATTEMPTS` (default 3), `WORKER_BACKOFF_MS` (default 5000), `WORKER_DLQ_ENABLED` (default true), and `WORKER_DLQ_NAME` for failed job routing.
 
 ## Test Pyramid
 - Unit (fast, no DB): validation helpers, rate limiter utilities, markdown sanitizer, audit hash chain builder, SLA due calculators.
