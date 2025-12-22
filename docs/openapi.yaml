@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: HelpDesk API
+  title: HelpDesk API (AS-IS)
   version: 0.1.0
-  description: Contract-ready OpenAPI covering target ticketing endpoints.
+  description: OpenAPI baseline reflecting currently implemented routes.
 servers:
   - url: https://example.com
     description: Replace with deployment host
@@ -12,91 +12,44 @@ components:
       type: apiKey
       in: cookie
       name: next-auth.session-token
-  parameters:
-    Limit:
-      name: limit
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-    Offset:
-      name: offset
-      in: query
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-    Sort:
-      name: sort
-      in: query
-      description: field:direction (createdAt, priority, status)
-      schema:
-        type: string
-  requestBodies:
-    TicketCreate:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/TicketCreate'
-    TicketUpdate:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/TicketUpdate'
-    CommentCreate:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CommentCreate'
-    AttachmentCreate:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AttachmentCreate'
-  responses:
-    Unauthorized:
-      description: Authentication required. AS-IS handlers return `{ error: "Unauthorized" }` rather than the normalized error envelope.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    Forbidden:
-      description: Forbidden. AS-IS handlers return `{ error: "Forbidden" }` rather than the normalized error envelope.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    NotFound:
-      description: Not found. AS-IS handlers return `{ error: "Not found" }` rather than the normalized error envelope.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
   schemas:
-    Error:
-      type: object
-      required: [code, message]
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        details:
-          type: object
-          additionalProperties: true
-        traceId:
-          type: string
-    ErrorResponse:
+    ErrorAsIs:
       type: object
       properties:
         error:
-          $ref: '#/components/schemas/Error'
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+      additionalProperties: true
+    TeamSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+      additionalProperties: true
     Ticket:
       type: object
       properties:
@@ -158,14 +111,17 @@ components:
         updatedAt:
           type: string
           format: date-time
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tag'
-        etag:
-          type: string
-          nullable: true
-          description: Target-only concurrency token; AS-IS handlers do not return or validate this field.
+    TicketExpanded:
+      allOf:
+        - $ref: '#/components/schemas/Ticket'
+        - type: object
+          properties:
+            requester:
+              $ref: '#/components/schemas/UserSummary'
+            assigneeUser:
+              $ref: '#/components/schemas/UserSummary'
+            assigneeTeam:
+              $ref: '#/components/schemas/TeamSummary'
     TicketCreate:
       type: object
       required: [title, descriptionMd, priority]
@@ -173,23 +129,18 @@ components:
         title:
           type: string
           minLength: 3
-          maxLength: 140
         descriptionMd:
           type: string
           minLength: 3
-          maxLength: 8000
         priority:
           type: string
           enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
         category:
           type: string
           nullable: true
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/TagRef'
     TicketUpdate:
       type: object
+      description: Must include at least one of the fields below; requester-only updates are limited to closing/reopening.
       properties:
         status:
           type: string
@@ -217,10 +168,10 @@ components:
         authorId:
           type: string
           format: uuid
-        bodyMd:
-          type: string
         isInternal:
           type: boolean
+        bodyMd:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -231,93 +182,16 @@ components:
         bodyMd:
           type: string
           minLength: 1
-          maxLength: 4000
         isInternal:
           type: boolean
           default: false
-    Attachment:
-      type: object
-      description: Target attachment representation; AS-IS Prisma model lacks `status` and `url` fields and no handlers exist.
-      properties:
-        id:
-          type: string
-          format: uuid
-        ticketId:
-          type: string
-          format: uuid
-        uploaderId:
-          type: string
-          format: uuid
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        sizeBytes:
-          type: integer
-        status:
-          type: string
-          enum: [PENDING, CLEAN, REJECTED]
-        url:
-          type: string
-          format: uri
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-    AttachmentCreate:
-      type: object
-      required: [fileName, mimeType, sizeBytes]
-      properties:
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        sizeBytes:
-          type: integer
-          maximum: 26214400
-    Tag:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-    TagRef:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
 paths:
   /api/tickets:
     get:
       summary: List tickets
-      description: |
-        AS-IS implementation returns `{ tickets }` without pagination, filtering, or sorting and scopes results by role/organization.
-        Target behavior adds `limit`/`offset`/`sort` and optional `status`/`priority`/`q` filters plus pagination metadata.
-        AS-IS payload includes expanded `requester`, `assigneeUser`, and `assigneeTeam` objects not modeled in the target schema.
-      x-implementation-status: "as-is (pagination/filtering not yet implemented)"
+      description: Returns all tickets scoped by role/organization. No server-side pagination, filtering, or sorting is applied.
       security:
         - cookieAuth: []
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-        - $ref: '#/components/parameters/Sort'
-        - name: status
-          in: query
-          schema:
-            type: string
-        - name: priority
-          in: query
-          schema:
-            type: string
-        - name: q
-          in: query
-          schema:
-            type: string
       responses:
         '200':
           description: Tickets list
@@ -329,39 +203,27 @@ paths:
                   tickets:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Ticket'
-                  page:
-                    type: object
-                    properties:
-                      limit:
-                        type: integer
-                      offset:
-                        type: integer
-                      total:
-                        type: integer
+                      $ref: '#/components/schemas/TicketExpanded'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
     post:
       summary: Create ticket
-      description: |
-        AS-IS returns 200 with `{ ticket }` and does not enforce idempotency. Target behavior should return 201, require an
-        `Idempotency-Key`, and include pagination-friendly metadata fields such as `etag`.
-      x-implementation-status: "as-is (idempotency + 201 response pending)"
+      description: Validates basic fields and creates a ticket; no idempotency is enforced.
       security:
         - cookieAuth: []
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          description: Target requires this idempotency key; AS-IS handlers ignore it.
-          schema:
-            type: string
-            format: uuid
       requestBody:
-        $ref: '#/components/requestBodies/TicketCreate'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreate'
       responses:
         '200':
-          description: Ticket created (AS-IS returns 200; target may switch to 201)
+          description: Ticket created
           content:
             application/json:
               schema:
@@ -374,47 +236,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorAsIs'
         '401':
-          $ref: '#/components/responses/Unauthorized'
-  /api/tickets/{id}:
-    get:
-      summary: Get ticket by id
-      description: |
-        Not implemented in current code. Target behavior should return ticket details with relations when organization scope
-        matches; use 404 on scope violations.
-      x-implementation-status: "planned (no handler in code)"
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Ticket detail
+          description: Unauthorized
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ticket:
-                    $ref: '#/components/schemas/Ticket'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tickets/{id}:
     patch:
       summary: Update ticket
-      description: |
-        AS-IS allows status/priority/assignee updates per role constraints without `If-Match` or etag enforcement and
-        returns 200 on success or 400 on validation/no-change. Target adds optimistic locking via `If-Match` and may return
-        412 on mismatch.
-      x-implementation-status: "as-is (no etag/If-Match)"
+      description: Updates status/priority/assignees with role and organization checks; no If-Match/etag enforcement.
       security:
         - cookieAuth: []
       parameters:
@@ -423,47 +255,49 @@ paths:
           required: true
           schema:
             type: string
-        - name: If-Match
-          in: header
-          required: false
-          description: Target will require etag-based updates; AS-IS ignores this header.
-          schema:
-            type: string
       requestBody:
-        $ref: '#/components/requestBodies/TicketUpdate'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketUpdate'
       responses:
         '200':
-          description: Updated ticket
+          description: Ticket updated
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   ticket:
-                    $ref: '#/components/schemas/Ticket'
+                    $ref: '#/components/schemas/TicketExpanded'
         '400':
           description: Validation or no changes
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorAsIs'
         '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '412':
-          description: Precondition failed
+          description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Not found or other organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
     put:
-      summary: Replace ticket (alias for patch behavior)
-      description: |
-        Mirrors PATCH. Same AS-IS behavior without `If-Match`; target may require it.
-      x-implementation-status: "as-is (no etag/If-Match)"
+      summary: Replace ticket (same semantics as PATCH)
+      description: Mirrors PATCH behavior and validations.
       security:
         - cookieAuth: []
       parameters:
@@ -472,91 +306,50 @@ paths:
           required: true
           schema:
             type: string
-        - name: If-Match
-          in: header
-          required: false
-          description: Target will require etag-based updates; AS-IS ignores this header.
-          schema:
-            type: string
       requestBody:
-        $ref: '#/components/requestBodies/TicketUpdate'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketUpdate'
       responses:
         '200':
-          description: Updated ticket
+          description: Ticket updated
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   ticket:
-                    $ref: '#/components/schemas/Ticket'
+                    $ref: '#/components/schemas/TicketExpanded'
         '400':
           description: Validation or no changes
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorAsIs'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '412':
-          description: Precondition failed
+          description: Forbidden
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Not found or other organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
   /api/tickets/{id}/comments:
-    get:
-      summary: List comments for ticket
-      description: |
-        Not implemented in current code. Target behavior paginates comments and hides internal notes from requesters.
-      x-implementation-status: "planned (no handler in code)"
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/Limit'
-        - name: cursor
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Comments
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  comments:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Comment'
-                  page:
-                    type: object
-                    properties:
-                      limit:
-                        type: integer
-                      cursor:
-                        type: string
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
     post:
       summary: Create comment
-      description: |
-        AS-IS accepts `bodyMd` and optional `isInternal` (default false), stamps `firstResponseAt` for first public agent
-        comment, and returns 200 without idempotency or organization-scope enforcement. Target adds org scoping, may add
-        optional idempotency, and return 201.
-      x-implementation-status: "as-is (idempotency + 201 pending)"
+      description: Creates a comment; organization scope is not enforced in the current handler.
       security:
         - cookieAuth: []
       parameters:
@@ -565,17 +358,15 @@ paths:
           required: true
           schema:
             type: string
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            type: string
-            format: uuid
       requestBody:
-        $ref: '#/components/requestBodies/CommentCreate'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
       responses:
         '200':
-          description: Comment created (AS-IS returns 200; target may switch to 201)
+          description: Comment created
           content:
             application/json:
               schema:
@@ -588,97 +379,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorAsIs'
         '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /api/tickets/{id}/attachments:
-    post:
-      summary: Create attachment upload request
-      description: |
-        Not implemented in current code. Target behavior should validate size/MIME, issue signed upload URL, and track scan
-        status before downloads are allowed.
-      x-implementation-status: "planned (no handler in code)"
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: Idempotency-Key
-          in: header
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: '#/components/requestBodies/AttachmentCreate'
-      responses:
-        '201':
-          description: Upload URL issued
+          description: Unauthorized
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  attachment:
-                    $ref: '#/components/schemas/Attachment'
-                  uploadUrl:
-                    type: string
-                    format: uri
-        '400':
-          description: Validation error
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: '#/components/schemas/ErrorAsIs'
         '404':
-          $ref: '#/components/responses/NotFound'
-  /api/tickets/{id}/attachments/{attachmentId}:
-    get:
-      summary: Get attachment download link
-      description: |
-        Not implemented in current code. Target behavior should enforce organization ownership and attachment scan status
-        before issuing download URLs.
-      x-implementation-status: "planned (no handler in code)"
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: attachmentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Download link
+          description: Not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  attachment:
-                    $ref: '#/components/schemas/Attachment'
-                  downloadUrl:
-                    type: string
-                    format: uri
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/ErrorAsIs'
