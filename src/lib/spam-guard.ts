@@ -11,11 +11,13 @@ type Logger = {
 const lastCommentAt = new Map<string, number>();
 
 function getConfig() {
+  const explicit = process.env.SPAM_GUARD_ENABLED;
+  const allowInTest = explicit === "true";
   return {
-    // Disable spam guard in tests to avoid noisy timing-dependent failures.
+    // Default off in tests unless explicitly enabled via SPAM_GUARD_ENABLED=true.
     enabled:
-      process.env.NODE_ENV !== "test" &&
-      process.env.SPAM_GUARD_ENABLED !== "false",
+      (process.env.NODE_ENV !== "test" || allowInTest) &&
+      explicit !== "false",
     cooldownMs: Number.parseInt(process.env.SPAM_GUARD_COOLDOWN_MS ?? "10000", 10),
   };
 }
