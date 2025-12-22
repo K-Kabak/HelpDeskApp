@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
+import { notificationService } from "@/lib/notification";
 
 const updateSchema = z
   .object({
@@ -59,6 +60,28 @@ async function updateTicket(
   const payload = parsed.data;
   const now = new Date();
 
+  // Check reopen cooldown if attempting to reopen
+  if (payload.status === TicketStatus.PONOWNIE_OTWARTE && ticket.status !== TicketStatus.PONOWNIE_OTWARTE) {
+    const cooldownEnabled = process.env.REOPEN_COOLDOWN_ENABLED !== "false";
+    const cooldownMs = Number.parseInt(process.env.REOPEN_COOLDOWN_MS ?? "600000", 10); // Default 10 minutes
+
+    if (cooldownEnabled && ticket.lastReopenedAt) {
+      const timeSinceLastReopen = now.getTime() - ticket.lastReopenedAt.getTime();
+      if (timeSinceLastReopen < cooldownMs) {
+        const retryAfterSeconds = Math.max(1, Math.ceil((cooldownMs - timeSinceLastReopen) / 1000));
+        return NextResponse.json(
+          { error: "Reopen cooldown active" },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": `${retryAfterSeconds}`,
+            },
+          }
+        );
+      }
+    }
+  }
+
   if (isRequester) {
     if (payload.priority !== undefined || payload.assigneeUserId !== undefined || payload.assigneeTeamId !== undefined) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -96,6 +119,10 @@ async function updateTicket(
       updates.closedAt = null;
     } else if (payload.status === TicketStatus.ZAMKNIETE) {
       updates.closedAt = now;
+    } else if (payload.status === TicketStatus.PONOWNIE_OTWARTE) {
+      updates.lastReopenedAt = now;
+      updates.resolvedAt = null;
+      updates.closedAt = null;
     } else {
       updates.resolvedAt = null;
       updates.closedAt = null;
@@ -216,6 +243,34 @@ async function updateTicket(
     firstResponseDue: updatedTicket.firstResponseDue,
     resolveDue: updatedTicket.resolveDue,
   });
+
+  // Trigger CSAT request on resolution/closure (idempotent)
+  const finalStatuses: TicketStatus[] = [TicketStatus.ROZWIAZANE, TicketStatus.ZAMKNIETE];
+  if (payload.status && finalStatuses.includes(payload.status) && payload.status !== ticket.status) {
+    const existingCsat = await prisma.csatRequest.findUnique({
+      where: { ticketId: updatedTicket.id },
+    });
+
+    if (!existingCsat) {
+      await prisma.csatRequest.create({
+        data: {
+          ticketId: updatedTicket.id,
+        },
+      });
+
+      await notificationService.send({
+        channel: "email",
+        to: updatedTicket.requester.email,
+        subject: "Prosimy o opinię - Zgłoszenie #" + updatedTicket.number,
+        templateId: "csat-request",
+        idempotencyKey: `csat-${updatedTicket.id}`,
+        data: {
+          ticketId: updatedTicket.id,
+          ticketNumber: updatedTicket.number,
+        },
+      });
+    }
+  }
 
   return NextResponse.json({ ticket: updatedTicket });
 }
