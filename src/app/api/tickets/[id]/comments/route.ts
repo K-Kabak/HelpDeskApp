@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
-import { getServerSession } from "next-auth";
+import {
+  isAgentOrAdmin,
+  isSameOrganization,
+  requireAuth,
+} from "@/lib/authorization";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -15,28 +18,30 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const auth = await requireAuth();
   const logger = createRequestLogger({
     route: `/api/tickets/${params.id}/comments`,
     method: req.method,
-    userId: session.user.id,
+    userId: auth.ok ? auth.user.id : undefined,
   });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
+  }
 
   const rate = checkRateLimit(req, "comments:create", {
     logger,
-    identifier: session.user.id,
+    identifier: auth.user.id,
   });
   if (!rate.allowed) return rate.response;
 
   const ticket = await prisma.ticket.findUnique({
     where: { id: params.id },
+    select: { id: true, requesterId: true, organizationId: true, firstResponseAt: true },
   });
   if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (ticket.organizationId !== session.user.organizationId) {
+  if (!isSameOrganization(auth.user, ticket.organizationId)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -46,8 +51,8 @@ export async function POST(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const isRequester = ticket.requesterId === session.user.id;
-  const isAgent = session.user.role === "AGENT" || session.user.role === "ADMIN";
+  const isRequester = ticket.requesterId === auth.user.id;
+  const isAgent = isAgentOrAdmin(auth.user);
   if (parsed.data.isInternal && !isAgent) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -58,7 +63,7 @@ export async function POST(
   const comment = await prisma.comment.create({
     data: {
       ticketId: ticket.id,
-      authorId: session.user.id,
+      authorId: auth.user.id,
       isInternal: parsed.data.isInternal,
       bodyMd: parsed.data.bodyMd,
     },
