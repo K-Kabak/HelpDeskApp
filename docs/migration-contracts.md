@@ -23,7 +23,8 @@ Guidance to move from AS-IS to Target contracts with minimal disruption.
 
 ## Data Migration Notes
 - Add attachment visibility/metadata columns via `prisma migrate dev --name attach_visibility_metadata` (applies migration `202512220156_attach_visibility_metadata`). Defaults are safe (`visibility` defaults to `INTERNAL`, `metadata` nullable).
-- Verify with `\d "Attachment"` or `SELECT visibility, metadata FROM "Attachment" LIMIT 5;` after migration.
+- Add category taxonomy table via `prisma migrate dev --name category_taxonomy` (migration `202512220309_category_taxonomy`). Seeds add Networking/Hardware/Software to the Demo org; rerun `pnpm prisma:seed` to populate.
+- Verify with `\d "Attachment"` or `SELECT visibility, metadata FROM "Attachment" LIMIT 5;` and `SELECT name FROM "Category" LIMIT 5;` after migration.
 - SLA recalculations may need backfill for existing tickets once logic added.
 
 ## Observability & Rollout
