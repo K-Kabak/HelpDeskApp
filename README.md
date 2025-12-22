@@ -58,3 +58,6 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 - Attachments (upload + metadata)
 - Reports, Kanban, KPI dashboard
 - E2E/Unit tests, Dockerfile + docker-compose
+
+## Operations runbooks
+- `docs/worker-deployment-runbook.md`: Restart, drain, rollback guidance for BullMQ workers along with failure mode troubleshooting.
