@@ -5,8 +5,19 @@ import { parseMultiParam, appendMultiParam } from "@/lib/search-filters";
 import { prisma } from "@/lib/prisma";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
+import type { Session } from "next-auth";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
+
+type SessionWithUser = Session & {
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    role?: string;
+    organizationId?: string;
+  };
+};
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -41,7 +52,8 @@ export default async function DashboardPage({
 }: {
   searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
 }) {
-  const session = await getServerSession(authOptions);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
   if (!session?.user) return null;
 
   const params = (await searchParams) ?? {};
@@ -93,7 +105,7 @@ export default async function DashboardPage({
   const categoriesLoaded = !categoryLoading;
   const tagsLoaded = !tagsLoading;
 
-  let { tickets, nextCursor, prevCursor } = await getTicketPage(
+  const { tickets: allTickets, nextCursor, prevCursor } = await getTicketPage(
     {
       id: session.user.id,
       role: session.user.role ?? "",
@@ -111,15 +123,15 @@ export default async function DashboardPage({
   });
 
   // Apply SLA status filter if specified
-  if (slaStatusFilter) {
-    tickets = tickets.filter(ticket => {
-      const sla = getSlaStatus(ticket);
-      if (ticket.status === "ZAMKNIETE" || ticket.status === "ROZWIAZANE") {
-        return false; // Closed/resolved tickets don't have active SLA status
-      }
-      return sla.state === slaStatusFilter;
-    });
-  }
+  const tickets = slaStatusFilter
+    ? allTickets.filter(ticket => {
+        const sla = getSlaStatus(ticket);
+        if (ticket.status === "ZAMKNIETE" || ticket.status === "ROZWIAZANE") {
+          return false; // Closed/resolved tickets don't have active SLA status
+        }
+        return sla.state === slaStatusFilter;
+      })
+    : allTickets;
 
   const slaCounts = tickets.reduce(
     (acc, ticket) => {

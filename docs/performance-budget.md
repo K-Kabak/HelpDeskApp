@@ -67,6 +67,24 @@ All critical query patterns are covered by indexes:
 - ✅ **Attachments**: `Attachment_ticketId_idx`
 - ✅ **Audit Events**: `AuditEvent_ticketId_createdAt_idx`
 - ✅ **Admin Audit**: `AdminAudit_organizationId_createdAt_idx` (DESC)
+This document outlines the performance targets for the HelpDeskApp database and API.
+
+## Database Query Targets
+
+| Query Type | Target Latency (P95) | Current (1k tickets) |
+|------------|----------------------|-----------------------|
+| Ticket List (20 items) | < 50ms | ~6ms |
+| Ticket Search | < 100ms | ~7ms |
+| Ticket Detail (inc. comments/audit) | < 100ms | TBD |
+| Admin Audit Logs | < 200ms | TBD |
+
+## API Response Targets
+
+| Endpoint | Target Latency |
+|----------|----------------|
+| GET /api/tickets | < 200ms |
+| POST /api/tickets | < 300ms |
+| POST /api/tickets/[id]/comments | < 200ms |
 
 ## Optimization History
 

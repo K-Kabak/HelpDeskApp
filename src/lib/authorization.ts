@@ -3,6 +3,16 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 
+type SessionWithUser = Session & {
+  user: {
+    id: string;
+    role: string;
+    organizationId?: string;
+    name?: string | null;
+    email?: string | null;
+  };
+};
+
 export type AuthenticatedUser = {
   id: string;
   role: string;
@@ -17,7 +27,8 @@ type AuthResult =
  * Fetches the current session and returns a normalized user or an auth error response.
  */
 export async function requireAuth(): Promise<AuthResult> {
-  const session = await getServerSession(authOptions);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
 
   if (!session?.user) {
     return {
@@ -28,7 +39,7 @@ export async function requireAuth(): Promise<AuthResult> {
 
   // SECURITY: Validate required user fields and role
   const role = session.user.role;
-  if (!role || typeof role !== 'string' || !['REQUESTER', 'AGENT', 'ADMIN'].includes(role)) {
+  if (!role || typeof role !== "string" || !["REQUESTER", "AGENT", "ADMIN"].includes(role)) {
     return {
       ok: false,
       response: NextResponse.json({ error: "Invalid user role" }, { status: 401 }),
