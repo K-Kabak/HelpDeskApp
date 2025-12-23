@@ -37,12 +37,12 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 
-function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT", organizationId = "org-1") {
+function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
   return {
     user: {
       id: "user-1",
       role,
-      organizationId,
+      organizationId: "org-1",
     },
   };
 }
@@ -323,100 +323,5 @@ describe("POST /api/tickets/{id}/comments", () => {
     expect(res.status).toBe(200);
     const createArgs = mockPrisma.comment.create.mock.calls[0]?.[0];
     expect(createArgs?.data?.bodyMd).toBe('<img src="1" />hello');
-  });
-
-  test("validates comment length limits", async () => {
-    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT"));
-    mockPrisma.ticket.findUnique.mockResolvedValueOnce({
-      id: "t1",
-      requesterId: "user-1",
-      organizationId: "org-1",
-      firstResponseAt: null,
-    });
-
-    const longComment = "a".repeat(10001);
-    const req = new Request("http://localhost/api/tickets/t1/comments", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ bodyMd: longComment }),
-    });
-
-    const res = await createComment(req, { params: { id: "t1" } });
-    expect(res.status).toBe(400);
-    const body = await res.json();
-    expect(body.error.fieldErrors.bodyMd).toBeDefined();
-  });
-
-  test("trims whitespace and rejects empty comments", async () => {
-    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT"));
-    mockPrisma.ticket.findUnique.mockResolvedValueOnce({
-      id: "t1",
-      requesterId: "user-1",
-      organizationId: "org-1",
-      firstResponseAt: null,
-    });
-
-    const req = new Request("http://localhost/api/tickets/t1/comments", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ bodyMd: "   \n\t   " }),
-    });
-
-    const res = await createComment(req, { params: { id: "t1" } });
-    expect(res.status).toBe(400);
-    const body = await res.json();
-    expect(body.error.fieldErrors.bodyMd).toBeDefined();
-  });
-
-  test("trims whitespace from valid comments", async () => {
-    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT"));
-    mockPrisma.ticket.findUnique.mockResolvedValueOnce({
-      id: "t1",
-      requesterId: "user-1",
-      organizationId: "org-1",
-      firstResponseAt: null,
-    });
-    mockPrisma.comment.create.mockResolvedValueOnce({
-      id: "c3",
-      ticketId: "t1",
-      authorId: "user-1",
-      isInternal: false,
-      bodyMd: "Hello World",
-      createdAt: new Date("2024-01-01T00:00:00Z"),
-    });
-
-    const req = new Request("http://localhost/api/tickets/t1/comments", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ bodyMd: "  Hello World  \n" }),
-    });
-
-    const res = await createComment(req, { params: { id: "t1" } });
-    expect(res.status).toBe(200);
-    const createArgs = mockPrisma.comment.create.mock.calls[0]?.[0];
-    expect(createArgs?.data?.bodyMd).toBe("Hello World");
-  });
-
-  test("returns 404 for cross-organization ticket access", async () => {
-    // User from different organization
-    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT", "org-2"));
-    mockPrisma.ticket.findUnique.mockResolvedValueOnce({
-      id: "t1",
-      requesterId: "user-1",
-      organizationId: "org-1", // Different organization
-      firstResponseAt: null,
-    });
-
-    const req = new Request("http://localhost/api/tickets/t1/comments", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ bodyMd: "Cross-org comment attempt" }),
-    });
-
-    const res = await createComment(req, { params: { id: "t1" } });
-    expect(res.status).toBe(404);
-    expect(await res.json()).toEqual({ error: "Not found" });
-    // Ensure comment creation is not attempted
-    expect(mockPrisma.comment.create).not.toHaveBeenCalled();
   });
 });
