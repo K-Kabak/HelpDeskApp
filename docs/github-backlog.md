@@ -66,7 +66,7 @@
 - Security/Edge cases: default creds scoped to local only
 - Rollback/Recovery: remove compose services
 
-**[006] CI pipeline skeleton (lint, typecheck placeholder)**
+**[006] CI pipeline skeleton (lint, typecheck placeholder) ✅ COMPLETED**
 - Goal: CI pipeline skeleton (lint, typecheck placeholder)
 - Acceptance Criteria:
   - pipeline runs on PR
@@ -702,7 +702,7 @@
 - Security/Edge cases: includes actor
 - Rollback/Recovery: disable logging
 
-**[069] Set up Redis/BullMQ worker service**
+**[069] Set up Redis/BullMQ worker service ✅ COMPLETED**
 - Goal: Set up Redis/BullMQ worker service
 - Acceptance Criteria:
   - worker connects and processes dummy job
@@ -732,7 +732,7 @@
 - Security/Edge cases: org scoping
 - Rollback/Recovery: stop enqueue
 
-**[072] Worker processes SLA breach -> audit + notifications**
+**[072] Worker processes SLA breach -> audit + notifications ✅ COMPLETED**
 - Goal: Worker processes SLA breach -> audit + notifications
 - Acceptance Criteria:
   - breach sets flag and sends notification
@@ -772,7 +772,7 @@
 - Security/Edge cases: secret handling
 - Rollback/Recovery: disable email
 
-**[076] Health checks for worker queues (lag, failures)**
+**[076] Health checks for worker queues (lag, failures) ✅ COMPLETED**
 - Goal: Health checks for worker queues (lag, failures)
 - Acceptance Criteria:
   - endpoint exposes metrics

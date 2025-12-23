@@ -40,6 +40,8 @@ This document distills the current repository state and defines an execution-rea
   - Reporting/analytics endpoints or UI.
   - Notification system (email/webhook) or SLA breach alerts.
   - Role-based access guard helpers beyond ad hoc session checks.
+  - Worker job processor (RESOLVED: Task 1 completed - worker routes SLA jobs)
+  - CI/CD pipeline (RESOLVED: Task 2 completed - GitHub Actions workflow added)
 
 ## B) Target Directions (Options)
 1. **Polished Mono-App Enhancement (Recommended):** Keep Next.js/Prisma stack; deliver full helpdesk features (admin console, attachments, SLA engine, reporting) within current app. Benefits: leverages existing code, minimal migration risk, fastest time-to-value. Risks: need disciplined module boundaries to avoid sprawl.
@@ -134,6 +136,9 @@ This document distills the current repository state and defines an execution-rea
 | Notifications | Not found. | Users unaware of updates/SLA breaches. | Add email notifications + optional webhooks. | P2 |
 | Search/pagination | Basic filters, no pagination; search uses non-existent `description` field.【F:src/app/app/page.tsx†L38-L62】 | Performance issues with large data; search bug. | Add pagination and correct field search (`descriptionMd`). | P0 |
 | Security hardening | No rate limits; comment body unsanitized in render context (ReactMarkdown default). | Potential abuse/XSS. | Add rate limiting, rehype-sanitize, and stricter validation. | P0 |
+| Worker job processor | RESOLVED: Worker routes SLA jobs to handlers (Task 1)【F:src/worker/index.ts】 | N/A - implemented | N/A | ✅ |
+| CI/CD pipeline | RESOLVED: GitHub Actions workflow added (Task 2)【F:.github/workflows/ci.yml】 | N/A - implemented | N/A | ✅ |
+| Documentation accuracy | Partially resolved: contradictions.md updated, current-state.md updated (Task 7) | Some docs still claim missing features | Complete Task 7 - update gap analysis and mark backlog items | P1 |
 
 ## E) Execution Plan (Dependency-Driven)
 1. **Foundation: AuthZ & Data Guardrails**
