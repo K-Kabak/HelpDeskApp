@@ -45,6 +45,7 @@ describe("assignment-suggest", () => {
         assigneeUserId: { in: ["agent-1", "agent-2", "agent-3"] },
         status: { notIn: [TicketStatus.ROZWIAZANE, TicketStatus.ZAMKNIETE] },
       },
+      _count: { id: true },
     });
   });
 
