@@ -140,5 +140,11 @@ export async function POST(req: Request) {
     resolveDue: ticket.resolveDue,
   });
 
+  const { evaluateAutomationRules } = await import("@/lib/automation-rules");
+  await evaluateAutomationRules({
+    type: "ticketCreated",
+    ticket,
+  });
+
   return NextResponse.json({ ticket });
 }

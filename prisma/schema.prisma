@@ -49,6 +49,7 @@ model Organization {
   slaPolicy SlaPolicy[]
   adminAudits AdminAudit[]
   slaEscalationLevels SlaEscalationLevel[]
+  automationRules AutomationRule[]
 }
 
 model User {
@@ -275,6 +276,20 @@ model CsatRequest {
   ticketId  String   @unique
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model AutomationRule {
+  id             String   @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  enabled        Boolean  @default(true)
+  triggerConfig  Json
+  actionConfig   Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([organizationId, enabled])
 }
 
 // NextAuth adapter models
