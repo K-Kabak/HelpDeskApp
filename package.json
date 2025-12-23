@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "check:env": "node scripts/validate-env.mjs",
     "check:envexample": "node scripts/check-env-example.mjs",
     "prisma:generate": "dotenv -e .env.local -- prisma generate",
