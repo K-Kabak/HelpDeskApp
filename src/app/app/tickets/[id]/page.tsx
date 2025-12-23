@@ -11,7 +11,6 @@ import { AttachmentPicker } from "./attachment-picker";
 import { AttachmentVisibility } from "@prisma/client";
 import { suggestAssigneeByLoad } from "@/lib/assignment-suggest";
 import { AuditTimeline } from "./audit-timeline";
-import type { SessionWithUser } from "@/lib/session-types";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -47,7 +46,7 @@ export default async function TicketPage({
 }: {
   params: { id: string };
 }) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/login");
   }

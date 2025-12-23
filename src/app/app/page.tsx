@@ -7,7 +7,6 @@ import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
-import type { SessionWithUser } from "@/lib/session-types";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -42,7 +41,7 @@ export default async function DashboardPage({
 }: {
   searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
 }) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const session = await getServerSession(authOptions);
   if (!session?.user) return null;
 
   const params = (await searchParams) ?? {};
