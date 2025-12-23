@@ -26,9 +26,18 @@ export async function requireAuth(): Promise<AuthResult> {
     };
   }
 
+  // SECURITY: Validate required user fields and role
+  const role = session.user.role;
+  if (!role || typeof role !== 'string' || !['REQUESTER', 'AGENT', 'ADMIN'].includes(role)) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid user role" }, { status: 401 }),
+    };
+  }
+
   const user: AuthenticatedUser = {
     id: session.user.id,
-    role: session.user.role || "",
+    role,
     organizationId: session.user.organizationId,
   };
 
@@ -39,9 +48,17 @@ export async function requireAuth(): Promise<AuthResult> {
  * Returns a Prisma where clause enforcing requester vs organization scope.
  */
 export function ticketScope(user: AuthenticatedUser) {
-  return user.role === "REQUESTER"
-    ? { requesterId: user.id }
-    : { organizationId: user.organizationId ?? undefined };
+  if (user.role === "REQUESTER") {
+    return { requesterId: user.id };
+  }
+
+  // SECURITY: Ensure organization scoping is always enforced for non-requester roles
+  if (!user.organizationId) {
+    // If user has no organization, they should not see any tickets
+    return { id: null }; // This will result in no matches
+  }
+
+  return { organizationId: user.organizationId };
 }
 
 export function isAgentOrAdmin(user: AuthenticatedUser) {
@@ -49,5 +66,8 @@ export function isAgentOrAdmin(user: AuthenticatedUser) {
 }
 
 export function isSameOrganization(user: AuthenticatedUser, organizationId: string) {
-  return Boolean(user.organizationId) && user.organizationId === organizationId;
+  // SECURITY: Strict validation - both values must exist and match exactly
+  return user.organizationId !== null &&
+         user.organizationId !== undefined &&
+         user.organizationId === organizationId;
 }
