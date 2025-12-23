@@ -25,6 +25,9 @@ const mockPrisma = vi.hoisted(() => ({
   comment: {
     create: vi.fn(),
   },
+  automationRule: {
+    findMany: vi.fn().mockResolvedValue([]),
+  },
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
