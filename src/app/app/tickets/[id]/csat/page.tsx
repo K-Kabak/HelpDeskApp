@@ -1,31 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
 export default function CsatPage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const ticketId = params.id as string;
-  const token = searchParams.get("token");
   const [score, setScore] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
-
-  // Validate token on mount if present
-  useEffect(() => {
-    if (token) {
-      // Token validation happens server-side, but we can show a loading state
-      setTokenValid(true);
-    } else {
-      // No token - session-based auth will be used
-      setTokenValid(true);
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,24 +23,10 @@ export default function CsatPage() {
     setError(null);
 
     try {
-      // Include token in request if present
-      const body: { score: number; comment?: string; token?: string } = {
-        score,
-        comment: comment || undefined,
-      };
-      if (token) {
-        body.token = token;
-      }
-
-      // If token is in URL, also pass it as query param for flexibility
-      const url = token 
-        ? `/api/tickets/${ticketId}/csat?token=${encodeURIComponent(token)}`
-        : `/api/tickets/${ticketId}/csat`;
-
-      const res = await fetch(url, {
+      const res = await fetch(`/api/tickets/${ticketId}/csat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ score, comment: comment || undefined }),
       });
 
       if (!res.ok) {
