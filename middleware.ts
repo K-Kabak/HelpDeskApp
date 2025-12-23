@@ -9,7 +9,8 @@ export default async function middleware(req: NextRequest) {
   }
 
   return withAuth(
-    async (req) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async (_req) => {
       return NextResponse.next();
     },
     {
