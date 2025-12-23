@@ -11,13 +11,7 @@ export interface EmailAdapter {
 }
 
 export class EmailAdapterStub implements EmailAdapter {
-  async send(_params: {
-    to: string;
-    subject: string;
-    body?: string;
-    templateId?: string;
-    data?: Record<string, unknown>;
-  }): Promise<{ id: string; status: "sent" | "queued" }> {
+  async send(): Promise<{ id: string; status: "sent" | "queued" }> {
     // Stub implementation - does not send emails
     return {
       id: `email-${Date.now()}`,
