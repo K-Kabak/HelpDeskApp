@@ -37,12 +37,12 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 
-function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
+function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT", organizationId = "org-1") {
   return {
     user: {
       id: "user-1",
       role,
-      organizationId: "org-1",
+      organizationId,
     },
   };
 }
@@ -323,5 +323,28 @@ describe("POST /api/tickets/{id}/comments", () => {
     expect(res.status).toBe(200);
     const createArgs = mockPrisma.comment.create.mock.calls[0]?.[0];
     expect(createArgs?.data?.bodyMd).toBe('<img src="1" />hello');
+  });
+
+  test("returns 404 for cross-organization ticket access", async () => {
+    // User from different organization
+    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT", "org-2"));
+    mockPrisma.ticket.findUnique.mockResolvedValueOnce({
+      id: "t1",
+      requesterId: "user-1",
+      organizationId: "org-1", // Different organization
+      firstResponseAt: null,
+    });
+
+    const req = new Request("http://localhost/api/tickets/t1/comments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ bodyMd: "Cross-org comment attempt" }),
+    });
+
+    const res = await createComment(req, { params: { id: "t1" } });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Not found" });
+    // Ensure comment creation is not attempted
+    expect(mockPrisma.comment.create).not.toHaveBeenCalled();
   });
 });
