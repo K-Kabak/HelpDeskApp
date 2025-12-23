@@ -292,6 +292,17 @@ model CsatRequest {
   createdAt DateTime @default(now())
 }
 
+model CsatResponse {
+  id        String   @id @default(uuid())
+  ticketId  String   @unique
+  ticket    Ticket   @relation("TicketCsatResponse", fields: [ticketId], references: [id])
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
 model AutomationRule {
   id             String   @id @default(uuid())
   organizationId String
