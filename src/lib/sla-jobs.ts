@@ -13,7 +13,7 @@ export const slaJobPayloadSchema = z.object({
   }),
   priority: z.string(),
   categoryId: z.string().uuid().nullable(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   idempotencyKey: z.string().min(1).optional(),
 });
 

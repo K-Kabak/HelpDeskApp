@@ -39,10 +39,10 @@ const notificationSchema = z.object({
   subject: z.string().optional(),
   body: z.string().optional(),
   templateId: z.string().optional(),
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
   idempotencyKey: z.string().min(1).optional(),
   metadata: z
-    .record(z.unknown())
+    .record(z.string(), z.unknown())
     .and(
       z.object({
         notificationType: z.enum(["ticketUpdate", "commentUpdate"]).optional(),
@@ -194,9 +194,9 @@ class NotificationServiceImpl implements NotificationService {
       const notification = await prisma.inAppNotification.create({
         data: {
           userId,
-          subject: payload.subject ?? null,
-          body: payload.body ?? null,
-          data: payload.data ?? null,
+          subject: payload.subject ?? undefined,
+          body: payload.body ?? undefined,
+          data: payload.data ? (payload.data as any) : undefined,
         },
       });
 

@@ -52,18 +52,21 @@ async function validateCategory(categoryId: string | null | undefined, organizat
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await assertAdmin();
   if (!auth.ok) return auth.response;
 
+  const { id } = await params;
   const policy = await prisma.slaPolicy.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       organizationId: true,
       priority: true,
       categoryId: true,
+      firstResponseHours: true,
+      resolveHours: true,
     },
   });
 
@@ -109,7 +112,9 @@ export async function PATCH(
   }
 
   if (parsed.data.categoryId !== undefined) {
-    updateData.categoryId = normalizedCategoryId;
+    updateData.category = normalizedCategoryId
+      ? { connect: { id: normalizedCategoryId } }
+      : { disconnect: true };
     if (normalizedCategoryId !== policy.categoryId) {
       changes.categoryId = { from: policy.categoryId, to: normalizedCategoryId };
     }
@@ -173,13 +178,14 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await assertAdmin();
   if (!auth.ok) return auth.response;
 
+  const { id } = await params;
   const policy = await prisma.slaPolicy.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       organizationId: true,

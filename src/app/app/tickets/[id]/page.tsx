@@ -1,7 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Role, TicketPriority, TicketStatus } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import CommentForm from "./comment-form";
@@ -10,6 +10,7 @@ import { SafeMarkdown } from "@/components/safe-markdown";
 import { AttachmentPicker } from "./attachment-picker";
 import { AttachmentVisibility } from "@prisma/client";
 import { suggestAssigneeByLoad } from "@/lib/assignment-suggest";
+import type { SessionWithUser } from "@/lib/session-types";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -45,7 +46,7 @@ export default async function TicketPage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }

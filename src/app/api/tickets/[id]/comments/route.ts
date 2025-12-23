@@ -18,11 +18,12 @@ const schema = z.object({
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const auth = await requireAuth();
   const logger = createRequestLogger({
-    route: `/api/tickets/${params.id}/comments`,
+    route: `/api/tickets/${id}/comments`,
     method: req.method,
     userId: auth.ok ? auth.user.id : undefined,
   });
@@ -42,7 +43,7 @@ export async function POST(
   if (!cooldown.allowed) return cooldown.response;
 
   const ticket = await prisma.ticket.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { id: true, requesterId: true, organizationId: true, firstResponseAt: true },
   });
   if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });

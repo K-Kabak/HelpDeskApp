@@ -1,10 +1,11 @@
 import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { Topbar } from "@/components/topbar";
+import type { SessionWithUser } from "@/lib/session-types";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }

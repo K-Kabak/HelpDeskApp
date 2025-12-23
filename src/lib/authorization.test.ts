@@ -21,7 +21,7 @@ vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { isAgentOrAdmin, isSameOrganization, requireAuth, ticketScope, type AuthenticatedUser } from "./authorization";
 
 const mockGetServerSession = getServerSession as unknown as vi.Mock;

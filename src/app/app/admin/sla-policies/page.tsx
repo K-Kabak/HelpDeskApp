@@ -1,11 +1,12 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { SlaPoliciesManager } from "./sla-policies-manager";
+import type { SessionWithUser } from "@/lib/session-types";
 
 export default async function SlaPoliciesPage() {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }

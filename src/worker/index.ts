@@ -23,7 +23,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-const connection = redisUrl;
+const connection = { host: new URL(redisUrl).hostname, port: Number.parseInt(new URL(redisUrl).port || "6379", 10) };
 
 const queue = new Queue(queueName, { connection, prefix });
 const dlq = dlqEnabled ? new Queue(dlqName, { connection, prefix }) : null;

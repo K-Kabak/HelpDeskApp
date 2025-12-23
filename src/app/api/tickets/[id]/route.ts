@@ -1,8 +1,9 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 import { z } from "zod";
 import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
@@ -28,15 +29,16 @@ const updateSchema = z
 
 async function updateTicket(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const { id } = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const ticket = await prisma.ticket.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!ticket || ticket.organizationId !== session.user.organizationId) {
@@ -172,7 +174,9 @@ async function updateTicket(
     }
 
     if (payload.assigneeUserId !== ticket.assigneeUserId) {
-      updates.assigneeUserId = payload.assigneeUserId;
+      updates.assigneeUser = payload.assigneeUserId
+        ? { connect: { id: payload.assigneeUserId } }
+        : { disconnect: true };
       changes.assigneeUserId = {
         from: ticket.assigneeUserId,
         to: payload.assigneeUserId,
@@ -199,7 +203,9 @@ async function updateTicket(
     }
 
     if (payload.assigneeTeamId !== ticket.assigneeTeamId) {
-      updates.assigneeTeamId = payload.assigneeTeamId;
+      updates.assigneeTeam = payload.assigneeTeamId
+        ? { connect: { id: payload.assigneeTeamId } }
+        : { disconnect: true };
       changes.assigneeTeamId = {
         from: ticket.assigneeTeamId,
         to: payload.assigneeTeamId,
@@ -213,7 +219,7 @@ async function updateTicket(
 
   const auditData = {
     changes,
-  };
+  } as Prisma.InputJsonValue;
 
   const [updatedTicket] = await prisma.$transaction([
     prisma.ticket.update({
@@ -288,14 +294,14 @@ async function updateTicket(
 
 export async function PATCH(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   return updateTicket(req, context);
 }
 
 export async function PUT(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   return updateTicket(req, context);
 }

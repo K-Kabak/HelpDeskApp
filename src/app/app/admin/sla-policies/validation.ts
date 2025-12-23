@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const slaPolicySchema = z.object({
   priority: z.nativeEnum(TicketPriority, {
-    required_error: "Priorytet jest wymagany",
+    message: "Priorytet jest wymagany",
   }),
   categoryId: z.string().trim().min(1).optional().nullable(),
   firstResponseHours: z.coerce.number().int().positive({

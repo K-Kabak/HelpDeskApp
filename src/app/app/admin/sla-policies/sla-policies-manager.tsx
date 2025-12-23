@@ -57,8 +57,8 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
     const parsed = validateSlaInput({
       priority: form.priority,
       categoryId: form.categoryId || null,
-      firstResponseHours: form.firstResponseHours,
-      resolveHours: form.resolveHours,
+      firstResponseHours: Number(form.firstResponseHours),
+      resolveHours: Number(form.resolveHours),
     });
     if (!parsed.success) {
       const message =
@@ -127,8 +127,8 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
     const parsed = validateSlaInput({
       priority: state.priority,
       categoryId: state.categoryId || null,
-      firstResponseHours: state.firstResponseHours,
-      resolveHours: state.resolveHours,
+      firstResponseHours: Number(state.firstResponseHours),
+      resolveHours: Number(state.resolveHours),
     });
     if (!parsed.success) {
       toast.error(parsed.error.flatten().formErrors[0] ?? "Błąd walidacji.");

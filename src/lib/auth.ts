@@ -1,7 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { NextAuthOptions, User } from "next-auth";
+import type { User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { JWT } from "next-auth/jwt";
+import type { JWT } from "next-auth/jwt";
 import bcrypt from "bcrypt";
 import { prisma } from "./prisma";
 
@@ -18,9 +18,9 @@ type AppToken = JWT & {
   organizationId?: string;
 };
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt" as const },
   pages: {
     signIn: "/login",
   },
@@ -57,7 +57,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User & AppUser }) {
       if (user) {
         const appUser = user as User & AppUser;
         const appToken = token as AppToken;
@@ -68,10 +68,10 @@ export const authOptions: NextAuthOptions = {
 
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: JWT & { sub?: string } }) {
       if (session.user) {
         const appToken = token as AppToken;
-        session.user.id = token.sub ?? "";
+        session.user.id = (token as JWT & { sub?: string }).sub ?? "";
         session.user.role = appToken.role;
         session.user.organizationId = appToken.organizationId;
       }
