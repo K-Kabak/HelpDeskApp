@@ -1,12 +1,16 @@
 import fs from "node:fs";
 import { describe, expect, beforeEach, vi, test } from "vitest";
-import { NextRequest } from "next/server";
-import { AdminAudit } from "@prisma/client";
 import { GET as listTickets, POST as createTicket } from "@/app/api/tickets/route";
 import { POST as createComment } from "@/app/api/tickets/[id]/comments/route";
 import { GET as listUsers, POST as createUser } from "@/app/api/admin/users/route";
 import { GET as getUser, PATCH as updateUser, DELETE as deleteUser } from "@/app/api/admin/users/[id]/route";
 import { resetMockPrisma } from "../test-utils/prisma-mocks";
+
+interface MockUser {
+  id: string;
+  role: string;
+  organizationId?: string | null;
+}
 
 const mockPrisma = vi.hoisted(() => ({
   ticket: {
@@ -62,14 +66,12 @@ vi.mock("next/headers", () => ({
 }));
 
 // Mock the authorization module to bypass Next.js context issues
-import type { AuthenticatedUser } from "@/lib/authorization";
-
 const mockRequireAuth = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/authorization", () => ({
   requireAuth: mockRequireAuth,
   ticketScope: vi.fn(),
-  isAgentOrAdmin: (user: AuthenticatedUser) => user.role === "AGENT" || user.role === "ADMIN",
-  isSameOrganization: (user: AuthenticatedUser, orgId: string) => Boolean(user.organizationId) && user.organizationId === orgId,
+  isAgentOrAdmin: (user: MockUser) => user.role === "AGENT" || user.role === "ADMIN",
+  isSameOrganization: (user: MockUser, orgId: string) => Boolean(user.organizationId) && user.organizationId === orgId,
 }));
 
 function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
@@ -387,7 +389,7 @@ describe("POST /api/tickets/{id}/comments", () => {
     const res = await createComment(req, { params: { id: "t1" } });
     expect(res.status).toBe(200);
     const createArgs = mockPrisma.comment.create.mock.calls[0]?.[0];
-    expect(createArgs?.data?.bodyMd).toBe('<img src="1" />hello');
+    expect(createArgs?.data?.bodyMd).toBe("<img src=\"1\" />hello");
   });
 });
 
@@ -571,7 +573,7 @@ describe("POST /api/admin/users", () => {
       createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: new Date("2024-01-01T00:00:00Z"),
     });
-    mockPrisma.adminAudit.create.mockResolvedValueOnce({} as AdminAudit);
+    mockPrisma.adminAudit.create.mockResolvedValueOnce({ id: "audit-1" });
 
     const req = new Request("http://localhost/api/admin/users", {
       method: "POST",
@@ -601,7 +603,7 @@ describe("GET /api/admin/users/[id]", () => {
         organizationId: "org-1",
       },
     });
-    const res = await getUser({} as NextRequest, { params: { id: "user-1" } });
+    const res = await getUser({} as unknown as Request, { params: { id: "user-1" } });
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
@@ -617,7 +619,7 @@ describe("GET /api/admin/users/[id]", () => {
     });
     mockPrisma.user.findFirst.mockResolvedValueOnce(null);
 
-    const res = await getUser({} as NextRequest, { params: { id: "nonexistent" } });
+    const res = await getUser({} as unknown as Request, { params: { id: "nonexistent" } });
     const body = await res.json();
     expect(res.status).toBe(404);
     expect(body.error).toContain("User not found");
@@ -646,7 +648,7 @@ describe("GET /api/admin/users/[id]", () => {
       },
     });
 
-    const res = await getUser({} as NextRequest, { params: { id: "user-1" } });
+    const res = await getUser({} as unknown as Request, { params: { id: "user-1" } });
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.user.id).toBe("user-1");
@@ -719,7 +721,7 @@ describe("PATCH /api/admin/users/[id]", () => {
       createdAt: new Date("2024-01-01T00:00:00Z"),
       updatedAt: new Date("2024-01-01T00:00:00Z"),
     });
-    mockPrisma.adminAudit.create.mockResolvedValueOnce({} as AdminAudit);
+    mockPrisma.adminAudit.create.mockResolvedValueOnce({ id: "audit-2" });
 
     const req = new Request("http://localhost/api/admin/users/user-1", {
       method: "PATCH",
@@ -820,7 +822,7 @@ describe("DELETE /api/admin/users/[id]", () => {
       organizationId: "org-1",
       _count: { ticketsOwned: 0 },
     });
-    mockPrisma.adminAudit.create.mockResolvedValueOnce({} as AdminAudit);
+    mockPrisma.adminAudit.create.mockResolvedValueOnce({ id: "audit-3" });
 
     const req = new Request("http://localhost/api/admin/users/user-1", {
       method: "DELETE",
