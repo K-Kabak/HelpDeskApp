@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE "AutomationRule" (
-  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "organizationId" UUID NOT NULL,
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "organizationId" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "enabled" BOOLEAN NOT NULL DEFAULT true,
   "triggerConfig" JSONB NOT NULL,

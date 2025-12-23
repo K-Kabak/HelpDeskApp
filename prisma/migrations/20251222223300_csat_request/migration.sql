@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE "CsatRequest" (
-  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "ticketId" UUID NOT NULL,
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "ticketId" TEXT NOT NULL,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
