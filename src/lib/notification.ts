@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { defaultNotificationPreferences } from "@/lib/notification-preferences";
+import { emailAdapter, EmailAdapter } from "@/lib/email-adapter";
 
 export type NotificationChannel = "email" | "inapp";
 export type NotificationType = "ticketUpdate" | "commentUpdate";
@@ -165,9 +166,10 @@ class InMemoryNotificationService implements NotificationService {
   }
 }
 
-export function createNotificationService(): NotificationService {
-  // Provider selection can be extended here (e.g., SES, SMTP, in-app).
-  return new InMemoryNotificationService();
+export function createNotificationService(
+  emailAdapter?: EmailAdapter
+): NotificationService {
+  return new NotificationServiceImpl(emailAdapter ?? defaultEmailAdapter);
 }
 
 export const notificationService = createNotificationService();
