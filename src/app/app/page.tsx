@@ -8,6 +8,10 @@ import { getServerSession } from "next-auth/next";
 import type { Session } from "next-auth";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
+import { KpiCards } from "./kpi-cards";
+import { calculateKpiMetrics } from "@/lib/kpi-metrics";
+import { ExportButton } from "./export-button";
+import { Suspense } from "react";
 
 type SessionWithUser = Session & {
   user: {
@@ -148,6 +152,17 @@ export default async function DashboardPage({
     { breached: 0, healthy: 0 }
   );
 
+  // Fetch KPI metrics for admins
+  let kpiMetrics = null;
+  if (session.user.role === "ADMIN" && session.user.organizationId) {
+    try {
+      kpiMetrics = await calculateKpiMetrics(session.user.organizationId);
+    } catch (error) {
+      console.error("Error fetching KPI metrics:", error);
+      // Continue without KPI metrics if there's an error
+    }
+  }
+
   const baseParams = new URLSearchParams();
   if (statusFilter) baseParams.set("status", statusFilter);
   if (priorityFilter) baseParams.set("priority", priorityFilter);
@@ -175,13 +190,33 @@ export default async function DashboardPage({
             Role: {session.user.role} - Wyswietlane {tickets.length} zgloszenia
           </p>
         </div>
-        <Link
-          href="/app/tickets/new"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
-        >
-          Nowe zgloszenie
-        </Link>
+        <div className="flex gap-2">
+          {session.user.role !== "REQUESTER" && (
+            <Suspense fallback={<button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 opacity-50" disabled>Eksportuj zgłoszenia</button>}>
+              <ExportButton label="Eksportuj zgłoszenia" endpoint="tickets" />
+            </Suspense>
+          )}
+          {session.user.role === "ADMIN" && (
+            <Suspense fallback={<button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 opacity-50" disabled>Eksportuj komentarze</button>}>
+              <ExportButton label="Eksportuj komentarze" endpoint="comments" />
+            </Suspense>
+          )}
+          <Link
+            href="/app/tickets/new"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+          >
+            Nowe zgloszenie
+          </Link>
+        </div>
       </div>
+
+      {/* KPI Cards for Admins */}
+      {session.user.role === "ADMIN" && kpiMetrics && (
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Metryki wydajności</h2>
+          <KpiCards initialMetrics={kpiMetrics} />
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <Link href="/app?slaStatus=breached" className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition cursor-pointer">

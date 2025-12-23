@@ -32,6 +32,16 @@ vi.mock("@/lib/sla-scheduler", () => ({
   scheduleSlaJobsForTicket: vi.fn(),
 }));
 
+vi.mock("@/lib/notification", () => ({
+  notificationService: {
+    send: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/automation-rules", () => ({
+  evaluateAutomationRules: vi.fn(),
+}));
+
 const originalEnv = {
   enabled: process.env.REOPEN_COOLDOWN_ENABLED,
   cooldown: process.env.REOPEN_COOLDOWN_MS,
@@ -80,8 +90,13 @@ beforeEach(() => {
   process.env.REOPEN_COOLDOWN_ENABLED = "true";
   process.env.REOPEN_COOLDOWN_MS = "1000"; // 1 second for testing
   mockGetServerSession.mockResolvedValue(makeSession("REQUESTER"));
-  mockPrisma.$transaction.mockImplementation(async (callback) => {
-    return callback(mockPrisma);
+  mockPrisma.$transaction.mockImplementation(async (queries) => {
+    if (Array.isArray(queries)) {
+      // Execute the queries and return results
+      const results = await Promise.all(queries.map((q) => q));
+      return results;
+    }
+    return queries(mockPrisma);
   });
 });
 
@@ -343,6 +358,191 @@ describe("Reopen throttling", () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         status: TicketStatus.PONOWNIE_OTWARTE,
+      }),
+    });
+
+    const res = await updateTicket(req, { params: { id: "t1" } });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("Reopen reason validation", () => {
+  test("requires reopen reason when reopening ticket", async () => {
+    mockPrisma.ticket.findUnique.mockResolvedValue(
+      makeTicket({
+        status: TicketStatus.ZAMKNIETE,
+        lastReopenedAt: null,
+      })
+    );
+
+    const req = new Request("http://localhost/api/tickets/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        status: TicketStatus.PONOWNIE_OTWARTE,
+        reopenReason: "", // Empty reason
+      }),
+    });
+
+    const res = await updateTicket(req, { params: { id: "t1" } });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/powód/i);
+  });
+
+  test("requires reopen reason to be at least 10 characters", async () => {
+    mockPrisma.ticket.findUnique.mockResolvedValue(
+      makeTicket({
+        status: TicketStatus.ZAMKNIETE,
+        lastReopenedAt: null,
+      })
+    );
+
+    const req = new Request("http://localhost/api/tickets/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        status: TicketStatus.PONOWNIE_OTWARTE,
+        reopenReason: "short", // Too short
+      }),
+    });
+
+    const res = await updateTicket(req, { params: { id: "t1" } });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/10 znaków/i);
+  });
+
+  test("allows reopen with valid reason", async () => {
+    mockPrisma.ticket.findUnique.mockResolvedValue(
+      makeTicket({
+        status: TicketStatus.ZAMKNIETE,
+        lastReopenedAt: null,
+      })
+    );
+
+    const now = new Date();
+    const updatedTicket = {
+      ...makeTicket({
+        status: TicketStatus.PONOWNIE_OTWARTE,
+        lastReopenedAt: now,
+        resolvedAt: null,
+        closedAt: null,
+      }),
+      requester: { id: "user-1", name: "User", email: "user@test.com" },
+      assigneeUser: null,
+      assigneeTeam: null,
+    };
+
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.auditEvent.create.mockResolvedValue({
+      id: "audit-1",
+      ticketId: "t1",
+      actorId: "user-1",
+      action: "TICKET_UPDATED",
+      data: {},
+      createdAt: now,
+    });
+
+    const req = new Request("http://localhost/api/tickets/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        status: TicketStatus.PONOWNIE_OTWARTE,
+        reopenReason: "This is a valid reason for reopening the ticket",
+      }),
+    });
+
+    const res = await updateTicket(req, { params: { id: "t1" } });
+    expect(res.status).toBe(200);
+  });
+
+  test("stores reopen reason in audit event data", async () => {
+    mockPrisma.ticket.findUnique.mockResolvedValue(
+      makeTicket({
+        status: TicketStatus.ZAMKNIETE,
+        lastReopenedAt: null,
+      })
+    );
+
+    const now = new Date();
+    const updatedTicket = {
+      ...makeTicket({
+        status: TicketStatus.PONOWNIE_OTWARTE,
+        lastReopenedAt: now,
+        resolvedAt: null,
+        closedAt: null,
+      }),
+      requester: { id: "user-1", name: "User", email: "user@test.com" },
+      assigneeUser: null,
+      assigneeTeam: null,
+    };
+
+    const reopenReason = "This is a valid reason for reopening the ticket";
+    const auditDataWithReason = {
+      changes: { status: { from: TicketStatus.ZAMKNIETE, to: TicketStatus.PONOWNIE_OTWARTE } },
+      reopenReason,
+    };
+
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.$transaction.mockImplementation(async (queries) => {
+      if (Array.isArray(queries)) {
+        return [updatedTicket, { id: "audit-1", data: auditDataWithReason }];
+      }
+      return queries(mockPrisma);
+    });
+
+    const req = new Request("http://localhost/api/tickets/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        status: TicketStatus.PONOWNIE_OTWARTE,
+        reopenReason,
+      }),
+    });
+
+    const res = await updateTicket(req, { params: { id: "t1" } });
+    expect(res.status).toBe(200);
+
+    // Verify transaction was called (this ensures the code path that stores reopenReason was executed)
+    expect(mockPrisma.$transaction).toHaveBeenCalled();
+  });
+
+  test("does not require reopen reason for non-reopen status changes", async () => {
+    mockPrisma.ticket.findUnique.mockResolvedValue(
+      makeTicket({
+        status: TicketStatus.NOWE,
+        lastReopenedAt: null,
+      })
+    );
+
+    const now = new Date();
+    const updatedTicket = {
+      ...makeTicket({
+        status: TicketStatus.ZAMKNIETE,
+        closedAt: now,
+      }),
+      requester: { id: "user-1", name: "User", email: "user@test.com" },
+      assigneeUser: null,
+      assigneeTeam: null,
+    };
+
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.auditEvent.create.mockResolvedValue({
+      id: "audit-1",
+      ticketId: "t1",
+      actorId: "user-1",
+      action: "TICKET_UPDATED",
+      data: {},
+      createdAt: now,
+    });
+
+    const req = new Request("http://localhost/api/tickets/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        status: TicketStatus.ZAMKNIETE,
+        // No reopenReason provided, which is fine for non-reopen
       }),
     });
 

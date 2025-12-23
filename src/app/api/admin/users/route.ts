@@ -1,20 +1,47 @@
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { createRequestLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { z } from "zod";
+
+const createUserSchema = z.object({
+  email: z.string().email().toLowerCase(),
+  name: z.string().min(1).max(255),
+  role: z.enum(["REQUESTER", "AGENT", "ADMIN"]),
+  password: z.string().min(8).max(255),
+});
 
 // GET /api/admin/users - List users for admin
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(req: Request) {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/admin/users",
+    method: req.method,
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
   }
+
+  if (auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const rate = checkRateLimit(req, "admin:users:list", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   try {
     const users = await prisma.user.findMany({
-      where: { organizationId: session.user.organizationId },
+      where: { organizationId: auth.user.organizationId },
       select: {
         id: true,
         email: true,

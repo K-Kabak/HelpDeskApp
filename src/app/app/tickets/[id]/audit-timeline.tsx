@@ -36,7 +36,8 @@ function formatAuditChange(action: string, data: Record<string, unknown> | null)
       const parts: string[] = [];
 
       if (changes.status) {
-        parts.push(`Status: ${changes.status.old} → ${changes.status.new}`);
+        const statusChange = `Status: ${changes.status.old} → ${changes.status.new}`;
+        parts.push(statusChange);
       }
       if (changes.priority) {
         parts.push(`Priorytet: ${changes.priority.old} → ${changes.priority.new}`);
@@ -172,6 +173,12 @@ export function AuditTimeline({ ticketId }: { ticketId: string }) {
                   <p className="text-sm text-slate-700">
                     {formatAuditChange(event.action, event.data)}
                   </p>
+                  {event.action === "TICKET_UPDATED" && event.data && typeof event.data === "object" && "reopenReason" in event.data && event.data.reopenReason && (
+                    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs font-semibold text-amber-800 mb-1">Powód ponownego otwarcia:</p>
+                      <p className="text-sm text-amber-900">{String(event.data.reopenReason)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
