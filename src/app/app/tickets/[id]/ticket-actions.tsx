@@ -210,13 +210,19 @@ export default function TicketActions({
                     Przypisany agent
                   </label>
                   {suggestedAgentId && suggestedAgentId !== assigneeUserId && (
-                    <button
-                      type="button"
-                      onClick={() => setAssigneeUserId(suggestedAgentId)}
-                      className="text-xs text-sky-600 underline hover:text-sky-700"
-                    >
-                      Sugeruj: {agents.find((a) => a.id === suggestedAgentId)?.name}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Sugestia:</span>
+                      <button
+                        type="button"
+                        onClick={() => setAssigneeUserId(suggestedAgentId)}
+                        className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-200 transition-colors"
+                      >
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                        </svg>
+                        {agents.find((a) => a.id === suggestedAgentId)?.name}
+                      </button>
+                    </div>
                   )}
                 </div>
                 <select
