@@ -138,6 +138,12 @@ model Ticket {
   csatRequest      CsatRequest?
   csatResponse     CsatResponse? @relation("TicketCsatResponse")
 
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([requesterId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([priority, createdAt(sort: Desc)])
+  @@index([assigneeUserId, status])
+  @@index([assigneeTeamId, status])
   @@index([organizationId, title, descriptionMd, category], name: "Ticket_search_idx")
 }
 
@@ -150,6 +156,9 @@ model Comment {
   isInternal Boolean @default(false)
   bodyMd    String
   createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([authorId])
 }
 
 model Attachment {
@@ -165,6 +174,9 @@ model Attachment {
   visibility AttachmentVisibility @default(INTERNAL)
   metadata   Json?
   createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([uploaderId])
 }
 
 model Tag {
@@ -213,6 +225,8 @@ model AuditEvent {
   action    String
   data      Json?
   createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 model AdminAudit {
@@ -227,7 +241,8 @@ model AdminAudit {
   data           Json?
   createdAt      DateTime @default(now())
 
-  @@index([organizationId, resource, resourceId], name: "AdminAudit_org_resource_idx")
+  @@index([organizationId, resource, resourceId])
+  @@index([organizationId, createdAt(sort: Desc)])
 }
 
 model SlaPolicy {
