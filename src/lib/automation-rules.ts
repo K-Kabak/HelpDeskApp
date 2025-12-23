@@ -146,6 +146,10 @@ export async function evaluateAutomationRules(
     },
   });
 
+  if (!Array.isArray(rules)) {
+    return;
+  }
+
   for (const rule of rules) {
     try {
       const trigger = validateTriggerConfig(rule.triggerConfig);
