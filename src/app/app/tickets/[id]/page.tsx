@@ -9,6 +9,7 @@ import TicketActions from "./ticket-actions";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import { AttachmentPicker } from "./attachment-picker";
 import { AttachmentVisibility } from "@prisma/client";
+import { suggestAssigneeByLoad } from "@/lib/assignment-suggest";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -187,6 +188,7 @@ export default async function TicketPage({
         isOwner={ticket.requesterId === session.user.id}
         agents={agents.map((agent) => ({ id: agent.id, name: agent.name }))}
         teams={teams}
+        suggestedAgentId={suggestion.suggestedAgentId}
       />
 
       <AttachmentPicker

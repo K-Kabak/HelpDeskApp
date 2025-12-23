@@ -203,9 +203,20 @@ export default function TicketActions({
           <form className="space-y-3" onSubmit={handleAssignmentSubmit}>
             <div className="space-y-2">
               <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  Przypisany agent
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Przypisany agent
+                  </label>
+                  {suggestedAgentId && suggestedAgentId !== assigneeUserId && (
+                    <button
+                      type="button"
+                      onClick={() => setAssigneeUserId(suggestedAgentId)}
+                      className="text-xs text-sky-600 underline hover:text-sky-700"
+                    >
+                      Sugeruj: {agents.find((a) => a.id === suggestedAgentId)?.name}
+                    </button>
+                  )}
+                </div>
                 <select
                   className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
                   value={assigneeUserId}
