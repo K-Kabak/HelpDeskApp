@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { describe, expect, beforeEach, vi, test } from "vitest";
 import { GET as listTickets, POST as createTicket } from "@/app/api/tickets/route";
 import { POST as createComment } from "@/app/api/tickets/[id]/comments/route";
+import { resetMockPrisma } from "../test-utils/prisma-mocks";
 
 const mockPrisma = vi.hoisted(() => ({
   ticket: {
@@ -29,7 +30,6 @@ const mockPrisma = vi.hoisted(() => ({
     findMany: vi.fn().mockResolvedValue([]),
   },
 }));
-
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
 const mockGetServerSession = vi.fn();
@@ -49,15 +49,7 @@ function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  Object.values(mockPrisma).forEach((group) => {
-    if (typeof group === "object" && group !== null) {
-      Object.values(group).forEach((fn) => {
-        if (typeof fn === "function" && "mockReset" in fn) {
-          (fn as { mockReset: () => void }).mockReset();
-        }
-      });
-    }
-  });
+  resetMockPrisma(mockPrisma);
 });
 
 describe("OpenAPI baseline", () => {
