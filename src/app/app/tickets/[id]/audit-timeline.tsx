@@ -102,7 +102,7 @@ export function AuditTimeline({ ticketId }: { ticketId: string }) {
         }
         const data = await response.json();
         setAuditEvents(data.auditEvents);
-      } catch (_err) {
+      } catch {
         setError("Nie udało się pobrać historii zmian");
       } finally {
         setLoading(false);
