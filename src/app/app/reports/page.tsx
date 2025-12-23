@@ -2,8 +2,19 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { ReportsClient } from "./reports-client";
-import { calculateKpiMetrics, DateRange } from "@/lib/kpi-metrics";
+import { calculateKpiMetrics, DateRange, type KpiMetrics } from "@/lib/kpi-metrics";
 import { prisma } from "@/lib/prisma";
+import type { Session } from "next-auth";
+
+type SessionWithUser = Session & {
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    role?: string;
+    organizationId?: string | null;
+  };
+};
 
 async function fetchAnalytics(organizationId: string, days: number) {
   const endDate = new Date();
@@ -84,7 +95,7 @@ export default async function ReportsPage({
 }: {
   searchParams?: { days?: string } | Promise<{ days?: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }
@@ -104,7 +115,7 @@ export default async function ReportsPage({
 
   // Fetch data server-side
   let analytics = null;
-  let kpi = null;
+  let kpi: KpiMetrics | null = null;
 
   try {
     const dateRange: DateRange = {
@@ -113,10 +124,8 @@ export default async function ReportsPage({
     };
     dateRange.startDate.setDate(dateRange.startDate.getDate() - validDays);
 
-    [analytics, kpi] = await Promise.all([
-      fetchAnalytics(session.user.organizationId, validDays),
-      calculateKpiMetrics(session.user.organizationId, dateRange),
-    ]);
+    kpi = await calculateKpiMetrics(session.user.organizationId, dateRange);
+    analytics = await fetchAnalytics(session.user.organizationId, validDays);
   } catch (error) {
     console.error("Error fetching reports data:", error);
     // Continue with null data - client will handle fetching

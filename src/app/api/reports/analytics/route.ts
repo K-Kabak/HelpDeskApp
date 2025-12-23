@@ -1,20 +1,23 @@
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
+import { requireAuth } from "@/lib/authorization";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return auth.response;
   }
 
   // Check if user is admin (analytics are typically admin-only)
-  if (session.user.role !== "ADMIN") {
+  if (auth.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
   }
 
-  const organizationId = session.user.organizationId;
+  if (!auth.user.organizationId) {
+    return NextResponse.json({ error: "Organization required" }, { status: 403 });
+  }
+
+  const organizationId = auth.user.organizationId;
   const { searchParams } = new URL(req.url);
   
   // Support both days parameter and custom date range

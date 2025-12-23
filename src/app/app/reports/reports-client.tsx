@@ -63,6 +63,7 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
     if (days !== initialDays) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days]);
 
   const fetchData = async () => {
