@@ -244,6 +244,14 @@ async function updateTicket(
     resolveDue: updatedTicket.resolveDue,
   });
 
+  const { evaluateAutomationRules } = await import("@/lib/automation-rules");
+  await evaluateAutomationRules({
+    type: "ticketUpdated",
+    ticket: updatedTicket,
+    previousTicket: ticket,
+    changes,
+  });
+
   // Trigger CSAT request on resolution/closure (idempotent)
   const finalStatuses: TicketStatus[] = [TicketStatus.ROZWIAZANE, TicketStatus.ZAMKNIETE];
   if (payload.status && finalStatuses.includes(payload.status) && payload.status !== ticket.status) {
