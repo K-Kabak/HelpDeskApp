@@ -34,6 +34,7 @@ type DashboardSearchParams = {
   direction?: "next" | "prev";
   category?: string;
   tags?: string | string[];
+  slaStatus?: "breached" | "healthy";
 };
 
 export default async function DashboardPage({
@@ -57,6 +58,7 @@ export default async function DashboardPage({
   const searchQuery = params.q?.trim();
   const categoryFilter = params.category?.trim();
   const tagFilters = parseMultiParam(params.tags);
+  const slaStatusFilter = params.slaStatus;
 
   let categoryOptions: { id: string; name: string }[] = [];
   let tagOptions: { id: string; name: string }[] = [];
@@ -92,7 +94,7 @@ export default async function DashboardPage({
   const categoriesLoaded = !categoryLoading;
   const tagsLoaded = !tagsLoading;
 
-  const { tickets, nextCursor, prevCursor } = await getTicketPage(
+  let { tickets, nextCursor, prevCursor } = await getTicketPage(
     {
       id: session.user.id,
       role: session.user.role ?? "",
@@ -108,6 +110,17 @@ export default async function DashboardPage({
     category: categoryFilter,
     tagIds: tagFilters,
   });
+
+  // Apply SLA status filter if specified
+  if (slaStatusFilter) {
+    tickets = tickets.filter(ticket => {
+      const sla = getSlaStatus(ticket);
+      if (ticket.status === "ZAMKNIETE" || ticket.status === "ROZWIAZANE") {
+        return false; // Closed/resolved tickets don't have active SLA status
+      }
+      return sla.state === slaStatusFilter;
+    });
+  }
 
   const slaCounts = tickets.reduce(
     (acc, ticket) => {
@@ -130,6 +143,7 @@ export default async function DashboardPage({
   if (searchQuery) baseParams.set("q", searchQuery);
   if (categoryFilter) baseParams.set("category", categoryFilter);
   appendMultiParam(baseParams, "tags", tagFilters);
+  if (slaStatusFilter) baseParams.set("slaStatus", slaStatusFilter);
   const nextParams = new URLSearchParams(baseParams.toString());
   if (nextCursor) {
     nextParams.set("cursor", nextCursor);
@@ -159,7 +173,7 @@ export default async function DashboardPage({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <Link href="/app?slaStatus=breached" className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia z naruszonym SLA</p>
@@ -181,8 +195,8 @@ export default async function DashboardPage({
               </svg>
             </div>
           </div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        </Link>
+        <Link href="/app?slaStatus=healthy" className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia zgodne z SLA</p>
@@ -204,7 +218,7 @@ export default async function DashboardPage({
               </svg>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
