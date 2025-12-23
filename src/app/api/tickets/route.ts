@@ -19,7 +19,7 @@ const createSchema = z.object({
 });
 
 const querySchema = z.object({
-  limit: z.coerce.number().min(1).max(50).optional(),
+  limit: z.coerce.number().min(1).max(100).optional(),
   cursor: z.string().optional(),
   direction: z.enum(["next", "prev"]).optional(),
   status: z.nativeEnum(TicketStatus).optional(),
