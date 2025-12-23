@@ -3,12 +3,6 @@
 import { useEffect, useState } from "react";
 import { Role } from "@prisma/client";
 
-type AuditData =
-  | { changes: Record<string, { old?: unknown; new?: unknown }> }
-  | { attachment: { fileName?: string } }
-  | { isInternal: boolean }
-  | null;
-
 type AuditEvent = {
   id: string;
   action: string;
@@ -19,7 +13,7 @@ type AuditEvent = {
     email: string;
     role: Role;
   };
-  data: AuditData;
+  data: Record<string, unknown> | null;
   createdAt: string;
 };
 
@@ -35,10 +29,10 @@ const roleColors: Record<Role, string> = {
   ADMIN: "bg-indigo-100 text-indigo-700",
 };
 
-function formatAuditChange(action: string, data: AuditData): string {
+function formatAuditChange(action: string, data: Record<string, unknown> | null): string {
   switch (action) {
     case "TICKET_UPDATED": {
-      const changes = (data && 'changes' in data) ? data.changes : {};
+      const changes = data?.changes || {};
       const parts: string[] = [];
 
       if (changes.status) {
@@ -62,12 +56,12 @@ function formatAuditChange(action: string, data: AuditData): string {
     }
 
     case "ATTACHMENT_UPLOADED": {
-      const attachment = (data && 'attachment' in data) ? data.attachment : null;
+      const attachment = data?.attachment;
       return `Przesłano załącznik: ${attachment?.fileName || "plik"}`;
     }
 
     case "ATTACHMENT_DELETED": {
-      const attachment = (data && 'attachment' in data) ? data.attachment : null;
+      const attachment = data?.attachment;
       return `Usunięto załącznik: ${attachment?.fileName || "plik"}`;
     }
 
@@ -75,10 +69,10 @@ function formatAuditChange(action: string, data: AuditData): string {
       return "Utworzono zgłoszenie";
 
     case "COMMENT_CREATED":
-      return (data && 'isInternal' in data) ? (data.isInternal ? "Dodano wewnętrzny komentarz" : "Dodano komentarz") : "Dodano komentarz";
+      return data?.isInternal ? "Dodano wewnętrzny komentarz" : "Dodano komentarz";
 
     case "COMMENT_UPDATED":
-      return (data && 'isInternal' in data) ? (data.isInternal ? "Zaktualizowano wewnętrzny komentarz" : "Zaktualizowano komentarz") : "Zaktualizowano komentarz";
+      return data?.isInternal ? "Zaktualizowano wewnętrzny komentarz" : "Zaktualizowano komentarz";
 
     case "TICKET_REOPENED":
       return "Ponownie otwarto zgłoszenie";
@@ -108,7 +102,7 @@ export function AuditTimeline({ ticketId }: { ticketId: string }) {
         }
         const data = await response.json();
         setAuditEvents(data.auditEvents);
-      } catch {
+      } catch (_err) {
         setError("Nie udało się pobrać historii zmian");
       } finally {
         setLoading(false);
