@@ -81,7 +81,12 @@ export async function PATCH(
     }
   }
 
-  const updateData: any = {
+  const updateData: Partial<{
+    name: string;
+    enabled: boolean;
+    triggerConfig: unknown;
+    actionConfig: unknown;
+  }> = {
     ...(parsed.data.name !== undefined && { name: parsed.data.name }),
     ...(parsed.data.enabled !== undefined && { enabled: parsed.data.enabled }),
     ...(parsed.data.triggerConfig !== undefined && { triggerConfig: parsed.data.triggerConfig }),

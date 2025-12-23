@@ -35,8 +35,8 @@ export default async function AutomationRulesPage() {
     id: rule.id,
     name: rule.name,
     enabled: rule.enabled,
-    triggerConfig: rule.triggerConfig as any, // Will be validated on use
-    actionConfig: rule.actionConfig as any, // Will be validated on use
+    triggerConfig: rule.triggerConfig as Record<string, unknown>, // Will be validated on use
+    actionConfig: rule.actionConfig as Record<string, unknown>, // Will be validated on use
     createdAt: rule.createdAt,
     updatedAt: rule.updatedAt,
   }));

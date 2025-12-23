@@ -63,8 +63,8 @@ export async function POST(req: Request) {
     data: {
       organizationId: orgId,
       name: parsed.data.name,
-      triggerConfig: parsed.data.triggerConfig as any,
-      actionConfig: parsed.data.actionConfig as any,
+      triggerConfig: parsed.data.triggerConfig,
+      actionConfig: parsed.data.actionConfig,
     },
   });
 
