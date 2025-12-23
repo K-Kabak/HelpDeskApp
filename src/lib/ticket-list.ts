@@ -22,7 +22,7 @@ export type TicketListOptions = {
 };
 
 export type TicketListResult = {
-  tickets: Awaited<ReturnType<typeof prisma.ticket.findMany>>;
+  tickets: Awaited<ReturnType<typeof prisma.ticket.findMany<{ include: { requester: true; assigneeUser: true; assigneeTeam: true } }>>>;
   nextCursor: string | null;
   prevCursor: string | null;
 };
@@ -60,8 +60,8 @@ export async function getTicketPage(
     ...(options.search
       ? {
           OR: [
-            { title: { contains: options.search, mode: "insensitive" } },
-            { descriptionMd: { contains: options.search, mode: "insensitive" } },
+            { title: { contains: options.search, mode: "insensitive" as const } },
+            { descriptionMd: { contains: options.search, mode: "insensitive" as const } },
           ],
         }
       : {}),

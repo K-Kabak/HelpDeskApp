@@ -43,7 +43,7 @@ export async function GET(req?: Request) {
   const url = req ? new URL(req.url) : null;
   const parsedQuery = url
     ? querySchema.safeParse(Object.fromEntries(url.searchParams.entries()))
-    : { success: true, data: {} as Record<string, unknown> };
+    : { success: true as const, data: {} };
 
   if (!parsedQuery.success) {
     return NextResponse.json({ error: parsedQuery.error.flatten() }, { status: 400 });

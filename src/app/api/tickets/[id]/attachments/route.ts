@@ -11,21 +11,23 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
 import { recordAttachmentAudit } from "@/lib/audit";
 import { Attachment, AttachmentVisibility } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { SessionWithUser } from "@/lib/session-types";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const { id } = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const logger = createRequestLogger({
-    route: `/api/tickets/${params.id}/attachments`,
+    route: `/api/tickets/${id}/attachments`,
     method: req.method,
     userId: session.user.id,
   });
@@ -56,7 +58,7 @@ export async function POST(
   }
 
   const ticket = await prisma.ticket.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { id: true, requesterId: true, organizationId: true },
   });
 
@@ -123,15 +125,16 @@ const deleteSchema = z.object({
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const { id } = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const logger = createRequestLogger({
-    route: `/api/tickets/${params.id}/attachments`,
+    route: `/api/tickets/${id}/attachments`,
     method: req.method,
     userId: session.user.id,
   });
@@ -152,7 +155,7 @@ export async function DELETE(
   if (
     !attachment ||
     attachment.ticket.organizationId !== session.user.organizationId ||
-    attachment.ticket.id !== params.id
+    attachment.ticket.id !== id
   ) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -192,7 +195,7 @@ export async function DELETE(
     );
   });
 
-  logger.info({ attachmentId: attachment.id }, "attachment deleted");
+  logger.info("attachment deleted", { attachmentId: attachment.id });
 
   return NextResponse.json({ ok: true });
 }

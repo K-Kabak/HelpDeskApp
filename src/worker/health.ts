@@ -36,7 +36,8 @@ export async function getQueueHealth(options: HealthOptions = {}): Promise<Healt
     };
   }
 
-  const queue = new Queue(queueName, { connection: redisUrl, prefix });
+  const connection = { host: new URL(redisUrl).hostname, port: Number.parseInt(new URL(redisUrl).port || "6379", 10) };
+  const queue = new Queue(queueName, { connection, prefix });
 
   try {
     const counts = await queue.getJobCounts("waiting", "active", "delayed", "failed", "completed", "paused");
@@ -47,7 +48,7 @@ export async function getQueueHealth(options: HealthOptions = {}): Promise<Healt
       redisUrl,
       prefix,
       counts,
-      failedIds: failedJobs.map((job) => job.id),
+      failedIds: failedJobs.map((job) => job.id ?? "").filter((id): id is string => id !== undefined),
     };
   } catch (error) {
     return {

@@ -13,7 +13,7 @@ export function SafeMarkdown({ children }: SafeMarkdownProps) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeSanitize(sanitizeSchema)]}
+      rehypePlugins={[rehypeSanitize(sanitizeSchema) as any]}
     >
       {children}
     </ReactMarkdown>

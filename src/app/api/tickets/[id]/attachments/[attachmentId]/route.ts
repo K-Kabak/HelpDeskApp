@@ -6,22 +6,23 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string; attachmentId: string } }
+  { params }: { params: Promise<{ id: string; attachmentId: string }> }
 ) {
+  const { id, attachmentId } = await params;
   const auth = await requireAuth();
   const logger = createRequestLogger({
-    route: `/api/tickets/${params.id}/attachments/${params.attachmentId}`,
+    route: `/api/tickets/${id}/attachments/${attachmentId}`,
     method: req.method,
     userId: auth.ok ? auth.user.id : undefined,
   });
 
   if (!auth.ok) {
-    logger.warn({ event: "attachment_download", status: "unauthorized" }, "attachment download blocked");
+    logger.warn("attachment download blocked", { event: "attachment_download", status: "unauthorized" });
     return auth.response;
   }
 
   const attachment = await prisma.attachment.findUnique({
-    where: { id: params.attachmentId },
+    where: { id: attachmentId },
     include: {
       ticket: {
         select: { id: true, organizationId: true, requesterId: true },
@@ -29,15 +30,15 @@ export async function GET(
     },
   });
 
-  if (!attachment || attachment.ticket.id !== params.id) {
-    logger.warn({ attachmentId: params.attachmentId, ticketId: params.id }, "attachment not found");
+  if (!attachment || attachment.ticket.id !== id) {
+    logger.warn("attachment not found", { attachmentId, ticketId: id });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   if (attachment.ticket.organizationId !== auth.user.organizationId) {
     logger.warn(
-      { attachmentId: attachment.id, ticketId: attachment.ticket.id, userId: auth.user.id },
-      "attachment download forbidden"
+      "attachment download forbidden",
+      { attachmentId: attachment.id, ticketId: attachment.ticket.id, userId: auth.user.id }
     );
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -47,8 +48,8 @@ export async function GET(
   const isAgent = isAgentOrAdmin(auth.user);
   if (!isAgent && !isRequester) {
     logger.warn(
-      { attachmentId: attachment.id, ticketId: attachment.ticket.id, userId: auth.user.id },
-      "attachment download forbidden"
+      "attachment download forbidden",
+      { attachmentId: attachment.id, ticketId: attachment.ticket.id, userId: auth.user.id }
     );
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -56,6 +57,7 @@ export async function GET(
   const downloadUrl = resolveDownloadUrl(attachment.filePath);
 
   logger.info(
+    "attachment download",
     {
       event: "attachment_download",
       ticketId: attachment.ticketId,
@@ -63,8 +65,7 @@ export async function GET(
       userId: auth.user.id,
       sizeBytes: attachment.sizeBytes,
       status: "success",
-    },
-    "attachment download"
+    }
   );
 
   return NextResponse.json({

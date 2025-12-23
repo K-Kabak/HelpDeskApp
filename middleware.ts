@@ -1,8 +1,6 @@
 import { withAuth } from "next-auth/middleware";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-
-const auth = withAuth({});
 
 export default async function middleware(req: NextRequest) {
   const rate = checkRateLimit(req, "app");
@@ -10,7 +8,14 @@ export default async function middleware(req: NextRequest) {
     return rate.response;
   }
 
-  return auth(req);
+  return withAuth(
+    async (req) => {
+      return NextResponse.next();
+    },
+    {
+      callbacks: {},
+    }
+  )(req);
 }
 
 export const config = {

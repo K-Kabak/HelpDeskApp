@@ -140,13 +140,13 @@ export function AuditViewer() {
                     {" - "}
                     {format(new Date(event.createdAt), "PPp", { locale: pl })}
                   </p>
-                  {event.data && typeof event.data === "object" && (
+                  {event.data != null && typeof event.data === "object" && (
                     <details className="mt-2">
                       <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700">
                         Szczegóły
                       </summary>
                       <pre className="mt-2 overflow-auto rounded bg-slate-50 p-2 text-xs">
-                        {JSON.stringify(event.data, null, 2)}
+                        {String(JSON.stringify(event.data, null, 2))}
                       </pre>
                     </details>
                   )}

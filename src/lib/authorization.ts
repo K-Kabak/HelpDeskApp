@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { SessionWithUser } from "./session-types";
 
 export type AuthenticatedUser = {
   id: string;
@@ -16,7 +17,7 @@ type AuthResult =
  * Fetches the current session and returns a normalized user or an auth error response.
  */
 export async function requireAuth(): Promise<AuthResult> {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
 
   if (!session?.user) {
     return {
@@ -27,7 +28,7 @@ export async function requireAuth(): Promise<AuthResult> {
 
   const user: AuthenticatedUser = {
     id: session.user.id,
-    role: session.user.role,
+    role: session.user.role ?? "",
     organizationId: session.user.organizationId,
   };
 

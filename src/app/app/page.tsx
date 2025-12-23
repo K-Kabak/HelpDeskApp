@@ -4,9 +4,10 @@ import { getSlaStatus } from "@/lib/sla-status";
 import { parseMultiParam, appendMultiParam } from "@/lib/search-filters";
 import { prisma } from "@/lib/prisma";
 import { TicketPriority, TicketStatus } from "@prisma/client";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
+import type { SessionWithUser } from "@/lib/session-types";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -40,7 +41,7 @@ export default async function DashboardPage({
 }: {
   searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) return null;
 
   const params = (await searchParams) ?? {};
@@ -91,7 +92,13 @@ export default async function DashboardPage({
   const categoriesLoaded = !categoryLoading;
   const tagsLoaded = !tagsLoading;
 
-  const { tickets, nextCursor, prevCursor } = await getTicketPage(session.user, {
+  const { tickets, nextCursor, prevCursor } = await getTicketPage(
+    {
+      id: session.user.id,
+      role: session.user.role ?? "",
+      organizationId: session.user.organizationId,
+    },
+    {
     status: statusFilter,
     priority: priorityFilter,
     search: searchQuery,
@@ -101,6 +108,21 @@ export default async function DashboardPage({
     category: categoryFilter,
     tagIds: tagFilters,
   });
+
+  const slaCounts = tickets.reduce(
+    (acc, ticket) => {
+      const sla = getSlaStatus(ticket);
+      if (ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE") {
+        if (sla.state === "breached") {
+          acc.breached++;
+        } else {
+          acc.healthy++;
+        }
+      }
+      return acc;
+    },
+    { breached: 0, healthy: 0 }
+  );
 
   const baseParams = new URLSearchParams();
   if (statusFilter) baseParams.set("status", statusFilter);
@@ -385,7 +407,7 @@ export default async function DashboardPage({
               </div>
               <h3 className="line-clamp-2 font-semibold text-slate-900">{ticket.title}</h3>
               <p className="mt-1 text-xs text-slate-600">{statusLabels[ticket.status]}</p>
-              <p className="mt-2 text-xs text-slate-500">Zglaszajacy: {ticket.requester.name}</p>
+              <p className="mt-2 text-xs text-slate-500">Zglaszajacy: {ticket.requester?.name ?? "N/A"}</p>
               {ticket.assigneeUser && (
                 <p className="text-xs text-slate-500">Przypisany: {ticket.assigneeUser.name}</p>
               )}
