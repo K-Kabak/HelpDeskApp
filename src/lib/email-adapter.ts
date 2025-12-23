@@ -1,3 +1,5 @@
+import { EmailAdapterReal } from "./email-adapter-real";
+
 export interface EmailAdapter {
   send(params: {
     to: string;
@@ -9,7 +11,7 @@ export interface EmailAdapter {
 }
 
 export class EmailAdapterStub implements EmailAdapter {
-  async send(params: {
+  async send(_params: {
     to: string;
     subject: string;
     body?: string;
@@ -24,5 +26,29 @@ export class EmailAdapterStub implements EmailAdapter {
   }
 }
 
-export const emailAdapter: EmailAdapter = new EmailAdapterStub();
+/**
+ * Creates the appropriate email adapter based on EMAIL_ENABLED flag.
+ * If EMAIL_ENABLED=true, uses real SMTP adapter.
+ * Otherwise, uses stub adapter (safe default).
+ */
+function createEmailAdapter(): EmailAdapter {
+  const emailEnabled = process.env.EMAIL_ENABLED === "true";
+
+  if (emailEnabled) {
+    try {
+      return new EmailAdapterReal();
+    } catch (error) {
+      console.warn(
+        "[EmailAdapter] Failed to initialize real email adapter, falling back to stub:",
+        error
+      );
+      return new EmailAdapterStub();
+    }
+  }
+
+  return new EmailAdapterStub();
+}
+
+export const emailAdapter: EmailAdapter = createEmailAdapter();
+export const defaultEmailAdapter = emailAdapter;
 
