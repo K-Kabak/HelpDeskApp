@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE "InAppNotification" (
-  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "userId" UUID NOT NULL,
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "userId" TEXT NOT NULL,
   "subject" TEXT,
   "body" TEXT,
   "data" JSONB,

@@ -93,7 +93,7 @@ export default async function DashboardPage({
   const categoriesLoaded = !categoryLoading;
   const tagsLoaded = !tagsLoading;
 
-  const { tickets, nextCursor, prevCursor } = await getTicketPage(
+  let { tickets, nextCursor, prevCursor } = await getTicketPage(
     {
       id: session.user.id,
       role: session.user.role ?? "",

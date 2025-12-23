@@ -1,8 +1,8 @@
 -- CreateTable
 CREATE TABLE "AdminAudit" (
-  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "organizationId" UUID NOT NULL,
-  "actorId" UUID NOT NULL,
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "organizationId" TEXT NOT NULL,
+  "actorId" TEXT NOT NULL,
   "resource" TEXT NOT NULL,
   "resourceId" TEXT NOT NULL,
   "action" TEXT NOT NULL,
