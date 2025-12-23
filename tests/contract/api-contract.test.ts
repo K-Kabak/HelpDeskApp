@@ -3,7 +3,6 @@ import { describe, expect, beforeEach, vi, test } from "vitest";
 import { GET as listTickets, POST as createTicket } from "@/app/api/tickets/route";
 import { POST as createComment } from "@/app/api/tickets/[id]/comments/route";
 import { resetMockPrisma } from "../test-utils/prisma-mocks";
-import type { TicketEvent } from "@/lib/automation-rules";
 
 const mockPrisma = vi.hoisted(() => ({
   ticket: {
@@ -38,11 +37,6 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 
-const mockEvaluateAutomationRules = vi.fn();
-vi.mock("@/lib/automation-rules", () => ({
-  evaluateAutomationRules: (...args: unknown[]) => mockEvaluateAutomationRules(...args),
-}));
-
 function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
   return {
     user: {
@@ -53,11 +47,10 @@ function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
   };
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  resetMockPrisma(mockPrisma);
-  mockEvaluateAutomationRules.mockResolvedValue(undefined);
-});
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetMockPrisma(mockPrisma);
+  });
 
 describe("OpenAPI baseline", () => {
   test("docs/openapi.yaml is present and contains implemented paths", () => {
