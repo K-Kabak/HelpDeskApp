@@ -32,9 +32,30 @@ const mockPrisma = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
+// Mock automation rules evaluation
+const mockEvaluateAutomationRules = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/automation-rules", () => ({
+  evaluateAutomationRules: mockEvaluateAutomationRules,
+}));
+
+// Mock getServerSession to avoid Next.js context issues
 const mockGetServerSession = vi.fn();
 vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
+}));
+
+// Mock Next.js headers to provide required context
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => new Map([["next-auth.session-token", "mock-token"]])),
+}));
+
+// Mock the authorization module to bypass Next.js context issues
+const mockRequireAuth = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/authorization", () => ({
+  requireAuth: mockRequireAuth,
+  ticketScope: vi.fn(),
+  isAgentOrAdmin: (user: any) => user.role === "AGENT" || user.role === "ADMIN",
+  isSameOrganization: (user: any, orgId: string) => Boolean(user.organizationId) && user.organizationId === orgId,
 }));
 
 function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
@@ -50,6 +71,19 @@ function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
   beforeEach(() => {
     vi.clearAllMocks();
     resetMockPrisma(mockPrisma);
+
+    // Default mock implementation for requireAuth - returns authenticated user
+    mockRequireAuth.mockResolvedValue({
+      ok: true,
+      user: {
+        id: "user-1",
+        role: "AGENT",
+        organizationId: "org-1",
+      },
+    });
+
+    // Default mock for automation rules evaluation
+    mockEvaluateAutomationRules.mockResolvedValue(undefined);
   });
 
 describe("OpenAPI baseline", () => {
@@ -63,7 +97,10 @@ describe("OpenAPI baseline", () => {
 
 describe("GET /api/tickets", () => {
   test("returns 401 when session is missing", async () => {
-    mockGetServerSession.mockResolvedValueOnce(null);
+    mockRequireAuth.mockResolvedValueOnce({
+      ok: false,
+      response: new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
+    });
     const res = await listTickets();
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Unauthorized" });
@@ -268,7 +305,14 @@ describe("POST /api/tickets/{id}/comments", () => {
   });
 
   test("creates comment for requester", async () => {
-    mockGetServerSession.mockResolvedValueOnce(makeSession("REQUESTER"));
+    mockRequireAuth.mockResolvedValueOnce({
+      ok: true,
+      user: {
+        id: "user-1",
+        role: "REQUESTER",
+        organizationId: "org-1",
+      },
+    });
     mockPrisma.ticket.findUnique.mockResolvedValueOnce({
       id: "t1",
       requesterId: "user-1",
@@ -297,7 +341,14 @@ describe("POST /api/tickets/{id}/comments", () => {
   });
 
   test("sanitizes comment body on ingest", async () => {
-    mockGetServerSession.mockResolvedValueOnce(makeSession("AGENT"));
+    mockRequireAuth.mockResolvedValueOnce({
+      ok: true,
+      user: {
+        id: "user-1",
+        role: "AGENT",
+        organizationId: "org-1",
+      },
+    });
     mockPrisma.ticket.findUnique.mockResolvedValueOnce({
       id: "t1",
       requesterId: "user-1",

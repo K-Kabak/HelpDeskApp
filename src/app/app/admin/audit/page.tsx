@@ -2,10 +2,9 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { AuditViewer } from "./audit-viewer";
-import type { SessionWithUser } from "@/lib/session-types";
 
 export default async function AuditPage() {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/login");
   }

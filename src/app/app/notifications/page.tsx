@@ -4,10 +4,9 @@ import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { NotificationsList } from "./notifications-list";
 import Link from "next/link";
-import type { SessionWithUser } from "@/lib/session-types";
 
 export default async function NotificationsPage() {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/login");
   }
