@@ -29,7 +29,7 @@ export async function recordAdminAudit({
       resource,
       resourceId,
       action,
-      data: data,
+      data: data ? (data as any) : undefined,
     },
   });
 }
