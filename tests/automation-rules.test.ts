@@ -125,6 +125,31 @@ describe("automation rules", () => {
       lastReopenedAt: null,
     };
 
+    it("happy path: executes one action on matching trigger", async () => {
+      mockPrisma.automationRule.findMany.mockResolvedValue([
+        {
+          id: "rule-1",
+          organizationId: "org-1",
+          enabled: true,
+          triggerConfig: { type: "ticketCreated" },
+          actionConfig: { type: "setPriority", priority: TicketPriority.WYSOKI },
+        },
+      ]);
+      mockPrisma.ticket.update.mockResolvedValue(baseTicket);
+
+      const event: TicketEvent = {
+        type: "ticketCreated",
+        ticket: baseTicket,
+      };
+
+      await evaluateAutomationRules(event);
+
+      expect(mockPrisma.ticket.update).toHaveBeenCalledWith({
+        where: { id: "ticket-1" },
+        data: { priority: TicketPriority.WYSOKI },
+      });
+    });
+
     it("executes rule on ticketCreated event", async () => {
       mockPrisma.automationRule.findMany.mockResolvedValue([
         {
