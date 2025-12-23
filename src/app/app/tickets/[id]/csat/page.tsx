@@ -1,20 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
-export default function CsatPage({ params }: { params: Promise<{ id: string }> }) {
+export default function CsatPage() {
   const router = useRouter();
-  const [ticketId, setTicketId] = useState<string>("");
+  const params = useParams();
+  const ticketId = params.id as string;
   const [score, setScore] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    params.then((p) => setTicketId(p.id));
-  }, [params]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +34,7 @@ export default function CsatPage({ params }: { params: Promise<{ id: string }> }
         throw new Error(data.error || "Błąd podczas wysyłania odpowiedzi");
       }
 
-      router.push(`/app/tickets/${params.id}`);
+      router.push(`/app/tickets/${ticketId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Wystąpił błąd");
       setSubmitting(false);
@@ -48,7 +45,7 @@ export default function CsatPage({ params }: { params: Promise<{ id: string }> }
     <div className="container mx-auto max-w-2xl py-8 px-4">
       <div className="mb-6">
         <Link
-          href={`/app/tickets/${params.id}`}
+          href={`/app/tickets/${ticketId}`}
           className="text-sm text-gray-600 hover:text-gray-900"
         >
           ← Powrót do zgłoszenia
@@ -114,7 +111,7 @@ export default function CsatPage({ params }: { params: Promise<{ id: string }> }
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/app/tickets/${params.id}`)}
+              onClick={() => router.push(`/app/tickets/${ticketId}`)}
               className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 font-medium hover:bg-gray-50"
             >
               Anuluj
@@ -125,4 +122,3 @@ export default function CsatPage({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 }
-

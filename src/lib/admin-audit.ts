@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-export type AdminAuditResource = "USER" | "TEAM" | "TAG" | "SLA";
+export type AdminAuditResource = "USER" | "TEAM" | "TAG" | "SLA" | "AUTOMATION_RULE";
 export type AdminAuditAction = "CREATE" | "UPDATE" | "DELETE";
 
 export type RecordAdminAuditInput = {
