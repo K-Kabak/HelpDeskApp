@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const schema = z.object({
-  bodyMd: z.string().min(1),
+  bodyMd: z.string().trim().min(1).max(10000),
   isInternal: z.boolean().default(false),
 });
 
