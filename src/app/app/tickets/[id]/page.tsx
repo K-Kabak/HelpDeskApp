@@ -10,6 +10,7 @@ import { SafeMarkdown } from "@/components/safe-markdown";
 import { AttachmentPicker } from "./attachment-picker";
 import { AttachmentVisibility } from "@prisma/client";
 import { suggestAssigneeByLoad } from "@/lib/assignment-suggest";
+import { AuditTimeline } from "./audit-timeline";
 import type { SessionWithUser } from "@/lib/session-types";
 
 const statusLabels: Record<TicketStatus, string> = {
@@ -264,6 +265,8 @@ export default async function TicketPage({
           <CommentForm ticketId={ticket.id} allowInternal={session.user.role !== "REQUESTER"} />
         </div>
       </div>
+
+      <AuditTimeline ticketId={ticket.id} />
     </div>
   );
 }
