@@ -34,6 +34,7 @@ type DashboardSearchParams = {
   direction?: "next" | "prev";
   category?: string;
   tags?: string | string[];
+  slaStatus?: string;
 };
 
 export default async function DashboardPage({
@@ -57,6 +58,7 @@ export default async function DashboardPage({
   const searchQuery = params.q?.trim();
   const categoryFilter = params.category?.trim();
   const tagFilters = parseMultiParam(params.tags);
+  const slaStatusFilter = params.slaStatus === "breached" || params.slaStatus === "healthy" ? params.slaStatus : undefined;
 
   let categoryOptions: { id: string; name: string }[] = [];
   let tagOptions: { id: string; name: string }[] = [];
@@ -107,6 +109,7 @@ export default async function DashboardPage({
     limit: 10,
     category: categoryFilter,
     tagIds: tagFilters,
+    slaStatus: slaStatusFilter,
   });
 
   const slaCounts = tickets.reduce(
@@ -130,6 +133,7 @@ export default async function DashboardPage({
   if (searchQuery) baseParams.set("q", searchQuery);
   if (categoryFilter) baseParams.set("category", categoryFilter);
   appendMultiParam(baseParams, "tags", tagFilters);
+  if (slaStatusFilter) baseParams.set("slaStatus", slaStatusFilter);
   const nextParams = new URLSearchParams(baseParams.toString());
   if (nextCursor) {
     nextParams.set("cursor", nextCursor);
@@ -159,7 +163,10 @@ export default async function DashboardPage({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <Link
+          href={`/app?slaStatus=breached`}
+          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md hover:border-red-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia z naruszonym SLA</p>
@@ -181,8 +188,11 @@ export default async function DashboardPage({
               </svg>
             </div>
           </div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        </Link>
+        <Link
+          href={`/app?slaStatus=healthy`}
+          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md hover:border-emerald-300"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia zgodne z SLA</p>
@@ -204,7 +214,7 @@ export default async function DashboardPage({
               </svg>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">

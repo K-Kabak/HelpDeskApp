@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { AuthenticatedUser, ticketScope } from "@/lib/authorization";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 import { z } from "zod";
+import { getSlaStatus } from "@/lib/sla-status";
 
 const cursorSchema = z.object({
   id: z.string().uuid(),
@@ -19,6 +20,7 @@ export type TicketListOptions = {
   search?: string;
   category?: string;
   tagIds?: string[];
+  slaStatus?: "breached" | "healthy";
 };
 
 export type TicketListResult = {
@@ -93,6 +95,19 @@ export async function getTicketPage(
   });
 
   let items = direction === "next" ? tickets : tickets.reverse();
+
+  // Filter by SLA status after fetching (since SLA status is computed)
+  if (options.slaStatus) {
+    items = items.filter(ticket => {
+      // Skip closed/resolved tickets for SLA filtering
+      if (ticket.status === TicketStatus.ROZWIAZANE || ticket.status === TicketStatus.ZAMKNIETE) {
+        return false;
+      }
+      const sla = getSlaStatus(ticket);
+      return sla.state === options.slaStatus;
+    });
+  }
+
   const hasExtra = items.length > limit;
   if (hasExtra) {
     items = items.slice(0, limit);
