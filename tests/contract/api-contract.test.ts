@@ -3,6 +3,7 @@ import { describe, expect, beforeEach, vi, test } from "vitest";
 import { GET as listTickets, POST as createTicket } from "@/app/api/tickets/route";
 import { POST as createComment } from "@/app/api/tickets/[id]/comments/route";
 import { resetMockPrisma } from "../test-utils/prisma-mocks";
+import type { TicketEvent } from "@/lib/automation-rules";
 
 const mockPrisma = vi.hoisted(() => ({
   ticket: {
@@ -37,6 +38,11 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 
+const mockEvaluateAutomationRules = vi.fn();
+vi.mock("@/lib/automation-rules", () => ({
+  evaluateAutomationRules: (...args: unknown[]) => mockEvaluateAutomationRules(...args),
+}));
+
 function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
   return {
     user: {
@@ -50,6 +56,7 @@ function makeSession(role: "REQUESTER" | "AGENT" | "ADMIN" = "AGENT") {
 beforeEach(() => {
   vi.clearAllMocks();
   resetMockPrisma(mockPrisma);
+  mockEvaluateAutomationRules.mockResolvedValue(undefined);
 });
 
 describe("OpenAPI baseline", () => {
@@ -203,6 +210,51 @@ describe("POST /api/tickets", () => {
     expect(res.status).toBe(200);
     const createArgs = mockPrisma.ticket.create.mock.calls[0]?.[0];
     expect(createArgs?.data?.descriptionMd).toBe("clean content");
+  });
+
+  test("triggers automation hook with ticketCreated event", async () => {
+    mockGetServerSession.mockResolvedValueOnce(makeSession("REQUESTER"));
+    mockPrisma.slaPolicy.findFirst.mockResolvedValueOnce(null);
+    const createdTicket = {
+      id: "t3",
+      number: 3,
+      title: "Auto test",
+      descriptionMd: "Body",
+      status: "NOWE",
+      priority: "SREDNI",
+      category: null,
+      requesterId: "user-1",
+      assigneeUserId: null,
+      assigneeTeamId: null,
+      organizationId: "org-1",
+      firstResponseAt: null,
+      firstResponseDue: null,
+      resolveDue: null,
+      resolvedAt: null,
+      closedAt: null,
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-01T00:00:00Z"),
+    };
+    mockPrisma.ticket.create.mockResolvedValueOnce(createdTicket);
+
+    const req = new Request("http://localhost/api/tickets", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "Auto test",
+        descriptionMd: "Body",
+        priority: "SREDNI",
+      }),
+    });
+
+    const res = await createTicket(req);
+    expect(res.status).toBe(200);
+
+    expect(mockEvaluateAutomationRules).toHaveBeenCalledTimes(1);
+    expect(mockEvaluateAutomationRules).toHaveBeenCalledWith({
+      type: "ticketCreated",
+      ticket: createdTicket,
+    });
   });
 });
 
