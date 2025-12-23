@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { defaultNotificationPreferences } from "@/lib/notification-preferences";
 import { emailAdapter as defaultEmailAdapter, EmailAdapter } from "@/lib/email-adapter";
@@ -196,7 +197,7 @@ class NotificationServiceImpl implements NotificationService {
           userId,
           subject: payload.subject ?? undefined,
           body: payload.body ?? undefined,
-          data: payload.data ? (payload.data as any) : undefined,
+          data: payload.data as Prisma.JsonValue,
         },
       });
 

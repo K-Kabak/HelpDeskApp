@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { User } from "next-auth";
+import type { User, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 import bcrypt from "bcrypt";
@@ -68,7 +68,7 @@ export const authOptions = {
 
       return token;
     },
-    async session({ session, token }: { session: any; token: JWT & { sub?: string } }) {
+    async session({ session, token }: { session: Session; token: JWT & { sub?: string } }) {
       if (session.user) {
         const appToken = token as AppToken;
         session.user.id = (token as JWT & { sub?: string }).sub ?? "";
