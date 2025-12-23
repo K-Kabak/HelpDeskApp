@@ -49,7 +49,7 @@ export async function getTicketPage(
   user: AuthenticatedUser,
   options: TicketListOptions = {},
 ): Promise<TicketListResult> {
-  const limit = Math.min(Math.max(options.limit ?? 10, 1), 50);
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
   const direction: TicketListDirection = options.direction === "prev" ? "prev" : "next";
   const cursor = decodeCursor(options.cursor);
 
