@@ -41,20 +41,20 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
-  teams     Team[]
-  tickets   Ticket[]
-  tags      Tag[]
-  categories Category[]
-  slaPolicy SlaPolicy[]
-  adminAudits AdminAudit[]
+  users               User[]
+  teams               Team[]
+  tickets             Ticket[]
+  tags                Tag[]
+  categories          Category[]
+  slaPolicy           SlaPolicy[]
+  adminAudits         AdminAudit[]
   slaEscalationLevels SlaEscalationLevel[]
-  automationRules AutomationRule[]
+  automationRules     AutomationRule[]
 }
 
 model User {
-  id             String      @id @default(uuid())
-  email          String      @unique
+  id             String       @id @default(uuid())
+  email          String       @unique
   name           String
   passwordHash   String
   emailVerified  DateTime?
@@ -64,32 +64,36 @@ model User {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  ticketsCreated Ticket[]     @relation("TicketRequester")
-  ticketsOwned   Ticket[]     @relation("TicketAssigneeUser")
-  comments       Comment[]
-  attachments    Attachment[]
-  auditEvents    AuditEvent[]
-  adminAudits    AdminAudit[]
-  memberships    TeamMembership[]
-  accounts       Account[]
-  sessions       Session[]
+  ticketsCreated         Ticket[]                @relation("TicketRequester")
+  ticketsOwned           Ticket[]                @relation("TicketAssigneeUser")
+  comments               Comment[]
+  attachments            Attachment[]
+  auditEvents            AuditEvent[]
+  adminAudits            AdminAudit[]
+  memberships            TeamMembership[]
+  accounts               Account[]
+  sessions               Session[]
   notificationPreference NotificationPreference?
-  inAppNotifications InAppNotification[]
+  inAppNotifications     InAppNotification[]
+
+  @@index([organizationId], name: "User_organizationId_idx")
+  @@index([role], name: "User_role_idx")
 }
 
 model Team {
-  id             String           @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
   organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  memberships    TeamMembership[]
-  tickets        Ticket[]         @relation("TicketAssigneeTeam")
+  memberships         TeamMembership[]
+  tickets             Ticket[]             @relation("TicketAssigneeTeam")
   slaEscalationLevels SlaEscalationLevel[]
 
   @@unique([organizationId, name])
+  @@index([organizationId], name: "Team_organizationId_idx")
 }
 
 model TeamMembership {
@@ -105,38 +109,38 @@ model TeamMembership {
 }
 
 model Ticket {
-  id               String         @id @default(uuid())
-  number           Int            @default(autoincrement())
-  title            String
-  descriptionMd    String
-  status           TicketStatus   @default(NOWE)
-  priority         TicketPriority @default(SREDNI)
-  category         String?
-  requesterId      String
-  requester        User           @relation("TicketRequester", fields: [requesterId], references: [id])
-  assigneeUserId   String?
-  assigneeUser     User?          @relation("TicketAssigneeUser", fields: [assigneeUserId], references: [id])
-  assigneeTeamId   String?
-  assigneeTeam     Team?          @relation("TicketAssigneeTeam", fields: [assigneeTeamId], references: [id])
-  organizationId   String
-  organization     Organization   @relation(fields: [organizationId], references: [id])
-  tags             TicketTag[]
-  comments         Comment[]
-  attachments      Attachment[]
-  auditEvents      AuditEvent[]
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  resolvedAt       DateTime?
-  closedAt         DateTime?
-  firstResponseAt  DateTime?
-  firstResponseDue DateTime?
-  resolveDue       DateTime?
-  slaPausedAt      DateTime?
-  slaResumedAt     DateTime?
-  slaPauseTotalSeconds Int    @default(0)
-  lastReopenedAt   DateTime?
-  csatRequest      CsatRequest?
-  csatResponse     CsatResponse? @relation("TicketCsatResponse")
+  id                   String         @id @default(uuid())
+  number               Int            @default(autoincrement())
+  title                String
+  descriptionMd        String
+  status               TicketStatus   @default(NOWE)
+  priority             TicketPriority @default(SREDNI)
+  category             String?
+  requesterId          String
+  requester            User           @relation("TicketRequester", fields: [requesterId], references: [id])
+  assigneeUserId       String?
+  assigneeUser         User?          @relation("TicketAssigneeUser", fields: [assigneeUserId], references: [id])
+  assigneeTeamId       String?
+  assigneeTeam         Team?          @relation("TicketAssigneeTeam", fields: [assigneeTeamId], references: [id])
+  organizationId       String
+  organization         Organization   @relation(fields: [organizationId], references: [id])
+  tags                 TicketTag[]
+  comments             Comment[]
+  attachments          Attachment[]
+  auditEvents          AuditEvent[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  resolvedAt           DateTime?
+  closedAt             DateTime?
+  firstResponseAt      DateTime?
+  firstResponseDue     DateTime?
+  resolveDue           DateTime?
+  slaPausedAt          DateTime?
+  slaResumedAt         DateTime?
+  slaPauseTotalSeconds Int            @default(0)
+  lastReopenedAt       DateTime?
+  csatRequest          CsatRequest?
+  csatResponse         CsatResponse?  @relation("TicketCsatResponse")
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([requesterId, createdAt(sort: Desc)])
@@ -145,9 +149,28 @@ model Ticket {
   @@index([assigneeUserId, status])
   @@index([assigneeTeamId, status])
   @@index([organizationId, title, descriptionMd, category], name: "Ticket_search_idx")
+  @@index([organizationId], name: "Ticket_organizationId_idx")
+  @@index([status], name: "Ticket_status_idx")
+  @@index([priority], name: "Ticket_priority_idx")
+  @@index([assigneeUserId], name: "Ticket_assigneeUserId_idx")
+  @@index([assigneeTeamId], name: "Ticket_assigneeTeamId_idx")
+  @@index([createdAt], name: "Ticket_createdAt_idx")
+  @@index([updatedAt], name: "Ticket_updatedAt_idx")
 }
 
 model Comment {
+  id         String   @id @default(uuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  isInternal Boolean  @default(false)
+  bodyMd     String
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId], name: "Comment_ticketId_idx")
+  @@index([authorId], name: "Comment_authorId_idx")
+  @@index([createdAt], name: "Comment_createdAt_idx")
   id        String   @id @default(uuid())
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
@@ -162,17 +185,21 @@ model Comment {
 }
 
 model Attachment {
-  id         String   @id @default(uuid())
+  id         String               @id @default(uuid())
   ticketId   String
-  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  ticket     Ticket               @relation(fields: [ticketId], references: [id])
   uploaderId String
-  uploader   User     @relation(fields: [uploaderId], references: [id])
+  uploader   User                 @relation(fields: [uploaderId], references: [id])
   fileName   String
   filePath   String
   mimeType   String
   sizeBytes  Int
   visibility AttachmentVisibility @default(INTERNAL)
   metadata   Json?
+  createdAt  DateTime             @default(now())
+
+  @@index([ticketId], name: "Attachment_ticketId_idx")
+  @@index([uploaderId], name: "Attachment_uploaderId_idx")
   createdAt  DateTime @default(now())
 
   @@index([ticketId])
@@ -180,30 +207,32 @@ model Attachment {
 }
 
 model Tag {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   tickets TicketTag[]
 
   @@unique([organizationId, name])
+  @@index([organizationId], name: "Tag_organizationId_idx")
 }
 
 model Category {
-  id             String   @id @default(uuid())
-  name           String
-  description    String?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  slaPolicies    SlaPolicy[] @relation("CategorySlaPolicies")
+  id                  String               @id @default(uuid())
+  name                String
+  description         String?
+  organizationId      String
+  organization        Organization         @relation(fields: [organizationId], references: [id])
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  slaPolicies         SlaPolicy[]          @relation("CategorySlaPolicies")
   slaEscalationLevels SlaEscalationLevel[]
 
   @@unique([organizationId, name])
+  @@index([organizationId], name: "Category_organizationId_idx")
 }
 
 model TicketTag {
@@ -226,36 +255,39 @@ model AuditEvent {
   data      Json?
   createdAt DateTime @default(now())
 
+  @@index([ticketId], name: "AuditEvent_ticketId_idx")
+  @@index([actorId], name: "AuditEvent_actorId_idx")
+  @@index([createdAt], name: "AuditEvent_createdAt_idx")
   @@index([ticketId, createdAt])
 }
 
 model AdminAudit {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   actorId        String
-  actor          User     @relation(fields: [actorId], references: [id])
+  actor          User         @relation(fields: [actorId], references: [id])
   resource       String
   resourceId     String
   action         String
   data           Json?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   @@index([organizationId, resource, resourceId])
   @@index([organizationId, createdAt(sort: Desc)])
 }
 
 model SlaPolicy {
-  id                  String         @id @default(uuid())
-  organizationId      String
-  organization        Organization   @relation(fields: [organizationId], references: [id])
-  priority            TicketPriority
-  categoryId          String?
-  category            Category?      @relation("CategorySlaPolicies", fields: [categoryId], references: [id])
-  firstResponseHours  Int
-  resolveHours        Int
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  id                 String         @id @default(uuid())
+  organizationId     String
+  organization       Organization   @relation(fields: [organizationId], references: [id])
+  priority           TicketPriority
+  categoryId         String?
+  category           Category?      @relation("CategorySlaPolicies", fields: [categoryId], references: [id])
+  firstResponseHours Int
+  resolveHours       Int
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   @@unique([organizationId, priority, categoryId])
 }
@@ -272,8 +304,8 @@ model SlaEscalationLevel {
   team           Team           @relation(fields: [teamId], references: [id])
   createdAt      DateTime       @default(now())
 
-  @@index([organizationId, priority, categoryId, level])
   @@unique([organizationId, priority, categoryId, level])
+  @@index([organizationId, priority, categoryId, level])
 }
 
 model NotificationPreference {
@@ -289,14 +321,14 @@ model NotificationPreference {
 }
 
 model InAppNotification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
   subject   String?
   body      String?
   data      Json?
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId, createdAt])
 }
@@ -320,35 +352,35 @@ model CsatResponse {
 }
 
 model AutomationRule {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   name           String
-  enabled        Boolean  @default(true)
+  enabled        Boolean      @default(true)
   triggerConfig  Json
   actionConfig   Json
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, enabled])
 }
 
 // NextAuth adapter models
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
   oauth_token_secret String?
-  oauth_token       String?
+  oauth_token        String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

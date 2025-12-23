@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import { Role, Prisma } from "@prisma/client";
 import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
 
@@ -114,7 +115,7 @@ export async function PATCH(
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: Prisma.UserUpdateInput = {};
     if (email) updateData.email = email;
     if (name) updateData.name = name;
     if (role) updateData.role = role as Role;
