@@ -97,6 +97,7 @@ function matchesTrigger(
 async function executeAction(
   action: ActionConfig,
   ticketId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _organizationId: string
 ): Promise<void> {
   if (action.type === "assignUser") {

@@ -136,7 +136,6 @@ model Ticket {
   slaPauseTotalSeconds Int    @default(0)
   lastReopenedAt   DateTime?
   csatRequest      CsatRequest?
-  csatResponse     CsatResponse? @relation("TicketCsatResponse")
 
   @@index([organizationId, title, descriptionMd, category], name: "Ticket_search_idx")
 }

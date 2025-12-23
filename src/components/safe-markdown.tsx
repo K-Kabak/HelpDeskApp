@@ -13,6 +13,7 @@ export function SafeMarkdown({ children }: SafeMarkdownProps) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rehypePlugins={[rehypeSanitize(sanitizeSchema) as any]}
     >
       {children}

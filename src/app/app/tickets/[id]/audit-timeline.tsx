@@ -13,7 +13,7 @@ type AuditEvent = {
     email: string;
     role: Role;
   };
-  data: any;
+  data: Record<string, unknown> | null;
   createdAt: string;
 };
 
@@ -29,7 +29,7 @@ const roleColors: Record<Role, string> = {
   ADMIN: "bg-indigo-100 text-indigo-700",
 };
 
-function formatAuditChange(action: string, data: any): string {
+function formatAuditChange(action: string, data: Record<string, unknown> | null): string {
   switch (action) {
     case "TICKET_UPDATED": {
       const changes = data?.changes || {};
@@ -102,7 +102,7 @@ export function AuditTimeline({ ticketId }: { ticketId: string }) {
         }
         const data = await response.json();
         setAuditEvents(data.auditEvents);
-      } catch (err) {
+      } catch {
         setError("Nie udało się pobrać historii zmian");
       } finally {
         setLoading(false);
