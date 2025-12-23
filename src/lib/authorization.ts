@@ -1,7 +1,6 @@
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import type { Session } from "next-auth";
 
 export type AuthenticatedUser = {
   id: string;

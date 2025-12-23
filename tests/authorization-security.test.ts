@@ -1,6 +1,5 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import { requireAuth, ticketScope, isSameOrganization } from "@/lib/authorization";
-import { getServerSession } from "next-auth/next";
 
 const mockGetServerSession = vi.fn();
 vi.mock("next-auth/next", () => ({
