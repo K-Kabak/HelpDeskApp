@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { defaultNotificationPreferences } from "@/lib/notification-preferences";
-import { emailAdapter, EmailAdapter } from "@/lib/email-adapter";
+import { emailAdapter as defaultEmailAdapter, EmailAdapter } from "@/lib/email-adapter";
 
 export type NotificationChannel = "email" | "inapp";
 export type NotificationType = "ticketUpdate" | "commentUpdate";
@@ -95,8 +95,13 @@ async function shouldSendNotification(
   }
 }
 
-class InMemoryNotificationService implements NotificationService {
+class NotificationServiceImpl implements NotificationService {
   private sentByKey = new Map<string, NotificationResult>();
+  private emailAdapter: EmailAdapter;
+
+  constructor(emailAdapter: EmailAdapter) {
+    this.emailAdapter = emailAdapter;
+  }
 
   async send(request: NotificationRequest): Promise<NotificationResult> {
     const payload = notificationSchema.parse(request);
@@ -152,17 +157,61 @@ class InMemoryNotificationService implements NotificationService {
       }
     }
 
-    const result: NotificationResult = {
-      id: randomUUID(),
-      status: "queued",
-      deduped: false,
-    };
+    if (payload.channel === "email") {
+      const emailResult = await this.emailAdapter.send({
+        to: payload.to,
+        subject: payload.subject ?? "",
+        body: payload.body,
+        templateId: payload.templateId,
+        data: payload.data,
+      });
 
-    if (payload.idempotencyKey) {
-      this.sentByKey.set(payload.idempotencyKey, result);
+      const result: NotificationResult = {
+        id: emailResult.id,
+        status: emailResult.status,
+        deduped: false,
+      };
+
+      if (payload.idempotencyKey) {
+        this.sentByKey.set(payload.idempotencyKey, result);
+      }
+
+      return result;
+    } else {
+      // in-app channel
+      if (!userId) {
+        const result: NotificationResult = {
+          id: randomUUID(),
+          status: "queued",
+          deduped: false,
+        };
+        if (payload.idempotencyKey) {
+          this.sentByKey.set(payload.idempotencyKey, result);
+        }
+        return result;
+      }
+
+      const notification = await prisma.inAppNotification.create({
+        data: {
+          userId,
+          subject: payload.subject ?? null,
+          body: payload.body ?? null,
+          data: payload.data ?? null,
+        },
+      });
+
+      const result: NotificationResult = {
+        id: notification.id,
+        status: "sent",
+        deduped: false,
+      };
+
+      if (payload.idempotencyKey) {
+        this.sentByKey.set(payload.idempotencyKey, result);
+      }
+
+      return result;
     }
-
-    return result;
   }
 }
 
