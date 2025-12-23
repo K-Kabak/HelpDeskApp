@@ -97,7 +97,7 @@ function matchesTrigger(
 async function executeAction(
   action: ActionConfig,
   ticketId: string,
-  organizationId: string
+  _organizationId: string
 ): Promise<void> {
   if (action.type === "assignUser") {
     await prisma.ticket.update({

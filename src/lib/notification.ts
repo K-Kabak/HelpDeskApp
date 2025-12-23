@@ -196,7 +196,7 @@ class NotificationServiceImpl implements NotificationService {
           userId,
           subject: payload.subject ?? undefined,
           body: payload.body ?? undefined,
-          data: payload.data ? (payload.data as any) : undefined,
+          data: payload.data,
         },
       });
 

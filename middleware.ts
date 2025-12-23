@@ -9,7 +9,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   return withAuth(
-    async (req) => {
+    async (_req) => {
       return NextResponse.next();
     },
     {

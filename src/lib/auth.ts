@@ -68,7 +68,7 @@ export const authOptions = {
 
       return token;
     },
-    async session({ session, token }: { session: any; token: JWT & { sub?: string } }) {
+    async session({ session, token }: { session: unknown; token: JWT & { sub?: string } }) {
       if (session.user) {
         const appToken = token as AppToken;
         session.user.id = (token as JWT & { sub?: string }).sub ?? "";
