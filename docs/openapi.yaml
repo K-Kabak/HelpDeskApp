@@ -34,9 +34,24 @@ components:
           type: string
         role:
           type: string
+          enum: [REQUESTER, AGENT, ADMIN]
         organizationId:
           type: string
           format: uuid
+        emailVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        ticketCount:
+          type: integer
+          description: Total tickets created by this user
+        activeTicketCount:
+          type: integer
+          description: Active tickets assigned to this user
       additionalProperties: true
     TeamSummary:
       type: object
@@ -49,6 +64,18 @@ components:
         organizationId:
           type: string
           format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        memberCount:
+          type: integer
+          description: Number of team members
+        activeTicketCount:
+          type: integer
+          description: Active tickets assigned to this team
       additionalProperties: true
     Ticket:
       type: object
@@ -309,6 +336,224 @@ components:
         body: "SLA breach is imminent; please respond."
         metadata:
           ticketId: 111e4567-e89b-12d3-a456-426655440001
+    UserCreate:
+      type: object
+      required: [email, name, role, password]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          enum: [REQUESTER, AGENT, ADMIN]
+        password:
+          type: string
+          minLength: 8
+    UserUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          enum: [REQUESTER, AGENT, ADMIN]
+        password:
+          type: string
+          minLength: 8
+    TeamCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+    TeamUpdate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+    TeamMembership:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        joinedAt:
+          type: string
+          format: date-time
+    InAppNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticketId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+        uploadedById:
+          type: string
+          format: uuid
+        uploadedBy:
+          $ref: '#/components/schemas/UserSummary'
+        visibility:
+          type: string
+          enum: [INTERNAL, PUBLIC]
+        scanStatus:
+          type: string
+          enum: [PENDING, CLEAN, INFECTED, ERROR]
+        createdAt:
+          type: string
+          format: date-time
+    AttachmentUploadRequest:
+      type: object
+      required: [filename, sizeBytes, mimeType]
+      properties:
+        filename:
+          type: string
+          minLength: 1
+        sizeBytes:
+          type: integer
+          minimum: 1
+        mimeType:
+          type: string
+          minLength: 1
+    AttachmentUploadResponse:
+      type: object
+      properties:
+        attachment:
+          $ref: '#/components/schemas/Attachment'
+        uploadUrl:
+          type: string
+          description: Presigned URL for file upload
+        expiresAt:
+          type: string
+          format: date-time
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [STATUS_CHANGE, ASSIGNMENT_CHANGE, COMMENT_ADDED, ATTACHMENT_ADDED, SLA_BREACH, SLA_REMINDER]
+        actorId:
+          type: string
+          format: uuid
+          nullable: true
+        actor:
+          $ref: '#/components/schemas/UserSummary'
+        details:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    CsatResponse:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        feedback:
+          type: string
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+    SlaPreviewRequest:
+      type: object
+      required: [priority]
+      properties:
+        priority:
+          type: string
+          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        category:
+          type: string
+          nullable: true
+    SlaPreviewResponse:
+      type: object
+      properties:
+        firstResponseDue:
+          type: string
+          format: date-time
+          nullable: true
+        resolveDue:
+          type: string
+          format: date-time
+          nullable: true
   parameters:
     Limit:
       name: limit
@@ -622,6 +867,989 @@ paths:
                 $ref: '#/components/schemas/ErrorAsIs'
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/users:
+    get:
+      summary: List users
+      description: Returns all users in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Create user
+      description: Creates a new user in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserSummary'
+        '400':
+          description: Validation error or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/users/{id}:
+    get:
+      summary: Get user
+      description: Returns a specific user. Requires ADMIN role and user must be in admin's organization.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    patch:
+      summary: Update user
+      description: Updates a user in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserSummary'
+        '400':
+          description: Validation error or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete user
+      description: Deletes a user from the admin's organization. Cannot delete users with active tickets or self. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Cannot delete user (active tickets or self)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/teams:
+    get:
+      summary: List teams
+      description: Returns all teams in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Teams list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Create team
+      description: Creates a new team in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreate'
+      responses:
+        '201':
+          description: Team created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  team:
+                    $ref: '#/components/schemas/TeamSummary'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/teams/{id}:
+    get:
+      summary: Get team
+      description: Returns a specific team. Requires ADMIN role and team must be in admin's organization.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Team details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  team:
+                    $ref: '#/components/schemas/TeamSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    patch:
+      summary: Update team
+      description: Updates a team in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdate'
+      responses:
+        '200':
+          description: Team updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  team:
+                    $ref: '#/components/schemas/TeamSummary'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete team
+      description: Deletes a team from the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Team deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/teams/{id}/memberships:
+    get:
+      summary: List team memberships
+      description: Returns all memberships for a specific team. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Team memberships
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memberships:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamMembership'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Add team member
+      description: Adds a user to a team. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membership:
+                    $ref: '#/components/schemas/TeamMembership'
+        '400':
+          description: Validation error or user already in team
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Team or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Remove team member
+      description: Removes a user from a team. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Team or membership not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/notifications:
+    get:
+      summary: List notifications
+      description: Returns notifications for the authenticated user, ordered by creation date.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InAppNotification'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/notifications/{id}/read:
+    patch:
+      summary: Mark notification as read
+      description: Marks a specific notification as read for the authenticated user.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notification:
+                    $ref: '#/components/schemas/InAppNotification'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tickets/{id}/attachments:
+    get:
+      summary: List ticket attachments
+      description: Returns all attachments for a specific ticket.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attachments list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attachments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Attachment'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Upload attachment
+      description: Initiates attachment upload for a ticket. Returns presigned URL for upload.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachmentUploadRequest'
+      responses:
+        '200':
+          description: Upload initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentUploadResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tickets/{id}/attachments/{attachmentId}:
+    get:
+      summary: Get attachment
+      description: Returns attachment details and download URL.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attachment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attachment:
+                    $ref: '#/components/schemas/Attachment'
+                  downloadUrl:
+                    type: string
+                    description: Presigned URL for download
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket or attachment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete attachment
+      description: Deletes an attachment from a ticket.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attachment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket or attachment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tickets/{id}/audit:
+    get:
+      summary: Get ticket audit timeline
+      description: Returns audit events for a specific ticket.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tickets/{id}/csat:
+    post:
+      summary: Submit CSAT response
+      description: Submits customer satisfaction rating and optional feedback for a ticket.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CsatResponse'
+      responses:
+        '200':
+          description: CSAT response recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/categories:
+    get:
+      summary: List categories
+      description: Returns all ticket categories for the user's organization.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tags:
+    get:
+      summary: List tags
+      description: Returns all tags for the user's organization.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Tags list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/sla/preview:
+    post:
+      summary: Preview SLA deadlines
+      description: Calculates SLA deadlines for a given priority and optional category.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlaPreviewRequest'
+      responses:
+        '200':
+          description: SLA preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlaPreviewResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:
