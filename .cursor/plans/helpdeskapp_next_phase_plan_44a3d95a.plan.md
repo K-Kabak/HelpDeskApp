@@ -296,10 +296,10 @@ After systematic analysis of the repository, the codebase is significantly more 
 
 **Owner:** Backend Developer 3**Priority:** P2**Dependencies:** Task 2 (CI)**Files:** Various**What:** Add performance budgets, optimize slow queries, add monitoring hooks.**Why:** Prevent performance degradation as data grows.**Acceptance:**
 
-- Ticket list pagination performance acceptable (<200ms for 20 items)
-- Database indexes verified for common queries
-- Request logging includes timing metrics
-- Performance budget documented
+- [x] Ticket list pagination performance acceptable (<200ms for 20 items)
+- [x] Database indexes verified for common queries
+- [x] Request logging includes timing metrics
+- [x] Performance budget documented
 
 **Definition of Done:**
 
@@ -316,6 +316,10 @@ After systematic analysis of the repository, the codebase is significantly more 
 - [ ] Database indexes reviewed and optimized
 - [ ] Request timing logged
 - [ ] Performance budget doc created
+- [x] Ticket list query <200ms (measured)
+- [x] Database indexes reviewed and optimized
+- [x] Request timing logged
+- [x] Performance budget doc created
 
 **Concurrency:** Can run parallel with other tasks---
 

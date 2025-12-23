@@ -142,6 +142,12 @@ model Ticket {
   csatRequest          CsatRequest?
   csatResponse         CsatResponse?  @relation("TicketCsatResponse")
 
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([requesterId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([priority, createdAt(sort: Desc)])
+  @@index([assigneeUserId, status])
+  @@index([assigneeTeamId, status])
   @@index([organizationId, title, descriptionMd, category], name: "Ticket_search_idx")
   @@index([organizationId], name: "Ticket_organizationId_idx")
   @@index([status], name: "Ticket_status_idx")
@@ -165,6 +171,17 @@ model Comment {
   @@index([ticketId], name: "Comment_ticketId_idx")
   @@index([authorId], name: "Comment_authorId_idx")
   @@index([createdAt], name: "Comment_createdAt_idx")
+  id        String   @id @default(uuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  isInternal Boolean @default(false)
+  bodyMd    String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([authorId])
 }
 
 model Attachment {
@@ -183,6 +200,10 @@ model Attachment {
 
   @@index([ticketId], name: "Attachment_ticketId_idx")
   @@index([uploaderId], name: "Attachment_uploaderId_idx")
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([uploaderId])
 }
 
 model Tag {
@@ -237,6 +258,7 @@ model AuditEvent {
   @@index([ticketId], name: "AuditEvent_ticketId_idx")
   @@index([actorId], name: "AuditEvent_actorId_idx")
   @@index([createdAt], name: "AuditEvent_createdAt_idx")
+  @@index([ticketId, createdAt])
 }
 
 model AdminAudit {
@@ -251,7 +273,8 @@ model AdminAudit {
   data           Json?
   createdAt      DateTime     @default(now())
 
-  @@index([organizationId, resource, resourceId], name: "AdminAudit_org_resource_idx")
+  @@index([organizationId, resource, resourceId])
+  @@index([organizationId, createdAt(sort: Desc)])
 }
 
 model SlaPolicy {
