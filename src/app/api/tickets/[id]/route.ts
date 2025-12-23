@@ -7,6 +7,8 @@ import { z } from "zod";
 import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 import { notificationService } from "@/lib/notification";
+import { needsReopenReason, validateReopenReason } from "@/lib/reopen-reason";
+import { generateCsatToken } from "@/lib/csat-token";
 
 const updateSchema = z
   .object({
@@ -14,6 +16,7 @@ const updateSchema = z
     priority: z.nativeEnum(TicketPriority).optional(),
     assigneeUserId: z.string().uuid().nullable().optional(),
     assigneeTeamId: z.string().uuid().nullable().optional(),
+    reopenReason: z.string().optional(),
   })
   .refine(
     (data) =>
@@ -105,6 +108,16 @@ async function updateTicket(
 
     if (!requesterAllowedStatuses.includes(payload.status)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
+  // Validate reopen reason if needed
+  if (payload.status === TicketStatus.PONOWNIE_OTWARTE && payload.status !== ticket.status) {
+    if (needsReopenReason(payload.status)) {
+      const validation = validateReopenReason(payload.reopenReason ?? "");
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.message }, { status: 400 });
+      }
     }
   }
 
@@ -216,9 +229,16 @@ async function updateTicket(
     return NextResponse.json({ error: "No changes" }, { status: 400 });
   }
 
-  const auditData = {
+  const auditData: Record<string, unknown> = {
     changes,
-  } as Prisma.InputJsonValue;
+  };
+
+  // Store reopen reason in audit data if provided
+  if (payload.status === TicketStatus.PONOWNIE_OTWARTE && payload.reopenReason) {
+    auditData.reopenReason = payload.reopenReason.trim();
+  }
+
+  const auditDataJson = auditData as Prisma.InputJsonValue;
 
   const [updatedTicket] = await prisma.$transaction([
     prisma.ticket.update({
@@ -235,7 +255,7 @@ async function updateTicket(
         ticketId: ticket.id,
         actorId: session.user.id,
         action: "TICKET_UPDATED",
-        data: auditData,
+        data: auditDataJson,
       },
     }),
   ]);
@@ -265,9 +285,15 @@ async function updateTicket(
     });
 
     if (!existingCsat) {
+      // Generate signed token with 30-day expiry
+      const token = generateCsatToken(updatedTicket.id, 30);
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
       await prisma.csatRequest.create({
         data: {
           ticketId: updatedTicket.id,
+          token,
+          expiresAt,
         },
       });
 
@@ -280,6 +306,7 @@ async function updateTicket(
         data: {
           ticketId: updatedTicket.id,
           ticketNumber: updatedTicket.number,
+          csatToken: token, // Include token in email data
         },
         metadata: {
           notificationType: "ticketUpdate",

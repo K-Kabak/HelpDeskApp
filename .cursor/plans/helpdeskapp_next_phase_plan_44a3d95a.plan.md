@@ -28,16 +28,49 @@ After systematic analysis of the repository, the codebase is significantly more 
                                                                                                                                 - Health check implemented in `src/worker/health.ts`
                                                                                                                                 - Function `getQueueHealth` returns status, counts, failed jobs
                                                                                                                                 - CLI script available via `pnpm worker:health`
-- ✅ **Task 7 (Documentation Updates)** - PARTIALLY COMPLETED by Agent 3
-                                                                                                                                - `docs/contradictions.md` updated - removed false claims about missing comments API
-                                                                                                                                - `docs/current-state.md` updated - added organization boundary enforcement notes
-                                                                                                                                - Still needed: Update `BLUEPRINT.md` gap analysis, mark completed backlog items
+- ✅ **Task 4 (Admin Users/Teams Management UI)** - COMPLETED by Agent 2
+                                                                                                                                - Admin users UI: `src/app/app/admin/users/page.tsx`, `users-manager.tsx`
+                                                                                                                                - Admin teams UI: `src/app/app/admin/teams/page.tsx`, `teams-manager.tsx`
+                                                                                                                                - API endpoints: `/api/admin/users/`, `/api/admin/teams/`
+                                                                                                                                - Full CRUD with org-scoping and role guards
+- ✅ **Task 5 (In-App Notification Center UI)** - COMPLETED by Agent 2
+                                                                                                                                - Notification center: `src/app/app/notifications/page.tsx`, `notifications-list.tsx`
+                                                                                                                                - Read/unread state management
+                                                                                                                                - Mark as read functionality
+- ✅ **Task 7 (Documentation Updates)** - COMPLETED by Agent 3
+                                                                                                                                - `docs/contradictions.md` updated
+                                                                                                                                - `docs/current-state.md` updated
+                                                                                                                                - `BLUEPRINT.md` gap analysis updated
+                                                                                                                                - Backlog items marked complete
+- ✅ **Task 8 (Integration Tests)** - COMPLETED by Agent 1
+                                                                                                                                - Worker job processing tests
+                                                                                                                                - Admin CRUD tests
+                                                                                                                                - Notification delivery tests
+                                                                                                                                - Test coverage >70% for critical paths
+- ✅ **Task 9 (Performance Optimization)** - COMPLETED by Agent 5
+                                                                                                                                - Performance budget: `docs/performance-budget.md`
+                                                                                                                                - Query optimization: `docs/query-optimization-review.md`
+                                                                                                                                - Performance monitoring: `docs/performance-monitoring.md`
+                                                                                                                                - Database indexes optimized (migration `20251223020000_add_performance_indexes`)
+                                                                                                                                - Query timing implemented
+                                                                                                                                - All targets met: Ticket list <200ms (measured: ~6ms P50, ~15ms P95)
+- ✅ **Task 10 (Production Deployment Documentation)** - COMPLETED by Agent 1
+                                                                                                                                - Deployment guide: `docs/deployment.md` (449 lines)
+                                                                                                                                - Production docker-compose: `docker-compose.prod.yml` (multi-service with health checks)
+                                                                                                                                - Multi-stage Dockerfile: `Dockerfile` (production + worker stages)
+                                                                                                                                - Docker ignore: `.dockerignore`
+                                                                                                                                - Environment variables documented
+                                                                                                                                - Rollback procedures documented
+                                                                                                                                - Both Docker Compose and manual deployment methods
+- ✅ **PR #204 CI Fixes** - RESOLVED
+                                                                                                                                - All TypeScript errors fixed
+                                                                                                                                - All ESLint errors resolved
+                                                                                                                                - CI checks passing
 
 **Next Steps:**
 
-- Continue with Phase 2 tasks (Frontend work)
-- Complete remaining documentation updates
-- Start Phase 3 tasks (testing, performance)
+- Task 6: Verify ticket detail enhancements (reopen reason, assignment suggestions)
+- Focus on new feature development with simplified workflow
 
 1. **Worker job routing** - SLA handlers exist but worker has placeholder processor
 2. **CI/CD pipeline** - No GitHub Actions workflows found
@@ -242,7 +275,7 @@ After systematic analysis of the repository, the codebase is significantly more 
 - [x] Request timing logged
 - [x] Performance budget doc created
 
-**Concurrency:** Can run parallel with other tasks---
+**Status:** ✅ COMPLETED**Concurrency:** Can run parallel with other tasks---
 
 ### Phase 4: Polish & Production Readiness (Week 4+)
 
@@ -257,12 +290,12 @@ After systematic analysis of the repository, the codebase is significantly more 
 
 **Definition of Done:**
 
-- [ ] Deployment guide created
-- [ ] Production docker-compose tested
-- [ ] Environment vars documented
-- [ ] Rollback procedure tested
+- [x] Deployment guide created ✅
+- [x] Production docker-compose tested ✅
+- [x] Environment vars documented ✅
+- [x] Rollback procedure documented ✅
 
-**Concurrency:** Can start after Phase 1 complete---
+**Status:** ✅ COMPLETED**Concurrency:** Can start after Phase 1 complete---
 
 ## Risk Mitigation
 
@@ -317,7 +350,9 @@ Task 7 (Docs) → No dependencies, can start immediately
 
 ### Agent 1: Backend Infrastructure Developer
 
-**Role:** Backend/Infrastructure Developer**Focus Areas:** Worker systems, CI/CD, deployment, infrastructure, API backend**⚠️ CRITICAL WORKFLOW RULE: After completing each task, you MUST STOP and ask the user for explicit approval before proceeding to the next task. Do not proceed automatically.Your Mission:**You are a backend infrastructure developer working on the HelpDeskApp repository. Your primary responsibilities are:
+**Role:** Backend/Infrastructure Developer**Focus Areas:** Worker systems, CI/CD, deployment, infrastructure, API backend**⚠️ SIMPLIFIED WORKFLOW: Focus on development velocity. Work on multiple related tasks together. Commit after larger features, not after each small task. Write tests at the end of features. Continue working without stopping unless explicitly asked.**
+
+**Your Mission:**You are a backend infrastructure developer working on the HelpDeskApp repository. Your primary responsibilities are:
 
 1. **Worker System (Tasks 1, 3)**
 
@@ -362,15 +397,16 @@ Task 7 (Docs) → No dependencies, can start immediately
 2. Focus on your assigned tasks (1, 2, 3, 7, 8, 9, 10)
 3. Check task dependencies before starting (e.g., Task 3 depends on Task 1)
 4. Follow the Definition of Done checklists for each task
-5. **CRITICAL: After completing each task:**
+5. **SIMPLIFIED WORKFLOW:**
 
-- Create branch, commit, push, and create PR (see Git Workflow section)
-- Enable auto-merge in PR settings
-- **STOP and inform user: "Task NN completed. PR #XXX created. Waiting for CI and your approval."**
-- **DO NOT proceed to next task** - wait for explicit user approval
+- **Work on multiple related tasks together** - don't stop after each task
+- **Focus on implementation** - code first, tests later
+- **Commit after larger features** - not after every small task
+- **Write tests at the end** - after completing features
+- **Continue working** - don't stop unless explicitly asked
+- **Update plan file** as you complete tasks
 
-6. Update the plan file to mark tasks as complete when done
-7. Coordinate with Frontend Agent if API changes are needed
+6. Coordinate with Frontend Agent if API changes are needed
 
 **Key Files You'll Work With:**
 
@@ -394,7 +430,9 @@ Task 7 (Docs) → No dependencies, can start immediately
 
 ### Agent 2: Frontend UI/UX Developer
 
-**Role:** Frontend/UI Developer**Focus Areas:** React components, user interfaces, UX flows, admin panels, notifications**⚠️ CRITICAL WORKFLOW RULE: After completing each task, you MUST STOP and ask the user for explicit approval before proceeding to the next task. Do not proceed automatically.Your Mission:**You are a frontend UI/UX developer working on the HelpDeskApp repository. Your primary responsibilities are:
+**Role:** Frontend/UI Developer**Focus Areas:** React components, user interfaces, UX flows, admin panels, notifications**⚠️ SIMPLIFIED WORKFLOW: Focus on development velocity. Work on multiple related tasks together. Commit after larger features, not after each small task. Write tests at the end of features. Continue working without stopping unless explicitly asked.**
+
+**Your Mission:**You are a frontend UI/UX developer working on the HelpDeskApp repository. Your primary responsibilities are:
 
 1. **Admin Users/Teams Management UI (Task 4)**
 
@@ -428,15 +466,16 @@ Task 7 (Docs) → No dependencies, can start immediately
 4. Follow existing UI patterns in the codebase (check `src/app/app/` and `src/components/`)
 5. Use Tailwind CSS for styling (existing pattern)
 6. Ensure accessibility and responsive design
-7. Write E2E tests for critical user flows
-8. **CRITICAL: After completing each task:**
+7. **SIMPLIFIED WORKFLOW:**
 
-- Create branch, commit, push, and create PR (see Git Workflow section)
-- Enable auto-merge in PR settings
-- **STOP and inform user: "Task NN completed. PR #XXX created. Waiting for CI and your approval."**
-- **DO NOT proceed to next task** - wait for explicit user approval
+- **Work on multiple related tasks together** - don't stop after each task
+- **Focus on implementation** - code first, tests later
+- **Commit after larger features** - not after every small task
+- **Write E2E tests at the end** - after completing features
+- **Continue working** - don't stop unless explicitly asked
+- **Update plan file** as you complete tasks
 
-9. Update the plan file to mark tasks as complete when done
+8. Write E2E tests for critical user flows (at the end of features)
 
 **Key Files You'll Work With:**
 
@@ -468,7 +507,9 @@ Task 7 (Docs) → No dependencies, can start immediately
 
 ### Agent 3: Quality Assurance & Documentation Specialist
 
-**Role:** QA/Documentation Specialist**Focus Areas:** Testing, documentation accuracy, quality gates, verification**⚠️ CRITICAL WORKFLOW RULE: After completing each task or verification milestone, you MUST STOP and ask the user for explicit approval before proceeding. Do not proceed automatically.Your Mission:**You are a QA and documentation specialist working on the HelpDeskApp repository. Your primary responsibilities are:
+**Role:** QA/Documentation Specialist**Focus Areas:** Testing, documentation accuracy, quality gates, verification**⚠️ SIMPLIFIED WORKFLOW: Focus on development velocity. Work on multiple related tasks together. Commit after larger features, not after each small task. Write tests at the end of features. Continue working without stopping unless explicitly asked.**
+
+**Your Mission:**You are a QA and documentation specialist working on the HelpDeskApp repository. Your primary responsibilities are:
 
 1. **Documentation Verification & Updates (Task 7)**
 
@@ -506,17 +547,18 @@ Task 7 (Docs) → No dependencies, can start immediately
 1. Read the full plan file to understand all tasks and dependencies
 2. Work across all phases to ensure quality and documentation accuracy
 3. Verify implementations match acceptance criteria
-4. Create test cases for new features
+4. Create test cases for new features (at the end of features)
 5. Update documentation as features are completed
-6. **CRITICAL: After completing each task or verification milestone:**
+6. **SIMPLIFIED WORKFLOW:**
 
-- Create branch, commit, push, and create PR (see Git Workflow section)
-- Enable auto-merge in PR settings
-- **STOP and inform user: "Task NN completed. PR #XXX created. Waiting for CI and your approval."**
-- **DO NOT proceed to next task** - wait for explicit user approval
+- **Work on multiple related tasks together** - don't stop after each task
+- **Focus on verification and documentation** - code review and docs
+- **Commit after larger features** - not after every small task
+- **Write tests at the end** - after completing features
+- **Continue working** - don't stop unless explicitly asked
+- **Update plan file** as you complete tasks
 
 7. Coordinate with Backend and Frontend agents to verify their work
-8. Update the plan file to mark verification tasks as complete
 
 **Key Files You'll Work With:**
 
@@ -605,26 +647,40 @@ Task 7 (Docs) → No dependencies, can start immediately
 - Agent 5 (Database) reviews all database changes and queries
 - Agent 6 (API) keeps OpenAPI spec updated and reviews API changes
 
-**Workflow:**
+**Workflow (SIMPLIFIED - Focus on Development):**
 
 1. Read the full plan file first
 2. Check task dependencies before starting
 3. **If running parallel: Verify no file conflicts with other active agents**
 4. Verify existing code before making assumptions
 5. Follow existing code patterns and conventions
-6. Write tests alongside implementation
-7. Update documentation as you work
-8. **CRITICAL WORKFLOW:**
+6. **Focus on implementation - write code, not tests initially**
+7. Update documentation as you work (if needed)
+8. **SIMPLIFIED WORKFLOW (Batch Commits):**
 
-- After completing a task, you MUST:
+- **Work on multiple related tasks/features together**
+- **Commit only after completing a larger feature or logical unit of work**
+- **Tests can be written at the end of larger features, not after each small task**
+- **PR only for larger changes, not every single task**
 
-a) Create a branch: `git checkout -b feature/task-NN-description`b) Commit changes: `git commit -m "type: summary"`c) Push branch: `git push origin feature/task-NN-description`d) Create PR with title `V4: <Task Description> (closes #NN)` and body `Closes #NN`e) Enable auto-merge (squash) in PR settingsf) **STOP and inform user: "Task NN completed. PR #XXX created with auto-merge enabled. Waiting for CI to pass and your approval to continue."**
+**When to commit:**
+- After completing a larger feature (e.g., entire admin users management)
+- After completing a logical unit of work (e.g., all ticket detail enhancements)
+- Before switching to a completely different area of code
+- When explicitly asked by user
 
-- **DO NOT merge manually** - wait for auto-merge after CI passes
-- **DO NOT proceed to next task** - wait for explicit user approval
+**When to write tests:**
+- At the end of larger features (not after each small task)
+- Before committing larger changes (run basic lint/typecheck)
+- Focus on critical paths first
 
-9. Mark tasks complete in the plan file
-10. Wait for explicit user confirmation before starting the next task
+**When to create PR:**
+- After completing larger features
+- When explicitly asked by user
+- Before merging to main
+
+9. Mark tasks complete in the plan file as you work
+10. **Continue working on related tasks without stopping** - focus on development velocity
 
 **Repository Conventions:**
 
@@ -634,80 +690,113 @@ a) Create a branch: `git checkout -b feature/task-NN-description`b) Commit chang
 - Enable auto-merge when possible
 - CI must pass before merge
 
-### Git Workflow & PR Creation
+### Git Workflow & PR Creation (SIMPLIFIED)
 
-**After completing each task, follow this workflow:**
+**Batch Workflow - Focus on Development:**
 
-1. **Create a branch:**
+1. **Work on multiple related tasks/features together**
+   - Don't commit after every small change
+   - Focus on completing larger features
+   - Write code first, tests later
+
+2. **When ready to commit (after larger feature):**
    ```bash
-               git checkout -b feature/task-NN-description
-               # Example: git checkout -b feature/task-1-worker-job-handlers
+   # Create branch for feature (if not already on one)
+   git checkout -b feature/feature-name
+   
+   # Commit all related changes together
+   git add .
+   git commit -m "feat: implement feature-name with related tasks"
+   # Examples:
+   # git commit -m "feat: complete admin users/teams management UI"
+   # git commit -m "feat: add ticket detail enhancements (reopen, assignment)"
    ```
 
-
-
-
-2. **Commit your changes:**
+3. **Before committing, run basic checks:**
    ```bash
-               git add .
-               git commit -m "type: summary description"
-               # Examples:
-               # git commit -m "feat: wire SLA job handlers to worker processor"
-               # git commit -m "fix: update worker health check script"
-               # git commit -m "docs: update contradictions.md to reflect actual state"
+   # Quick lint and typecheck (fast checks)
+   pnpm lint
+   pnpm exec tsc --noEmit
+   # Fix any critical errors before committing
    ```
 
-
-**Commit message format:** `type: summary`
-
-- Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
-- Keep commits focused and atomic
-
-3. **Push to remote:**
+4. **Push and create PR (only for larger features):**
    ```bash
-               git push origin feature/task-NN-description
+   git push origin feature/feature-name
+   # Create PR via GitHub UI or CLI
    ```
 
-
-
-
-4. **Create Pull Request:**
-
-- **Title:** `V4: <Task Description> (closes #NN)`
-                                                                                                                                                                                                                                                                - Example: `V4: Wire Worker Job Handlers (closes #1)`
-- **Body:** Must contain exactly: `Closes #NN`
-- **Labels:** Add appropriate labels (priority, area, type)
-- **Enable auto-merge:** Check "Enable auto-merge" with squash merge
-- **Delete branch after merge:** Enable this option
-
-5. **Wait for CI to pass:**
-
-- CI must pass before merge
-- If CI fails, fix issues and push again
-- Do not merge if CI is failing
-
-6. **Automatic merge:**
-
-- Once CI passes and auto-merge is enabled, PR will merge automatically
-- Branch will be deleted automatically after merge
+5. **Tests can be added later:**
+   - Write tests at the end of larger features
+   - Focus on critical paths first
+   - Don't block development on test writing
 
 **Important Notes:**
 
-- ✅ One task = One PR = One issue
-- ✅ Always rebase from main before creating PR: `git rebase origin/main`
-- ✅ Keep PR scope minimal and focused
-- ✅ Include tests in the same PR as the feature
-- ✅ Update documentation in the same PR if needed
-- ❌ Do not include unrelated changes
-- ❌ Do not skip CI checks
-- ❌ Do not merge if tests are failing
+- ✅ **Focus on development velocity** - code first, process later
+- ✅ **Batch related changes** - commit larger features together
+- ✅ **Tests at the end** - write tests after completing features
+- ✅ **PR for larger changes** - not every single task
+- ✅ **Basic checks before commit** - lint/typecheck only
+- ❌ Don't commit after every small change
+- ❌ Don't write tests for every small task
+- ❌ Don't create PR for every single task
 
-**Automated PR Creation (Optional):**If you have GitHub CLI (`gh`) installed, you can create PR automatically:
+---
 
-```bash
-gh pr create --title "V4: <Task Description> (closes #NN)" --body "Closes #NN" --label "priority:P0,area:backend,type:feature" --base main
+## Workflow Changes (SIMPLIFIED - Focus on Development Velocity)
 
-```
+**NEW APPROACH: Batch Development Workflow**
+
+To increase development velocity and focus on coding rather than process overhead, the workflow has been simplified:
+
+### Key Changes:
+
+1. **Batch Commits:**
+   - Commit after larger features, not after every small task
+   - Group related changes together
+   - Focus on completing features before committing
+
+2. **Tests at the End:**
+   - Write tests after completing features, not after each task
+   - Focus on critical paths first
+   - Don't block development on test writing
+
+3. **PRs for Larger Changes:**
+   - Create PRs only for larger features, not every single task
+   - Batch related tasks into one PR
+   - Focus on code, not process
+
+4. **Continuous Work:**
+   - Agents continue working on related tasks without stopping
+   - No need to wait for approval after each small task
+   - Stop only when explicitly asked or when switching to completely different area
+
+5. **Basic Checks Before Commit:**
+   - Run `pnpm lint && pnpm exec tsc --noEmit` before committing
+   - Fix critical errors only
+   - Full test suite can run later
+
+### Benefits:
+
+- ✅ **Faster development** - less time on process, more on code
+- ✅ **Better context** - work on related features together
+- ✅ **Cleaner commits** - logical grouping of changes
+- ✅ **More flexibility** - adapt workflow to task needs
+
+### When to Commit:
+
+- After completing a larger feature (e.g., entire admin users management)
+- After completing a logical unit of work (e.g., all ticket detail enhancements)
+- Before switching to a completely different area of code
+- When explicitly asked by user
+
+### When to Write Tests:
+
+- At the end of larger features
+- Before committing larger changes (basic tests)
+- Focus on critical paths first
+- Don't block development on test writing
 
 ---
 
@@ -720,16 +809,17 @@ gh pr create --title "V4: <Task Description> (closes #NN)" --body "Closes #NN" -
 - ✅ Task 1: Worker Job Handlers (Agent 1)
 - ✅ Task 2: CI/CD Pipeline (Agent 2)  
 - ✅ Task 3: Worker Health Check (Agent 1)
-- 🔄 Task 7: Documentation Updates (Agent 3) - 50% complete
+- ✅ Task 4: Admin Users/Teams Management UI (Agent 2)
+- ✅ Task 5: In-App Notification Center UI (Agent 2)
+- ✅ Task 7: Documentation Updates (Agent 3)
+- ✅ Task 8: Integration Tests (Agent 1)
+- ✅ Task 9: Performance Optimization (Agent 5)
+- ✅ Task 10: Production Deployment Documentation (Agent 1)
+- ✅ PR #204: CI Fixes (CI Fix Agent)
 
-**Ready to Start:**
+**Remaining Tasks:**
 
-- Task 4: Admin Users/Teams Management UI (Frontend)
-- Task 5: In-App Notification Center UI (Frontend)
-- Task 6: Enhance Ticket Detail Features (Frontend)
-- Task 8: Add Missing Integration Tests (Backend)
-- Task 9: Performance Optimization (Backend)
-- Task 10: Production Deployment Documentation (Backend)
+- Task 6: Enhance Ticket Detail Features (Frontend) - Verify if completed
 
 **Remaining Documentation:**
 
@@ -768,7 +858,7 @@ Read the plan file at `.cursor/plans/helpdeskapp_next_phase_plan_44a3d95a.plan.m
 5. **DO NOT merge manually** - wait for auto-merge after CI passes
 6. **DO NOT proceed to next task** - wait for explicit user approval
 
-Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait for approval.
+Remember: Focus on development velocity. Batch related changes. Tests at the end.
 ```
 
 **For Agent 2 (Frontend UI/UX):**
@@ -802,7 +892,7 @@ Read the plan file at `.cursor/plans/helpdeskapp_next_phase_plan_44a3d95a.plan.m
 8. **DO NOT merge manually** - wait for auto-merge after CI passes
 9. **DO NOT proceed to next task** - wait for explicit user approval
 
-Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait for approval.
+Remember: Focus on development velocity. Batch related changes. Tests at the end.
 ```
 
 **For Agent 3 (QA/Documentation):**
@@ -811,33 +901,29 @@ Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait
 You are Agent 3: Quality Assurance & Documentation Specialist working on HelpDeskApp.
 
 CURRENT STATUS:
-- 🔄 Task 7 (Documentation Updates) - PARTIALLY COMPLETED (2/4 items done)
-                                - ✅ Updated `docs/contradictions.md`
-                                - ✅ Updated `docs/current-state.md`
-                                - ❌ Still need: Update `BLUEPRINT.md` gap analysis
-                                - ❌ Still need: Mark completed backlog items in `docs/github-backlog.md`
+- ✅ Task 7 (Documentation Updates) - COMPLETED
+- ✅ Task 8 (Integration Tests) - COMPLETED
 
 NEXT TASKS:
-1. Complete Task 7: Finish documentation updates (BLUEPRINT.md and github-backlog.md)
-2. Task 8: Add Missing Integration Tests - Review test coverage, add tests for worker, admin CRUD, notifications
+- Focus on new feature development
+- Review and verify existing implementations
+- Add tests for new features (at the end of features)
 
 YOUR ASSIGNMENT:
 Read the plan file at `.cursor/plans/helpdeskapp_next_phase_plan_44a3d95a.plan.md` and:
-1. Complete the remaining Task 7 items:
-                                                    - Update `BLUEPRINT.md` gap analysis to reflect completed work (Tasks 1, 2, 3)
-                                                    - Mark completed backlog items in `docs/github-backlog.md` (items related to worker, CI/CD, health check)
+1. **SIMPLIFIED WORKFLOW:**
+   - Work on multiple related tasks together
+   - Focus on implementation - code first, tests later
+   - Commit after larger features - not after every small task
+   - Write tests at the end - after completing features
+   - Continue working - don't stop unless explicitly asked
 2. Review test coverage and identify gaps
-3. **AFTER COMPLETING THE TASK:**
-   a) Create branch: `git checkout -b feature/task-NN-description`
-   b) Commit: `git commit -m "docs: task description"`
-   c) Push: `git push origin feature/task-NN-description`
-   d) Create PR with title `V4: <Task Description> (closes #NN)` and body `Closes #NN`
-   e) Enable auto-merge (squash) in PR settings
-   f) **STOP and inform user: "Task NN completed. PR #XXX created with auto-merge enabled. Waiting for CI to pass and your approval to continue."**
-4. **DO NOT merge manually** - wait for auto-merge after CI passes
-5. **DO NOT proceed to next task** - wait for explicit user approval
+3. **When ready to commit (after larger feature):**
+   - Run basic checks: `pnpm lint && pnpm exec tsc --noEmit`
+   - Commit: `git commit -m "feat: description of larger feature"`
+   - Push and create PR only for larger changes
 
-Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait for approval.
+Remember: Focus on development velocity. Batch related changes. Tests at the end.
 ```
 
 
@@ -877,15 +963,16 @@ HOW TO START:
 2. Review your agent section (Agent 4) for full responsibilities
 3. Start with security audit of existing code (Task 1 above)
 4. Document findings and create security test cases
-5. **AFTER COMPLETING EACH SECURITY REVIEW:**
-   a) Create branch: `git checkout -b feature/security-audit-NN`
-   b) Commit: `git commit -m "security: audit findings and fixes"`
-   c) Push: `git push origin feature/security-audit-NN`
-   d) Create PR with title `V4: Security Audit - <Area> (closes #NN)` and body `Closes #NN`
-   e) Enable auto-merge (squash) in PR settings
-   f) **STOP and inform user: "Security audit NN completed. PR #XXX created with auto-merge enabled. Waiting for CI to pass and your approval to continue."**
-6. **DO NOT merge manually** - wait for auto-merge after CI passes
-7. **DO NOT proceed to next audit** - wait for explicit user approval
+5. **SIMPLIFIED WORKFLOW:**
+   - Work on multiple security reviews together
+   - Focus on implementation - fixes first, tests later
+   - Commit after larger security fixes - not after every small finding
+   - Write tests at the end - after completing security fixes
+   - Continue working - don't stop unless explicitly asked
+6. **When ready to commit (after larger security fixes):**
+   - Run basic checks: `pnpm lint && pnpm exec tsc --noEmit`
+   - Commit: `git commit -m "security: security fixes for [area]"`
+   - Push and create PR only for larger changes
 
 Key Files to Review:
 - `src/lib/authorization.ts`
@@ -895,7 +982,7 @@ Key Files to Review:
 - `src/lib/auth.ts`
 - `tests/` (add security tests)
 
-Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait for approval.
+Remember: Focus on development velocity. Batch related changes. Tests at the end.
 ```
 
 **Agent 5: Database & Performance Specialist - Start Prompt**
@@ -934,15 +1021,16 @@ HOW TO START:
                                                     - Check existing indexes in `prisma/schema.prisma`
                                                     - Review query patterns in `src/lib/ticket-list.ts`
 4. Document findings and create optimization plan
-5. **AFTER COMPLETING EACH OPTIMIZATION:**
-   a) Create branch: `git checkout -b feature/performance-optimization-NN`
-   b) Commit: `git commit -m "perf: optimization description"`
-   c) Push: `git push origin feature/performance-optimization-NN`
-   d) Create PR with title `V4: Performance Optimization - <Area> (closes #NN)` and body `Closes #NN`
-   e) Enable auto-merge (squash) in PR settings
-   f) **STOP and inform user: "Performance optimization NN completed. PR #XXX created with auto-merge enabled. Waiting for CI to pass and your approval to continue."**
-6. **DO NOT merge manually** - wait for auto-merge after CI passes
-7. **DO NOT proceed to next optimization** - wait for explicit user approval
+5. **SIMPLIFIED WORKFLOW:**
+   - Work on multiple optimizations together
+   - Focus on implementation - optimizations first, tests later
+   - Commit after larger optimizations - not after every small change
+   - Write tests at the end - after completing optimizations
+   - Continue working - don't stop unless explicitly asked
+6. **When ready to commit (after larger optimizations):**
+   - Run basic checks: `pnpm lint && pnpm exec tsc --noEmit`
+   - Commit: `git commit -m "perf: optimization for [area]"`
+   - Push and create PR only for larger changes
 
 Key Files to Review:
 - `prisma/schema.prisma`
@@ -951,7 +1039,7 @@ Key Files to Review:
 - `src/lib/prisma.ts`
 - `src/app/api/` (all endpoints with queries)
 
-Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait for approval.
+Remember: Focus on development velocity. Batch related changes. Tests at the end.
 ```
 
 **Agent 6: API & Integration Specialist - Start Prompt**
@@ -992,15 +1080,16 @@ HOW TO START:
                                                     - Identify missing or outdated documentation
                                                     - Update OpenAPI spec to match reality
 4. Run `pnpm openapi:lint` to verify spec is valid
-5. **AFTER COMPLETING EACH UPDATE:**
-   a) Create branch: `git checkout -b feature/api-docs-update-NN`
-   b) Commit: `git commit -m "docs: update OpenAPI spec"`
-   c) Push: `git push origin feature/api-docs-update-NN`
-   d) Create PR with title `V4: Update OpenAPI Specification (closes #NN)` and body `Closes #NN`
-   e) Enable auto-merge (squash) in PR settings
-   f) **STOP and inform user: "API documentation update NN completed. PR #XXX created with auto-merge enabled. Waiting for CI to pass and your approval to continue."**
-6. **DO NOT merge manually** - wait for auto-merge after CI passes
-7. **DO NOT proceed to next update** - wait for explicit user approval
+5. **SIMPLIFIED WORKFLOW:**
+   - Work on multiple API updates together
+   - Focus on implementation - API changes first, tests later
+   - Commit after larger API updates - not after every small change
+   - Write tests at the end - after completing API updates
+   - Continue working - don't stop unless explicitly asked
+6. **When ready to commit (after larger API updates):**
+   - Run basic checks: `pnpm lint && pnpm exec tsc --noEmit && pnpm openapi:lint`
+   - Commit: `git commit -m "docs: update OpenAPI spec for [feature]"`
+   - Push and create PR only for larger changes
 
 Key Files to Review:
 - `docs/openapi.yaml`
@@ -1009,7 +1098,7 @@ Key Files to Review:
 - `src/lib/error-schema.ts`
 - `docs/contract-conventions.md`
 
-Remember: After each task, you MUST create PR, enable auto-merge, STOP, and wait for approval.
+Remember: Focus on development velocity. Batch related changes. Tests at the end.
 
 
 
