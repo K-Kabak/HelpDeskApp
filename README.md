@@ -16,6 +16,7 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
    Copy-Item .env.example .env.local -Force
    # Set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/helpdesk
    # Set NEXTAUTH_SECRET, NEXTAUTH_URL as needed
+   # Optional: Set EMAIL_ENABLED=true and SMTP_* variables for email notifications
    ```
 4) Install deps:
    ```powershell
@@ -43,6 +44,7 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
    ```powershell
    Copy-Item .env.example .env.local -Force
    # fill DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL as needed
+   # Optional: Set EMAIL_ENABLED=true and SMTP_* variables for email notifications
    ```
 4) Install deps (PowerShell):
    ```powershell
@@ -89,6 +91,16 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 - Attachments (upload + metadata)
 - Reports, Kanban, KPI dashboard
 - E2E/Unit tests, Dockerfile + docker-compose
+
+## Email Configuration
+- Email notifications are optional and controlled by `EMAIL_ENABLED` environment variable.
+- When `EMAIL_ENABLED=true`, configure SMTP settings:
+  - `SMTP_HOST` - SMTP server hostname
+  - `SMTP_PORT` - SMTP port (587 for STARTTLS, 465 for SSL)
+  - `SMTP_USER` - SMTP username
+  - `SMTP_PASSWORD` - SMTP password
+  - `SMTP_FROM` - From email address (defaults to `noreply@helpdesk.local`)
+- If `EMAIL_ENABLED` is not set or `false`, the application uses a stub adapter that queues emails without sending.
 
 ## Operations runbooks
 - `docs/worker-deployment-runbook.md`: Restart, drain, rollback guidance for BullMQ workers along with failure mode troubleshooting.

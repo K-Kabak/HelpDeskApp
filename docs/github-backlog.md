@@ -782,7 +782,7 @@
 - Security/Edge cases: protect endpoint
 - Rollback/Recovery: disable metrics
 
-**[077] Dashboard SLA widgets (open tickets by breach state)**
+**[077] Dashboard SLA widgets (open tickets by breach state)** ✅ COMPLETED
 - Goal: Dashboard SLA widgets (open tickets by breach state)
 - Acceptance Criteria:
   - widget renders counts
@@ -792,7 +792,7 @@
 - Security/Edge cases: none
 - Rollback/Recovery: hide widget
 
-**[078] Add automation rule engine (trigger/action config)**
+**[078] Add automation rule engine (trigger/action config)** ✅ COMPLETED
 - Goal: Add automation rule engine (trigger/action config)
 - Acceptance Criteria:
   - rules persisted and executed on events
@@ -832,7 +832,7 @@
 - Security/Edge cases: dedup
 - Rollback/Recovery: disable reminder flag
 
-**[082] Add CSAT request trigger on resolution/closure**
+**[082] Add CSAT request trigger on resolution/closure** ✅ COMPLETED
 - Goal: Add CSAT request trigger on resolution/closure
 - Acceptance Criteria:
   - CSAT notification dispatched once
@@ -914,7 +914,7 @@
 - Security/Edge cases: org scoping
 - Rollback/Recovery: disable feature
 
-**[090] Reporting job table and async export endpoints**
+**[090] Reporting job table and async export endpoints** ✅ COMPLETED
 - Goal: Reporting job table and async export endpoints
 - Acceptance Criteria:
   - report request returns job id
@@ -924,7 +924,7 @@
 - Security/Edge cases: org scope
 - Rollback/Recovery: disable endpoint
 
-**[091] Dashboard KPI cards (MTTR, MTTA, reopen rate)**
+**[091] Dashboard KPI cards (MTTR, MTTA, reopen rate)** ✅ COMPLETED
 - Goal: Dashboard KPI cards (MTTR, MTTA, reopen rate)
 - Acceptance Criteria:
   - metrics calculated accurately
@@ -934,7 +934,7 @@
 - Security/Edge cases: none
 - Rollback/Recovery: hide cards
 
-**[092] Export to CSV for tickets and comments**
+**[092] Export to CSV for tickets and comments** ✅ COMPLETED
 - Goal: Export to CSV for tickets and comments
 - Acceptance Criteria:
   - downloadable file generated asynchronously
@@ -954,7 +954,7 @@
 - Security/Edge cases: expiry + scope
 - Rollback/Recovery: revert to server proxy
 
-**[094] CSAT submission endpoint and schema**
+**[094] CSAT submission endpoint and schema** ✅ COMPLETED
 - Goal: CSAT submission endpoint and schema
 - Acceptance Criteria:
   - one response per ticket, signed token verified
@@ -964,7 +964,7 @@
 - Security/Edge cases: token validation
 - Rollback/Recovery: disable endpoint
 
-**[095] CSAT UI for requester (email link/page)**
+**[095] CSAT UI for requester (email link/page)** ✅ COMPLETED
 - Goal: CSAT UI for requester (email link/page)
 - Acceptance Criteria:
   - form submits score/comment
@@ -994,7 +994,7 @@
 - Security/Edge cases: safe content
 - Rollback/Recovery: hide suggestions
 
-**[098] Contract tests for reporting/exports and CSAT against OpenAPI**
+**[098] Contract tests for reporting/exports and CSAT against OpenAPI** ✅ COMPLETED
 - Goal: Contract tests for reporting/exports and CSAT against OpenAPI
 - Acceptance Criteria:
   - suite passes

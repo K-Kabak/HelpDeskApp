@@ -5,6 +5,7 @@ import { createRequestLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
+// Note: createUserSchema removed - validation done inline in POST method
 import { z } from "zod";
 
 const createUserSchema = z.object({
@@ -26,6 +27,13 @@ export async function GET(req: Request) {
   if (!auth.ok) {
     logger.warn("auth.required");
     return auth.response;
+  }
+
+  if (auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   }
 
   if (auth.user.role !== "ADMIN") {

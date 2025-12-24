@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { ticketScope } from "@/lib/authorization";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 
 /**
  * Export comments to CSV
@@ -30,6 +31,7 @@ export async function GET(req: Request) {
   const includeInternal = internalParam === "true" && !isRequester;
 
   // Build where clause
+  const where: Prisma.CommentWhereInput = {
   const where: any = {
     internal: includeInternal ? undefined : false, // Requesters only see public comments
   };
