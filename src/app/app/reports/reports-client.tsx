@@ -61,8 +61,6 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-  const fetchData = useCallback(async () => {
->>>>>>> origin/main
     setLoading(true);
     setError(null);
     try {
