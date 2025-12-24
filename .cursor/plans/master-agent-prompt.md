@@ -1,8 +1,6 @@
 # Master Agent Prompt - HelpDeskApp Development
 
-**Purpose:** This prompt provides essential context for any AI coding assistant (Agent 1-6) working on the HelpDeskApp repository. Paste this as a startup prompt before each task to ensure consistent context and workflow understanding.
-
-You are an AI coding assistant working on the **HelpDeskApp** repository. This prompt contains all critical information about the project, workflow, code editing rules, status, priorities, and quick references.
+You are an AI coding assistant working on the **HelpDeskApp** repository. This prompt contains all critical information about the project, workflow, and your responsibilities.
 
 ---
 
@@ -151,11 +149,6 @@ docs/                     # Documentation
 - **`playwright.config.ts`** - E2E test configuration
 - **`.github/workflows/ci.yml`** - CI/CD pipeline
 
-### Standards & Conventions
-- **`docs/coding-standards.md`** - Coding standards (lint/format/commit conventions)
-- **`docs/contract-conventions.md`** - API contract conventions
-- **`docs/glossary.md`** - Shared terminology
-
 ---
 
 ## CURRENT STATUS
@@ -173,23 +166,17 @@ docs/                     # Documentation
 - PR #204: CI fixes (TypeScript, ESLint errors)
 
 ### 🔄 Remaining Tasks
-- ✅ **Task 6:** Ticket detail enhancements - COMPLETED (all features implemented)
-- 🔄 **Real Email Notification Delivery:** EmailAdapterReal uses console.log - needs nodemailer implementation
+- **Task 6:** Verify ticket detail enhancements (reopen reason, assignment suggestions, audit timeline)
 
-### 📋 Next Priorities
-
-**🔄 Remaining (P1):**
-1. **Real Email Notification Delivery** - Implement nodemailer in `src/lib/email-adapter-real.ts`
-   - Install nodemailer package
-   - Replace console.log with real SMTP sending
-   - Test with real SMTP server
-
-**✅ Completed Features:**
-- ✅ Reporting/analytics endpoints and UI
-- ✅ CSAT improvements (Customer Satisfaction surveys)
-- ✅ Automation rules UI enhancements
-- ✅ Dashboard widgets (SLA status, ticket stats, KPI cards)
-- ✅ Export functionality (CSV exports)
+### 📋 Next Priorities (from backlog)
+**P1 Priority Features:**
+- Reporting/analytics endpoints or UI
+- CSAT improvements (Customer Satisfaction surveys)
+- Advanced search/filtering enhancements
+- Email notification delivery (real email sending)
+- Automation rules UI enhancements
+- Dashboard widgets (SLA status, ticket stats)
+- Export functionality (CSV/PDF exports)
 
 ---
 
@@ -311,21 +298,12 @@ const session = await getServerSession(authOptions);
 ### Scripts
 - `pnpm dev` - Start development server
 - `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm test` - Run unit/integration tests (Vitest)
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:e2e` - Run E2E tests (Playwright)
-- `pnpm test:contract` - Run contract tests
+- `pnpm test` - Run unit/integration tests
+- `pnpm test:e2e` - Run E2E tests
 - `pnpm lint` - Run ESLint
 - `pnpm exec tsc --noEmit` - Type check
-- `pnpm check:env` - Validate environment (Node/pnpm/DATABASE_URL)
-- `pnpm check:envexample` - Check `.env.example` completeness
-- `pnpm prisma:generate` - Generate Prisma client
 - `pnpm prisma:migrate` - Run migrations
 - `pnpm prisma:seed` - Seed database
-- `pnpm openapi:lint` - Validate OpenAPI specification
-- `pnpm worker:start` - Start BullMQ worker
-- `pnpm worker:health` - Check worker health
 
 ### Key Imports
 ```typescript
@@ -340,15 +318,6 @@ import { getServerSession } from 'next-auth';
 - Agent: `agent@serwisdesk.local` / `Agent123!`
 - Requester: `requester@serwisdesk.local` / `Requester123!`
 
-### Environment Setup
-- **Required:** Node 22+, pnpm, PostgreSQL (or Docker Compose)
-- **Services:** Postgres (5432), Redis (6379), MinIO (9000/9001)
-- **Env file:** Copy `.env.example` to `.env.local` and configure:
-  - `DATABASE_URL` - PostgreSQL connection string
-  - `NEXTAUTH_SECRET` - Secret for NextAuth JWT signing
-  - `NEXTAUTH_URL` - Application URL (e.g., http://localhost:3000)
-- **Quick start:** `docker compose up -d` → `pnpm install` → `pnpm prisma:migrate` → `pnpm prisma:seed` → `pnpm dev`
-
 ---
 
 ## YOUR MISSION
@@ -358,15 +327,9 @@ You are a coding assistant working on HelpDeskApp. Your primary goals:
 1. **Implement features** from the backlog or plan
 2. **Fix bugs** and improve existing code
 3. **Maintain code quality** (types, security, patterns)
-4. **Update documentation** when adding features (especially OpenAPI spec)
+4. **Update documentation** when adding features
 5. **Write tests** at the end of features
 6. **Follow the simplified workflow** - batch changes, code first, tests later
-
-### Agent Role Context
-While this prompt is designed for all agents (Agent 1-6), specific agent roles may include:
-- **Agent 1:** Backend/Infrastructure (workers, CI/CD, APIs)
-- **Agent 2:** Frontend/UI/UX (React components, admin panels, notifications)
-- **Agent 3-6:** Backend/QA/Security/Database/API specialists
 
 **Remember:** Focus on development velocity. Work on multiple related tasks together. Commit after larger features. Tests at the end. Continue working without stopping unless explicitly asked.
 
