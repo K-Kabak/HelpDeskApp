@@ -130,13 +130,14 @@ export default function TicketActions({
       <h2 className="text-lg font-semibold mb-4">Akcje</h2>
       <div className="grid gap-6 md:grid-cols-2">
         {(canManageStatus || requesterCanUpdate) && (
-        <form className="space-y-3" onSubmit={handleStatusSubmit}>
+        <form className="space-y-3" onSubmit={handleStatusSubmit} aria-label="Formularz zmiany statusu zgłoszenia">
           <div>
-            <label className="text-sm font-semibold text-slate-700">
+            <label htmlFor="ticket-status" className="text-sm font-semibold text-slate-700">
               Status zgłoszenia
             </label>
             <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+              id="ticket-status"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               value={status}
               onChange={(e) => {
                 const next = e.target.value as TicketStatus;
@@ -147,6 +148,7 @@ export default function TicketActions({
                 }
               }}
               disabled={mutation.isPending || statusOptions.length === 0}
+              aria-label="Status zgłoszenia"
             >
               {statusOptions.map((option) => (
                 <option key={option} value={option}>
@@ -156,10 +158,11 @@ export default function TicketActions({
             </select>
             {needsReopenReason(status) && (
               <div className="mt-3 space-y-1">
-                <label className="text-sm font-semibold text-slate-700">
+                <label htmlFor="reopen-reason" className="text-sm font-semibold text-slate-700">
                   Powód ponownego otwarcia
                 </label>
                 <textarea
+                  id="reopen-reason"
                   className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
                     reasonError ? "border-red-500" : "border-slate-200"
                   }`}
@@ -171,11 +174,15 @@ export default function TicketActions({
                   }}
                   placeholder="Opisz powód ponownego otwarcia zgłoszenia (min. 10 znaków)."
                   disabled={mutation.isPending}
+                  aria-invalid={!!reasonError}
+                  aria-describedby={reasonError ? "reopen-reason-error" : "reopen-reason-help"}
                 />
                 {reasonError && (
-                  <p className="text-xs text-red-600">{reasonError}</p>
+                  <p id="reopen-reason-error" className="text-xs text-red-600" role="alert">
+                    {reasonError}
+                  </p>
                 )}
-                <p className="text-xs text-slate-500">
+                <p id="reopen-reason-help" className="text-xs text-slate-500">
                   Historia zmian pomaga zespołowi zrozumieć kontekst ponownego
                   otwarcia.
                 </p>
@@ -189,12 +196,13 @@ export default function TicketActions({
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px]"
+            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
             disabled={
               mutation.isPending ||
               status === initialStatus ||
               (needsReopenReason(status) && !validateReopenReason(reopenReason).valid)
             }
+            aria-label={mutation.isPending ? "Zapisywanie zmian statusu..." : "Zapisz zmiany statusu zgłoszenia"}
           >
             {mutation.isPending ? "Zapisywanie..." : "Zapisz status"}
           </button>
@@ -202,7 +210,7 @@ export default function TicketActions({
         )}
 
         {canManageAssignments && (
-          <form className="space-y-3" onSubmit={handleAssignmentSubmit}>
+          <form className="space-y-3" onSubmit={handleAssignmentSubmit} aria-label="Formularz przypisania zgłoszenia">
             {suggestedAgentId && suggestedAgentId !== assigneeUserId && (
               <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
                 <div className="flex items-start justify-between gap-2">
@@ -220,7 +228,8 @@ export default function TicketActions({
                   <button
                     type="button"
                     onClick={() => setAssigneeUserId(suggestedAgentId)}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white hover:bg-sky-700 transition-colors whitespace-nowrap min-h-[36px]"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white hover:bg-sky-700 transition-colors whitespace-nowrap min-h-[36px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                    aria-label={`Zastosuj sugerowane przypisanie do ${agents.find((a) => a.id === suggestedAgentId)?.name}`}
                   >
                     <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
@@ -232,13 +241,15 @@ export default function TicketActions({
             )}
             <div className="space-y-2">
               <div>
-                <label className="text-sm font-semibold text-slate-700">
+                <label htmlFor="assignee-user" className="text-sm font-semibold text-slate-700">
                   Przypisany agent
                 </label>
                 <select
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+                  id="assignee-user"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   value={assigneeUserId}
                   onChange={(e) => setAssigneeUserId(e.target.value)}
+                  aria-label="Przypisany agent"
                   disabled={mutation.isPending}
                 >
                   <option value="">Brak</option>
@@ -251,14 +262,16 @@ export default function TicketActions({
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-700">
+                <label htmlFor="assignee-team" className="text-sm font-semibold text-slate-700">
                   Przypisany zespół
                 </label>
                 <select
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm"
+                  id="assignee-team"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   value={assigneeTeamId}
                   onChange={(e) => setAssigneeTeamId(e.target.value)}
                   disabled={mutation.isPending}
+                  aria-label="Przypisany zespół"
                 >
                   <option value="">Brak</option>
                   {teams.map((team) => (
@@ -271,12 +284,13 @@ export default function TicketActions({
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px]"
+              className="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               disabled={
                 mutation.isPending ||
                 (assigneeUserId === (initialAssigneeUserId ?? "") &&
                   assigneeTeamId === (initialAssigneeTeamId ?? ""))
               }
+              aria-label={mutation.isPending ? "Zapisywanie przypisania..." : "Zapisz przypisanie zgłoszenia"}
             >
               {mutation.isPending ? "Zapisywanie..." : "Zapisz przypisanie"}
             </button>

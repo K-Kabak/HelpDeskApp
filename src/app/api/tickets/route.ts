@@ -27,6 +27,17 @@ const querySchema = z.object({
   q: z.string().optional(),
 });
 
+/**
+ * GET /api/tickets
+ * 
+ * Retrieves a paginated list of tickets with optional filtering.
+ * 
+ * Authorization:
+ * - REQUESTER: Returns only tickets created by the user
+ * - AGENT/ADMIN: Returns tickets within the user's organization
+ * 
+ * Supports cursor-based pagination and filtering by status, priority, and search query.
+ */
 export async function GET(req?: Request) {
   const auth = await requireAuth();
   const logger = createRequestLogger({
@@ -68,6 +79,20 @@ export async function GET(req?: Request) {
   return NextResponse.json(page);
 }
 
+/**
+ * POST /api/tickets
+ * 
+ * Creates a new ticket with automatic SLA calculation and job scheduling.
+ * 
+ * Business logic:
+ * - Sanitizes markdown content to prevent XSS
+ * - Finds applicable SLA policy based on priority and category
+ * - Calculates first response and resolution due dates
+ * - Schedules SLA breach detection jobs
+ * - Creates audit event for ticket creation
+ * 
+ * Requires: title (min 3 chars), descriptionMd (min 3 chars), priority.
+ */
 export async function POST(req: Request) {
   const auth = await requireAuth();
   const logger = createRequestLogger({

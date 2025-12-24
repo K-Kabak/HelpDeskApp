@@ -204,20 +204,24 @@ export default function TicketForm() {
           <label className="text-sm text-slate-700" htmlFor="description">
             Opis (Markdown)
           </label>
-          <div className="flex gap-2 text-xs font-semibold text-slate-600">
+          <div className="flex gap-2 text-xs font-semibold text-slate-600" role="group" aria-label="Tryb edycji opisu">
             <button
               type="button"
-              className={`rounded px-2 py-1 ${previewMode === "edit" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
+              className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 ${previewMode === "edit" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
               onClick={() => setPreviewMode("edit")}
               disabled={loading}
+              aria-pressed={previewMode === "edit"}
+              aria-label="Tryb edycji"
             >
               Edycja
             </button>
             <button
               type="button"
-              className={`rounded px-2 py-1 ${previewMode === "preview" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
+              className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 ${previewMode === "preview" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
               onClick={() => setPreviewMode("preview")}
               disabled={loading}
+              aria-pressed={previewMode === "preview"}
+              aria-label="Tryb podglądu"
             >
               Podgląd
             </button>

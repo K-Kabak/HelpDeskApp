@@ -186,9 +186,9 @@ export default async function DashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Zgloszenia</h1>
-          <p className="text-sm text-slate-600">
-            Role: {session.user.role} - Wyswietlane {tickets.length} zgloszenia
+          <h1 className="text-2xl font-semibold">Zgłoszenia</h1>
+          <p className="text-sm text-slate-600" aria-live="polite" aria-atomic="true">
+            Role: {session.user.role} - Wyświetlane {tickets.length} zgłoszenia
           </p>
         </div>
         <div className="flex gap-2">
@@ -205,7 +205,8 @@ export default async function DashboardPage({
           )}
           <Link
             href="/app/tickets/new"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+            aria-label="Utwórz nowe zgłoszenie"
           >
             Nowe zgloszenie
           </Link>

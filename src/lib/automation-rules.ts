@@ -137,6 +137,16 @@ async function executeAction(
   }
 }
 
+/**
+ * Evaluates and executes automation rules for a ticket event.
+ * 
+ * Fetches all enabled automation rules for the ticket's organization,
+ * validates trigger and action configurations, and executes matching rules.
+ * 
+ * Invalid rules are skipped with error logging (does not throw).
+ * 
+ * @param event - Ticket event containing ticket data and event type
+ */
 export async function evaluateAutomationRules(
   event: TicketEvent
 ): Promise<void> {
