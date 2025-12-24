@@ -87,7 +87,7 @@ export function AttachmentPicker({
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      toast.error("Wybierz plik do przesłania.");
+      toast.error("Najpierw wybierz plik do przesłania, klikając przycisk 'Wybierz plik'.");
       return;
     }
     setSubmitting(true);

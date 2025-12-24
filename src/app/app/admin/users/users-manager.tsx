@@ -297,8 +297,20 @@ export function UsersManager({ initialUsers }: Props) {
         </div>
         <div className="divide-y divide-slate-200">
           {sortedUsers.length === 0 ? (
-            <div className="p-6 text-center text-slate-500">
-              Brak użytkowników
+            <div className="p-12 text-center">
+              <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+              <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak użytkowników</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                W organizacji nie ma jeszcze żadnych użytkowników.
+              </p>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="mt-4 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+              >
+                Dodaj pierwszego użytkownika
+              </button>
             </div>
           ) : (
             sortedUsers.map((user) => {

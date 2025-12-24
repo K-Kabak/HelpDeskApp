@@ -175,7 +175,7 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       setIsCreating(false);
       setEditingId(null);
     } catch (error) {
-      toast.error("Wystąpił błąd");
+      toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -206,7 +206,7 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       setRules(rules.map((r) => (r.id === id ? rule : r)));
       toast.success(`Reguła została ${enabled ? "włączona" : "wyłączona"}`);
     } catch (error) {
-      toast.error("Wystąpił błąd");
+      toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
       console.error(error);
     }
   };
@@ -224,7 +224,7 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       setRules(rules.filter((r) => r.id !== id));
       toast.success("Reguła została usunięta");
     } catch (error) {
-      toast.error("Wystąpił błąd");
+      toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
       console.error(error);
     }
   };
