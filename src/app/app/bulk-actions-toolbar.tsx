@@ -55,32 +55,39 @@ export function BulkActionsToolbar({
 
     setIsUpdating(true);
     try {
-      const results = await Promise.allSettled(
-        selectedTickets.map(ticketId =>
-          fetch(`/api/tickets/${ticketId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus }),
-          })
-        )
-      );
+      const response = await fetch("/api/tickets/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketIds: selectedTickets,
+          status: newStatus,
+        }),
+      });
 
-      const successful = results.filter(r => r.status === "fulfilled").length;
-      const failed = results.filter(r => r.status === "rejected").length;
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error ?? "Nie udało się zaktualizować zgłoszeń");
+      }
 
-      if (successful > 0) {
-        toast.success(`Zaktualizowano status ${successful} zgłoszeń`);
+      const result = await response.json();
+
+      if (result.updated > 0) {
+        toast.success(`Zaktualizowano status ${result.updated} zgłoszeń`);
         onTicketsUpdated();
         onClearSelection();
         setShowStatusDialog(false);
       }
 
-      if (failed > 0) {
-        toast.error(`Nie udało się zaktualizować ${failed} zgłoszeń`);
+      if (result.errors && result.errors.length > 0) {
+        toast.error(
+          `Nie udało się zaktualizować ${result.errors.length} zgłoszeń: ${result.errors.map((e: { ticketId: string; error: string }) => e.error).join(", ")}`
+        );
       }
     } catch (error) {
       console.error("Bulk status update error:", error);
-      toast.error("Wystąpił błąd podczas aktualizacji statusów");
+      toast.error(
+        error instanceof Error ? error.message : "Wystąpił błąd podczas aktualizacji statusów"
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -91,36 +98,53 @@ export function BulkActionsToolbar({
 
     setIsUpdating(true);
     try {
-      const payload: Record<string, unknown> = {};
-      if (newAssigneeUserId) payload.assigneeUserId = newAssigneeUserId;
-      if (newAssigneeTeamId) payload.assigneeTeamId = newAssigneeTeamId;
+      const payload: {
+        ticketIds: string[];
+        assigneeUserId?: string | null;
+        assigneeTeamId?: string | null;
+      } = {
+        ticketIds: selectedTickets,
+      };
+      
+      // Only include fields that are being set (empty string means clear/null)
+      if (newAssigneeUserId !== undefined) {
+        payload.assigneeUserId = newAssigneeUserId || null;
+      }
+      
+      if (newAssigneeTeamId !== undefined) {
+        payload.assigneeTeamId = newAssigneeTeamId || null;
+      }
 
-      const results = await Promise.allSettled(
-        selectedTickets.map(ticketId =>
-          fetch(`/api/tickets/${ticketId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-        )
-      );
+      const response = await fetch("/api/tickets/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      const successful = results.filter(r => r.status === "fulfilled").length;
-      const failed = results.filter(r => r.status === "rejected").length;
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error ?? "Nie udało się przypisać zgłoszeń");
+      }
 
-      if (successful > 0) {
-        toast.success(`Przypisano ${successful} zgłoszeń`);
+      const result = await response.json();
+
+      if (result.updated > 0) {
+        toast.success(`Przypisano ${result.updated} zgłoszeń`);
         onTicketsUpdated();
         onClearSelection();
         setShowAssignmentDialog(false);
       }
 
-      if (failed > 0) {
-        toast.error(`Nie udało się przypisać ${failed} zgłoszeń`);
+      if (result.errors && result.errors.length > 0) {
+        toast.error(
+          `Nie udało się przypisać ${result.errors.length} zgłoszeń: ${result.errors.map((e: { ticketId: string; error: string }) => e.error).join(", ")}`
+        );
       }
     } catch (error) {
       console.error("Bulk assignment update error:", error);
-      toast.error("Wystąpił błąd podczas przypisywania");
+      toast.error(
+        error instanceof Error ? error.message : "Wystąpił błąd podczas przypisywania"
+      );
     } finally {
       setIsUpdating(false);
     }

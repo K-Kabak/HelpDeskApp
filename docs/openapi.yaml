@@ -77,6 +77,49 @@ components:
           type: integer
           description: Active tickets assigned to this team
       additionalProperties: true
+    SavedView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
+            priority:
+              type: string
+              enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+            search:
+              type: string
+            category:
+              type: string
+            tagIds:
+              type: array
+              items:
+                type: string
+                format: uuid
+          additionalProperties: true
+        isDefault:
+          type: boolean
+        isShared:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     Ticket:
       type: object
       properties:
@@ -916,6 +959,344 @@ paths:
                 $ref: '#/components/schemas/ErrorAsIs'
         '404':
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/tickets/bulk:
+    patch:
+      summary: Bulk update tickets
+      description: |
+        Updates multiple tickets in a single request. Only AGENT/ADMIN roles can use bulk actions.
+        
+        Supports:
+        - Bulk status updates
+        - Bulk assignment to users or teams
+        - Partial success (some tickets may fail while others succeed)
+        
+        All tickets must belong to the user's organization. Creates audit events for each ticket update.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketIds]
+              properties:
+                ticketIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 100
+                  description: Array of ticket IDs to update
+                status:
+                  type: string
+                  enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
+                  description: New status for all tickets (optional)
+                assigneeUserId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Assign all tickets to this user (optional, null to clear)
+                assigneeTeamId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Assign all tickets to this team (optional, null to clear)
+      responses:
+        '200':
+          description: Bulk update result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                    description: Number of tickets successfully updated
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ticketId:
+                          type: string
+                          format: uuid
+                        error:
+                          type: string
+                    description: Array of errors for tickets that failed to update
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (REQUESTER role or invalid assignee/team)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/views:
+    get:
+      summary: List saved views
+      description: Returns all saved views for the authenticated user, scoped to their organization.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Saved views list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  views:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedView'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (no organization)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Create saved view
+      description: |
+        Creates a new saved view with the provided name and filters.
+        
+        Validation:
+        - Name must be 1-50 characters
+        - Filters must be valid filter structure
+        - Prevents duplicate names per user
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, filters]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                filters:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
+                    priority:
+                      type: string
+                      enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+                    search:
+                      type: string
+                    category:
+                      type: string
+                    tagIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                isShared:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: View created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  view:
+                    $ref: '#/components/schemas/SavedView'
+        '400':
+          description: Validation error or duplicate name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (no organization)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/views/{id}:
+    patch:
+      summary: Update saved view
+      description: |
+        Updates a saved view. User can only update their own views.
+        
+        Validation:
+        - Name must be 1-50 characters if provided
+        - Filters must be valid filter structure if provided
+        - Prevents duplicate names per user
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                filters:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
+                    priority:
+                      type: string
+                      enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+                    search:
+                      type: string
+                    category:
+                      type: string
+                    tagIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                isShared:
+                  type: boolean
+      responses:
+        '200':
+          description: View updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  view:
+                    $ref: '#/components/schemas/SavedView'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: View not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete saved view
+      description: Deletes a saved view. User can only delete their own views.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: View deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: View not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/views/{id}/set-default:
+    post:
+      summary: Set saved view as default
+      description: |
+        Sets a saved view as the default view for the user.
+        
+        Business logic:
+        - Unsets all other default views for the user
+        - Sets the specified view as default
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: View set as default
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: View not found or not owned by user
           content:
             application/json:
               schema:
