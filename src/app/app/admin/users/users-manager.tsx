@@ -206,7 +206,7 @@ export function UsersManager({ initialUsers }: Props) {
           <h2 className="text-lg font-semibold">Dodaj nowego użytkownika</h2>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 min-h-[44px]"
           >
             {showCreateForm ? "Anuluj" : "Dodaj użytkownika"}
           </button>
@@ -268,7 +268,7 @@ export function UsersManager({ initialUsers }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+                className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60 min-h-[44px]"
               >
                 {loading ? "Dodawanie..." : "Dodaj użytkownika"}
               </button>
@@ -279,7 +279,7 @@ export function UsersManager({ initialUsers }: Props) {
                   setShowCreateForm(false);
                   setFormError(null);
                 }}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold hover:bg-slate-50 min-h-[44px]"
               >
                 Anuluj
               </button>
@@ -394,14 +394,14 @@ export function UsersManager({ initialUsers }: Props) {
                         <button
                           type="submit"
                           disabled={editState.saving}
-                          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+                          className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60 min-h-[44px]"
                         >
                           {editState.saving ? "Zapisywanie..." : "Zapisz"}
                         </button>
                         <button
                           type="button"
                           onClick={() => cancelEditing(user.id)}
-                          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                          className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold hover:bg-slate-50 min-h-[44px]"
                         >
                           Anuluj
                         </button>

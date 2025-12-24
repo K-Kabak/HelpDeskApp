@@ -16,7 +16,14 @@ function escapeCsvField(value: string | null | undefined): string {
 }
 
 /**
- * Generate CSV content from ticket data
+ * Generates CSV content from ticket data for export.
+ * 
+ * Escapes special characters and handles null values properly.
+ * Includes all ticket metadata: number, title, status, priority, category,
+ * requester/assignee information, and timestamps.
+ * 
+ * @param tickets - Array of tickets with required fields for export
+ * @returns CSV-formatted string with headers and data rows
  */
 export function generateTicketCsv(
   tickets: Array<{

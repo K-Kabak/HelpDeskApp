@@ -936,11 +936,27 @@ To increase development velocity and focus on coding rather than process overhea
   - Implementation: `src/lib/email-adapter-real.ts` uses nodemailer.createTransport and transporter.sendMail
   - Tests: `tests/email-adapter.test.ts` covers email sending
 
-**Remaining Documentation:**
+- ✅ **Notification Center Filters** - COMPLETED (PR #221)
+  - Filter dropdown by notification type - ✅ Implemented
+  - API endpoint supports type filtering - ✅ Implemented
+  - UI: dropdown with filter options - ✅ Implemented
 
-- Update `BLUEPRINT.md` gap analysis
-- Mark completed backlog items in `docs/github-backlog.md`
-- Document worker health check in `docs/worker-deployment-runbook.md`
+- ✅ **Dashboard Polish** - COMPLETED (PR #221)
+  - Refresh button - ✅ Implemented in `src/app/app/refresh-button.tsx`
+  - Tooltips on KPI cards - ✅ Implemented (title attributes)
+  - Loading states - ✅ Improved
+
+- ✅ **Documentation Updates** - COMPLETED (PR #221)
+  - BLUEPRINT.md updated
+  - Backlog items marked complete
+
+**Remaining (Optional - P2):**
+
+- Mobile responsiveness improvements (check and polish)
+- Accessibility audit and fixes (backlog #100)
+- Advanced search/filtering enhancements
+- Bulk actions on ticket list (backlog #88)
+- Saved views for ticket filters (backlog #89)
 
 ### Next Action Prompt (For Agents 1-3)
 

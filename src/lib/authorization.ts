@@ -56,7 +56,16 @@ export async function requireAuth(): Promise<AuthResult> {
 }
 
 /**
- * Returns a Prisma where clause enforcing requester vs organization scope.
+ * Returns a Prisma where clause enforcing role-based ticket access scope.
+ * 
+ * - REQUESTER role: Returns only tickets created by the user (requesterId filter)
+ * - AGENT/ADMIN roles: Returns tickets within the user's organization (organizationId filter)
+ * 
+ * SECURITY: If user has no organizationId, returns a filter that matches nothing
+ * to prevent unauthorized access.
+ * 
+ * @param user - Authenticated user with role and organization context
+ * @returns Prisma where clause for ticket filtering
  */
 export function ticketScope(user: AuthenticatedUser) {
   if (user.role === "REQUESTER") {
@@ -72,10 +81,26 @@ export function ticketScope(user: AuthenticatedUser) {
   return { organizationId: user.organizationId };
 }
 
+/**
+ * Checks if user has agent or admin role.
+ * 
+ * @param user - Authenticated user
+ * @returns True if user is AGENT or ADMIN, false otherwise
+ */
 export function isAgentOrAdmin(user: AuthenticatedUser) {
   return user.role === "AGENT" || user.role === "ADMIN";
 }
 
+/**
+ * Validates that user belongs to the specified organization.
+ * 
+ * SECURITY: Performs strict validation - both values must exist and match exactly.
+ * Used to prevent cross-organization access.
+ * 
+ * @param user - Authenticated user
+ * @param organizationId - Organization ID to check against
+ * @returns True if user belongs to the organization, false otherwise
+ */
 export function isSameOrganization(user: AuthenticatedUser, organizationId: string) {
   // SECURITY: Strict validation - both values must exist and match exactly
   return user.organizationId !== null &&

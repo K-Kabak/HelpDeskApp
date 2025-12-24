@@ -39,13 +39,6 @@ export type KpiMetrics = {
 };
 
 /**
- * Calculate KPI metrics for an organization.
- * 
- * @param organizationId - Organization ID to calculate metrics for
- * @param dateRange - Optional date range to filter tickets (defaults to last 30 days)
- * @returns KPI metrics including MTTR, MTTA, and reopen rate
- */
-/**
  * Calculates KPI metrics for an organization within a date range.
  * 
  * Computes four key performance indicators:
@@ -54,8 +47,8 @@ export type KpiMetrics = {
  * - Reopen Rate: Percentage of closed tickets that were reopened
  * - SLA Compliance: Percentage of tickets resolved within SLA deadlines
  * 
- * @param organizationId - Organization to calculate metrics for
- * @param dateRange - Optional date range (defaults to last 30 days)
+ * @param organizationId - Organization ID to calculate metrics for
+ * @param dateRange - Optional date range to filter tickets (defaults to last 30 days)
  * @returns KPI metrics object with calculated values or null if insufficient data
  */
 export async function calculateKpiMetrics(

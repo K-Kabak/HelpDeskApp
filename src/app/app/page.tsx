@@ -273,7 +273,7 @@ export default async function DashboardPage({
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
             <div
-              className={`flex flex-1 min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
+              className={`flex flex-1 min-w-0 sm:min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
                 statusFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -296,7 +296,7 @@ export default async function DashboardPage({
             </div>
 
             <div
-              className={`flex flex-1 min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
+              className={`flex flex-1 min-w-0 sm:min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
                 priorityFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -408,7 +408,7 @@ export default async function DashboardPage({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 min-h-[44px]"
           >
             Zastosuj
           </button>

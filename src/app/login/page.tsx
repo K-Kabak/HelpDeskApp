@@ -33,33 +33,49 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white shadow p-8 border border-slate-200">
+      <main className="w-full max-w-md rounded-xl bg-white shadow p-8 border border-slate-200">
         <h1 className="text-2xl font-semibold text-slate-900 mb-2">SerwisDesk</h1>
         <p className="text-sm text-slate-600 mb-6">Zaloguj się</p>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Email</label>
+            <label htmlFor="email" className="text-sm font-medium text-slate-700">Email</label>
             <input
+              id="email"
               type="email"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${error ? "border-red-500" : "border-slate-300"}`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
               required
               autoComplete="email"
+              aria-invalid={!!error}
+              aria-describedby={error ? "login-error" : undefined}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Hasło</label>
+            <label htmlFor="password" className="text-sm font-medium text-slate-700">Hasło</label>
             <input
+              id="password"
               type="password"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${error ? "border-red-500" : "border-slate-300"}`}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError(null);
+              }}
               required
               autoComplete="current-password"
+              aria-invalid={!!error}
+              aria-describedby={error ? "login-error" : undefined}
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p id="login-error" className="text-sm text-red-600" role="alert">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={loading}
@@ -71,6 +87,9 @@ export default function LoginPage() {
         <p className="mt-6 text-xs text-slate-500">
           Konto demo: admin@serwisdesk.local / Admin123!
         </p>
+      </main>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {/* Screen reader announcements for login status */}
       </div>
     </div>
   );

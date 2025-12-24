@@ -189,7 +189,7 @@ export default function TicketActions({
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px]"
             disabled={
               mutation.isPending ||
               status === initialStatus ||
@@ -220,7 +220,7 @@ export default function TicketActions({
                   <button
                     type="button"
                     onClick={() => setAssigneeUserId(suggestedAgentId)}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-700 transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white hover:bg-sky-700 transition-colors whitespace-nowrap min-h-[36px]"
                   >
                     <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
@@ -271,7 +271,7 @@ export default function TicketActions({
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px]"
               disabled={
                 mutation.isPending ||
                 (assigneeUserId === (initialAssigneeUserId ?? "") &&

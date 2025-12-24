@@ -23,6 +23,18 @@ function toIso(value: string | Date | null | undefined) {
   return typeof value === "string" ? value : value.toISOString();
 }
 
+/**
+ * Schedules SLA breach detection jobs for a ticket.
+ * 
+ * Creates background jobs to check for SLA breaches at the ticket's due dates.
+ * Schedules jobs for both first response and resolution deadlines.
+ * Also schedules reminder jobs if configured.
+ * 
+ * Only schedules jobs for future due dates (skips past dates).
+ * 
+ * @param ticket - Ticket with SLA due dates and metadata
+ * @returns Array of job scheduling results (one per due date)
+ */
 export async function scheduleSlaJobsForTicket(ticket: TicketSlaSchedule): Promise<SlaJobResult[]> {
   const dueFields: DueField[] = [
     { jobType: "first-response", dueAt: ticket.firstResponseDue },
@@ -57,6 +69,18 @@ export async function scheduleSlaJobsForTicket(ticket: TicketSlaSchedule): Promi
   return results;
 }
 
+/**
+ * Schedules SLA reminder jobs for a ticket.
+ * 
+ * Creates reminder notifications before SLA deadlines to alert agents.
+ * Reminder timing is controlled by SLA_REMINDER_LEAD_MINUTES env var (default: 30 minutes).
+ * 
+ * Schedules reminders for both first response and resolution deadlines.
+ * Only schedules if reminder time is in the future.
+ * 
+ * @param ticket - Ticket with SLA due dates and metadata
+ * @returns Array of reminder job scheduling results (one per due date)
+ */
 export async function scheduleSlaReminderForTicket(ticket: TicketSlaSchedule): Promise<SlaJobResult[]> {
   const reminderLeadMs = getReminderLeadMs();
   if (reminderLeadMs <= 0) {

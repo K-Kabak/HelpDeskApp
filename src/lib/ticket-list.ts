@@ -45,6 +45,27 @@ function decodeCursor(cursor?: string | null) {
   }
 }
 
+/**
+ * Retrieves a paginated list of tickets with cursor-based pagination.
+ * 
+ * Supports filtering by status, priority, search query, category, and tags.
+ * Uses cursor-based pagination for efficient navigation through large datasets.
+ * 
+ * For REQUESTER role: Returns only tickets created by the user.
+ * For AGENT/ADMIN roles: Returns tickets scoped to the user's organization.
+ * 
+ * @param user - Authenticated user with role and organization context
+ * @param options - Pagination and filter options
+ * @param options.limit - Number of tickets per page (1-100, default: 20)
+ * @param options.cursor - Base64-encoded cursor for pagination
+ * @param options.direction - Pagination direction: "next" (forward) or "prev" (backward)
+ * @param options.status - Filter by ticket status
+ * @param options.priority - Filter by ticket priority
+ * @param options.search - Search in title and description (case-insensitive)
+ * @param options.category - Filter by category ID
+ * @param options.tagIds - Filter by tag IDs (tickets must have at least one matching tag)
+ * @returns Paginated ticket list with next/prev cursors
+ */
 export async function getTicketPage(
   user: AuthenticatedUser,
   options: TicketListOptions = {},

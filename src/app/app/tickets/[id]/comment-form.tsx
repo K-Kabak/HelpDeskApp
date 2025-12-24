@@ -36,15 +36,17 @@ export default function CommentForm({
   };
 
   return (
-    <form className="space-y-3" onSubmit={submit}>
+    <form className="space-y-3" onSubmit={submit} aria-label="Formularz dodawania komentarza">
       <div className="grid gap-1">
-        <label className="text-sm text-slate-700">Treść</label>
+        <label htmlFor="comment-body" className="text-sm text-slate-700">Treść</label>
         <textarea
+          id="comment-body"
           className="rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
           rows={3}
           value={bodyMd}
           onChange={(e) => setBody(e.target.value)}
           required
+          aria-label="Treść komentarza"
         />
       </div>
       {allowInternal && (
@@ -53,6 +55,7 @@ export default function CommentForm({
             type="checkbox"
             checked={isInternal}
             onChange={(e) => setIsInternal(e.target.checked)}
+            aria-label="Oznacz jako komentarz wewnętrzny"
           />
           Komentarz wewnętrzny (widoczny tylko dla agentów/admina)
         </label>
@@ -60,7 +63,8 @@ export default function CommentForm({
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-sky-600 px-4 py-2 text-white font-semibold hover:bg-sky-700 disabled:opacity-50"
+        className="rounded-lg bg-sky-600 px-4 py-3 text-white font-semibold hover:bg-sky-700 disabled:opacity-50 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+        aria-label={loading ? "Zapisywanie komentarza..." : "Dodaj komentarz"}
       >
         {loading ? "Zapisywanie..." : "Dodaj komentarz"}
       </button>

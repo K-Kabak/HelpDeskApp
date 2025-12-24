@@ -388,7 +388,7 @@ export default function TicketForm() {
       <button
         type="submit"
         disabled={loading}
-        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-white font-semibold hover:bg-sky-700 disabled:opacity-50"
+        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-white font-semibold hover:bg-sky-700 disabled:opacity-50 min-h-[44px]"
       >
         {loading && (
           <svg

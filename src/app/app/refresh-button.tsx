@@ -17,8 +17,9 @@ export function RefreshButton() {
     <button
       onClick={handleRefresh}
       disabled={isPending}
-      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-sky-500 hover:text-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-sky-500 hover:text-sky-700 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
       title="Odśwież dane"
+      aria-label="Odśwież dane"
     >
       <div className="flex items-center gap-2">
         <svg
