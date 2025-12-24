@@ -429,29 +429,14 @@ export default async function DashboardPage({
 
       {tickets.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
-          <div className="mx-auto h-12 w-12 text-slate-400">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">Brak zgłoszeń spełniających kryteria</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Nie znaleziono zgłoszeń dla wybranych filtrów. Spróbuj zmienić kryteria wyszukiwania lub usuń niektóre filtry.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Link
-              href="/app"
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Wyczyść filtry
-            </Link>
-            <Link
-              href="/app/tickets/new"
-              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
-            >
-              Utwórz zgłoszenie
-            </Link>
-          </div>
+          <h2 className="text-lg font-semibold text-slate-900">Brak zgloszen</h2>
+          <p className="mt-1 text-sm text-slate-600">Brak zgloszen - utworz pierwsze.</p>
+          <Link
+            href="/app/tickets/new"
+            className="mt-4 inline-flex rounded-lg border border-sky-600 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+          >
+            Utworz zgloszenie
+          </Link>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

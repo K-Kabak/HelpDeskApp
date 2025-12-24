@@ -81,8 +81,7 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
       setAnalytics(analyticsData);
       setKpi(kpiData);
     } catch (err) {
-      console.error("Błąd podczas ładowania danych raportów:", err);
-      setError("Nie udało się załadować danych raportów. Sprawdź połączenie internetowe i spróbuj ponownie.");
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
