@@ -8,6 +8,7 @@ import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 import { notificationService } from "@/lib/notification";
 import { needsReopenReason, validateReopenReason } from "@/lib/reopen-reason";
+import { generateCsatToken } from "@/lib/csat-token";
 
 const updateSchema = z
   .object({
@@ -284,9 +285,15 @@ async function updateTicket(
     });
 
     if (!existingCsat) {
+      // Generate signed token with 30-day expiry
+      const token = generateCsatToken(updatedTicket.id, 30);
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
       await prisma.csatRequest.create({
         data: {
           ticketId: updatedTicket.id,
+          token,
+          expiresAt,
         },
       });
 
@@ -299,6 +306,7 @@ async function updateTicket(
         data: {
           ticketId: updatedTicket.id,
           ticketNumber: updatedTicket.number,
+          csatToken: token, // Include token in email data
         },
         metadata: {
           notificationType: "ticketUpdate",

@@ -1,3 +1,23 @@
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/authorization";
+import { NextResponse } from "next/server";
+
+export async function GET(req: Request) {
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  // Check if user is admin (analytics are typically admin-only)
+  if (auth.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
+  }
+
+  if (!auth.user.organizationId) {
+    return NextResponse.json({ error: "Organization required" }, { status: 403 });
+  }
+
+  const organizationId = auth.user.organizationId;
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
