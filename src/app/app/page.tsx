@@ -11,6 +11,7 @@ import TicketForm from "./ticket-form";
 import { KpiCards } from "./kpi-cards";
 import { calculateKpiMetrics } from "@/lib/kpi-metrics";
 import { ExportButton } from "./export-button";
+import { RefreshButton } from "./refresh-button";
 import { Suspense } from "react";
 
 type SessionWithUser = Session & {
@@ -191,6 +192,7 @@ export default async function DashboardPage({
           </p>
         </div>
         <div className="flex gap-2">
+          <RefreshButton />
           {session.user.role !== "REQUESTER" && (
             <Suspense fallback={<button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 opacity-50" disabled>Eksportuj zgłoszenia</button>}>
               <ExportButton label="Eksportuj zgłoszenia" endpoint="tickets" />

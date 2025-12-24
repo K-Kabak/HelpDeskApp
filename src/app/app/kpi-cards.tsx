@@ -60,7 +60,10 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* MTTR Card */}
       {metrics.mttr && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div 
+          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          title="Średni czas rozwiązania (MTTR) - średni czas od utworzenia zgłoszenia do jego rozwiązania. Niższa wartość oznacza szybsze rozwiązywanie problemów."
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Średni czas rozwiązania (MTTR)</p>
@@ -92,7 +95,10 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
 
       {/* MTTA Card */}
       {metrics.mtta && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div 
+          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          title="Średni czas odpowiedzi (MTTA) - średni czas od utworzenia zgłoszenia do pierwszej odpowiedzi agenta. Niższa wartość oznacza szybszą reakcję na zgłoszenia."
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Średni czas odpowiedzi (MTTA)</p>
@@ -124,7 +130,10 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
 
       {/* Reopen Rate Card */}
       {metrics.reopenRate && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div 
+          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          title="Wskaźnik ponownych otwarć - procent zamkniętych zgłoszeń, które zostały ponownie otwarte. Niższa wartość oznacza lepszą jakość rozwiązań."
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Wskaźnik ponownych otwarć</p>
@@ -154,7 +163,10 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
 
       {/* SLA Compliance Card */}
       {metrics.slaCompliance && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div 
+          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          title="Zgodność z SLA - procent rozwiązanych zgłoszeń, które zostały rozwiązane zgodnie z ustalonymi terminami SLA. Wyższa wartość oznacza lepszą zgodność z umowami."
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Zgodność z SLA</p>
