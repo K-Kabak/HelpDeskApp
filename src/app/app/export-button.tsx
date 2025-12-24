@@ -73,7 +73,9 @@ export function ExportButton({ label, endpoint, className }: ExportButtonProps) 
     <button
       onClick={handleExport}
       disabled={exporting}
-      className={`rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed ${className || ""}`}
+      className={`rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${className || ""}`}
+      aria-label={exporting ? `Eksportowanie ${endpoint === "tickets" ? "zgłoszeń" : "komentarzy"}...` : label}
+      aria-busy={exporting}
     >
       {exporting ? "Eksportowanie..." : label}
     </button>

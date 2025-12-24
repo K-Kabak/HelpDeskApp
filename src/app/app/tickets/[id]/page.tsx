@@ -136,11 +136,15 @@ export default async function TicketPage({
 
   return (
     <div className="max-w-5xl space-y-6">
-      <Link href="/app" className="text-sm text-sky-700 underline">
+      <Link 
+        href="/app" 
+        className="text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded"
+        aria-label="Powrót do listy zgłoszeń"
+      >
         ← Powrót do listy
       </Link>
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs text-slate-500">#{ticket.number}</p>
             <h1 className="text-2xl font-semibold">{ticket.title}</h1>
@@ -157,15 +161,15 @@ export default async function TicketPage({
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
               {priorityLabels[ticket.priority]}
             </span>
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-white">
+            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-white" aria-label={`Status: ${statusLabels[ticket.status]}`}>
               {statusLabels[ticket.status]}
             </span>
           </div>
-        </div>
-        <div className="mt-4 prose prose-sm max-w-none">
+        </header>
+        <section className="mt-4 prose prose-sm max-w-none" aria-label="Opis zgłoszenia">
           <SafeMarkdown>{ticket.descriptionMd}</SafeMarkdown>
-        </div>
-        <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+        </section>
+        <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2" aria-label="Szczegóły zgłoszenia">
           <div>
             <dt className="font-semibold text-slate-700">Kategoria</dt>
             <dd>{ticket.category ?? "Brak"}</dd>
@@ -183,7 +187,7 @@ export default async function TicketPage({
             <dd>{ticket.createdAt.toLocaleString()}</dd>
           </div>
         </dl>
-      </div>
+      </article>
 
       <TicketActions
         ticketId={ticket.id}
@@ -205,12 +209,12 @@ export default async function TicketPage({
         attachmentsEnabled={attachmentsEnabled}
       />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="comments-heading">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">
+          <h2 id="comments-heading" className="text-lg font-semibold">
             Komentarze ({visibleComments.length})
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500" aria-live="polite">
             Ostatnia aktywność: {lastActivityDate}
           </p>
         </div>
@@ -263,7 +267,7 @@ export default async function TicketPage({
         <div className="mt-4">
           <CommentForm ticketId={ticket.id} allowInternal={session.user.role !== "REQUESTER"} />
         </div>
-      </div>
+      </section>
 
       <AuditTimeline ticketId={ticket.id} />
     </div>

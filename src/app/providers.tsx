@@ -13,6 +13,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster position="top-center" />
+        {/* Aria-live region for screen reader announcements */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {/* Screen reader announcements for dynamic content */}
+        </div>
       </QueryClientProvider>
     </SessionProvider>
   );
