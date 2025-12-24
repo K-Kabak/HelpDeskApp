@@ -35,13 +35,18 @@ This document distills the current repository state and defines an execution-rea
   - **Testing:** Scripts exist but no test files observed; lint/test automation not wired in docs beyond mention.【F:package.json†L5-L31】
 
 - **Not Found (searched via `find src prisma -type f` and inspected API/UI)**
-  - Admin console for user/team/tag/SLA management.
   - File storage configuration or services.
-  - Reporting/analytics endpoints or UI.
-  - Notification system (email/webhook) or SLA breach alerts.
   - Role-based access guard helpers beyond ad hoc session checks.
-  - Worker job processor (RESOLVED: Task 1 completed - worker routes SLA jobs)
-  - CI/CD pipeline (RESOLVED: Task 2 completed - GitHub Actions workflow added)
+
+- **Recently Completed (2024-2025)**
+  - ✅ Admin console for user/team/tag/SLA management (Task 4 completed)
+  - ✅ Reporting/analytics endpoints and UI (KPI metrics, CSV exports)
+  - ✅ Notification system (in-app notifications with filters, email via nodemailer)
+  - ✅ SLA breach alerts via background workers
+  - ✅ Worker job processor (Task 1 completed - worker routes SLA jobs)
+  - ✅ CI/CD pipeline (Task 2 completed - GitHub Actions workflow added)
+  - ✅ Dashboard enhancements (refresh button, KPI tooltips)
+  - ✅ Notification center with type filtering
 
 ## B) Target Directions (Options)
 1. **Polished Mono-App Enhancement (Recommended):** Keep Next.js/Prisma stack; deliver full helpdesk features (admin console, attachments, SLA engine, reporting) within current app. Benefits: leverages existing code, minimal migration risk, fastest time-to-value. Risks: need disciplined module boundaries to avoid sprawl.

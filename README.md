@@ -96,14 +96,15 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 - **Audit Log:** View all system changes and events
 
 ### Reporting & Analytics
-- **Dashboard Widgets:** SLA status, ticket statistics, KPI cards
-- **KPI Metrics:** MTTR (Mean Time to Resolve), MTTA (Mean Time to Acknowledge), reopen rate
+- **Dashboard Widgets:** SLA status, ticket statistics, KPI cards with tooltips
+- **Dashboard Features:** Refresh button for data updates, responsive layout
+- **KPI Metrics:** MTTR (Mean Time to Resolve), MTTA (Mean Time to Acknowledge), reopen rate, SLA compliance
 - **CSV Exports:** Export tickets and comments with filtering
 - **Analytics:** Ticket trends, creation/resolution rates, priority distribution
 
 ### Notifications
-- **In-App Notifications:** Notification center with read/unread status
-- **Email Notifications:** SMTP-based email delivery (optional, requires EMAIL_ENABLED=true)
+- **In-App Notifications:** Notification center with read/unread status and type filters (Ticket Updates, Comments, Assignments, SLA Breaches)
+- **Email Notifications:** SMTP-based email delivery via nodemailer (optional, requires EMAIL_ENABLED=true)
 - **Notification Preferences:** User-configurable notification channels
 
 ### CSAT (Customer Satisfaction)

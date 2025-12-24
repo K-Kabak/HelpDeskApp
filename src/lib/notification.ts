@@ -104,9 +104,19 @@ class NotificationServiceImpl implements NotificationService {
     this.emailAdapter = emailAdapter;
   }
 
+  /**
+   * Sends a notification via the specified channel (email or in-app).
+   * 
+   * Handles idempotency, user preference checks, and notification type detection.
+   * For in-app notifications, stores notificationType in the data field for filtering.
+   * 
+   * @param request - Notification request with channel, recipient, content, and metadata
+   * @returns Notification result with ID, status, and deduplication flag
+   */
   async send(request: NotificationRequest): Promise<NotificationResult> {
     const payload = notificationSchema.parse(request);
 
+    // Check idempotency: if we've already sent this notification, return cached result
     if (payload.idempotencyKey) {
       const existing = this.sentByKey.get(payload.idempotencyKey);
       if (existing) {
@@ -114,11 +124,14 @@ class NotificationServiceImpl implements NotificationService {
       }
     }
 
+    // Determine notification type from metadata or default to ticketUpdate
     const notificationType =
       (payload.metadata?.notificationType as NotificationType) ?? "ticketUpdate";
 
+    // Resolve user ID from email or user ID string
     const userId = await resolveUserId(payload.to);
     if (userId) {
+      // Check user's notification preferences before sending
       const allowed = await shouldSendNotification(
         userId,
         payload.channel,
