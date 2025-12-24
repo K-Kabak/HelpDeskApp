@@ -14,7 +14,7 @@ import { ExportButton } from "./export-button";
 import { RefreshButton } from "./refresh-button";
 import { BulkActionsToolbar } from "./bulk-actions-toolbar";
 import { TicketList } from "./ticket-list";
-import { Suspense, useState, useCallback } from "react";
+import { SavedViews } from "./saved-views";
 
 type SessionWithUser = Session & {
   user: {
@@ -52,6 +52,7 @@ type DashboardSearchParams = {
   category?: string;
   tags?: string | string[];
   slaStatus?: "breached" | "healthy";
+  view?: string;
 };
 
 export default async function DashboardPage({
@@ -65,17 +66,104 @@ export default async function DashboardPage({
 
   const params = (await searchParams) ?? {};
 
+  // Fetch saved views
+  let savedViews: Array<{
+    id: string;
+    name: string;
+    filters: unknown;
+    isDefault: boolean;
+    isShared: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }> = [];
+  let selectedView: {
+    id: string;
+    name: string;
+    filters: {
+      status?: string;
+      priority?: string;
+      search?: string;
+      category?: string;
+      tagIds?: string[];
+    };
+  } | null = null;
+
+  try {
+    savedViews = await prisma.savedView.findMany({
+      where: {
+        userId: session.user.id,
+        organizationId: session.user.organizationId ?? "",
+      },
+      orderBy: [
+        { isDefault: "desc" },
+        { createdAt: "desc" },
+      ],
+    });
+
+    // If view parameter is provided, load that view's filters
+    if (params.view) {
+      const view = savedViews.find((v) => v.id === params.view);
+      if (view) {
+        selectedView = {
+          id: view.id,
+          name: view.name,
+          filters: view.filters as {
+            status?: string;
+            priority?: string;
+            search?: string;
+            category?: string;
+            tagIds?: string[];
+          },
+        };
+      }
+    } else {
+      // If no view parameter and no other params, check for default view
+      const hasOtherParams = Boolean(
+        params.status ||
+        params.priority ||
+        params.q ||
+        params.category ||
+        params.tags ||
+        params.slaStatus ||
+        params.cursor
+      );
+      if (!hasOtherParams) {
+        const defaultView = savedViews.find((v) => v.isDefault);
+        if (defaultView) {
+          selectedView = {
+            id: defaultView.id,
+            name: defaultView.name,
+            filters: defaultView.filters as {
+              status?: string;
+              priority?: string;
+              search?: string;
+              category?: string;
+              tagIds?: string[];
+            },
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load saved views:", error);
+  }
+
+  // Apply view filters if a view is selected, otherwise use URL params
   const statusFilter =
-    params.status && (Object.keys(statusLabels) as string[]).includes(params.status)
+    selectedView?.filters.status ||
+    (params.status && (Object.keys(statusLabels) as string[]).includes(params.status)
       ? (params.status as TicketStatus)
-      : undefined;
+      : undefined);
   const priorityFilter =
-    params.priority && (Object.keys(priorityLabels) as string[]).includes(params.priority)
+    selectedView?.filters.priority ||
+    (params.priority && (Object.keys(priorityLabels) as string[]).includes(params.priority)
       ? (params.priority as TicketPriority)
-      : undefined;
-  const searchQuery = params.q?.trim();
-  const categoryFilter = params.category?.trim();
-  const tagFilters = parseMultiParam(params.tags);
+      : undefined);
+  const searchQuery = selectedView?.filters.search || params.q?.trim();
+  const categoryFilter = selectedView?.filters.category || params.category?.trim();
+  const tagFilters = selectedView?.filters.tagIds?.length
+    ? selectedView.filters.tagIds
+    : parseMultiParam(params.tags);
   const slaStatusFilter = params.slaStatus;
 
   let categoryOptions: { id: string; name: string }[] = [];
@@ -244,6 +332,32 @@ export default async function DashboardPage({
         </div>
       )}
 
+      <SavedViews
+        initialViews={savedViews.map((v) => ({
+          id: v.id,
+          name: v.name,
+          filters: v.filters as {
+            status?: string;
+            priority?: string;
+            search?: string;
+            category?: string;
+            tagIds?: string[];
+          },
+          isDefault: v.isDefault,
+          isShared: v.isShared,
+          createdAt: v.createdAt.toISOString(),
+          updatedAt: v.updatedAt.toISOString(),
+        }))}
+        currentFilters={{
+          status: statusFilter,
+          priority: priorityFilter,
+          q: searchQuery,
+          category: categoryFilter,
+          tags: tagFilters,
+          slaStatus: slaStatusFilter,
+        }}
+      />
+
       <div className="grid gap-4 md:grid-cols-2">
         <Link href="/app?slaStatus=breached" className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition cursor-pointer">
           <div className="flex items-center justify-between">
@@ -293,7 +407,7 @@ export default async function DashboardPage({
         </Link>
       </div>
 
-      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
+      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get" action="/app">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
             <div
