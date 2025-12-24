@@ -204,3 +204,5 @@ Z backlogu (`docs/github-backlog.md`):
 
 **Gotowy do rozpoczęcia pracy z agentami! 🚀**
 
+
+

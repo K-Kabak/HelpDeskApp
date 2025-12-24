@@ -12,7 +12,9 @@ import { KpiCards } from "./kpi-cards";
 import { calculateKpiMetrics } from "@/lib/kpi-metrics";
 import { ExportButton } from "./export-button";
 import { RefreshButton } from "./refresh-button";
-import { Suspense } from "react";
+import { BulkActionsToolbar } from "./bulk-actions-toolbar";
+import { TicketList } from "./ticket-list";
+import { Suspense, useState, useCallback } from "react";
 
 type SessionWithUser = Session & {
   user: {
@@ -109,6 +111,27 @@ export default async function DashboardPage({
 
   const categoriesLoaded = !categoryLoading;
   const tagsLoaded = !tagsLoading;
+
+  // Fetch agents and teams for bulk actions (only for AGENT/ADMIN)
+  let agents: Array<{ id: string; name: string }> = [];
+  let teams: Array<{ id: string; name: string }> = [];
+  if (session.user.role === "AGENT" || session.user.role === "ADMIN") {
+    [agents, teams] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          organizationId: session.user.organizationId,
+          role: { in: ["AGENT", "ADMIN"] },
+        },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.team.findMany({
+        where: { organizationId: session.user.organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
+  }
 
   const { tickets: allTickets, nextCursor, prevCursor } = await getTicketPage(
     {
@@ -482,6 +505,13 @@ export default async function DashboardPage({
           ))}
         </div>
       )}
+
+      <TicketList
+        initialTickets={tickets}
+        userRole={session.user.role ?? "REQUESTER"}
+        agents={agents}
+        teams={teams}
+      />
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-600">
