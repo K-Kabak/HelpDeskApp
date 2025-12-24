@@ -26,13 +26,12 @@ export async function GET(req: Request) {
   const endDateParam = searchParams.get("endDate");
   const internalParam = searchParams.get("internal");
 
-  // Requesters cannot see internal comments
+  // Requesters cannot see internal comments - enforce security at query level
   const isRequester = session.user.role === "REQUESTER";
   const includeInternal = internalParam === "true" && !isRequester;
 
-  // Build where clause
+  // Build where clause with organization scoping and visibility rules
   const where: Prisma.CommentWhereInput = {
-  const where: any = {
     internal: includeInternal ? undefined : false, // Requesters only see public comments
   };
 
@@ -93,7 +92,7 @@ export async function GET(req: Request) {
     }
   }
 
-  // Fetch comments with related data
+  // Fetch comments with related ticket and author data for CSV export
   const comments = await prisma.comment.findMany({
     where,
     include: {
@@ -114,7 +113,7 @@ export async function GET(req: Request) {
   const headers = ["Ticket Number", "Ticket Title", "Comment", "Author", "Author Email", "Internal", "Created At"];
 
   const rows = comments.map((comment) => {
-    // For requesters, scrub internal comment content
+    // Security: For requesters, scrub internal comment content even if somehow included
     const commentBody = comment.internal && isRequester ? "[Internal Comment - Hidden]" : comment.body;
 
     return [

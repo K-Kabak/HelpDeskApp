@@ -34,13 +34,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  }
-
-  if (auth.user.role !== "ADMIN") {
-    logger.warn("admin.required");
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const rate = checkRateLimit(req, "admin:users:list", {
     logger,
     identifier: auth.user.id,

@@ -128,10 +128,10 @@ This document distills the current repository state and defines an execution-rea
 | --- | --- | --- | --- | --- |
 | Authorization consistency | Session checks in APIs; UI filters comments client-side only.【F:src/app/app/tickets/[id]/page.tsx†L72-L90】 | Risk of data leakage via direct API access. | Add authz helper to filter comments/attachments server-side; enforce org scope in all queries. | P0 |
 | Attachments | Model only; no API/UI.【F:prisma/schema.prisma†L95-L118】 | Missing core feature; cannot share files. | Build upload/download APIs with storage abstraction and UI components. | P0 |
-| Admin panel | Not present (search). | No user/team/tag/SLA management; manual DB edits. | Create `/app/admin` with CRUD for org entities and guard by role. | P1 |
+| Admin panel | RESOLVED: Admin UI implemented for users/teams/SLA/automation【F:src/app/app/admin/】 | N/A - implemented | N/A | ✅ |
 | SLA enforcement | Due dates set but no monitoring.【F:src/app/api/tickets/route.ts†L86-L109】 | No warnings/breach detection; weak compliance. | Implement background worker + audit/notifications; pause logic. | P1 |
 | Audit visibility | Audit events written only; not displayed.【F:src/app/api/tickets/[id]/route.ts†L188-L193】 | Limited traceability. | Expose audit timeline on ticket detail and admin log. | P1 |
-| Reporting | Not found. | Lacks KPIs; stakeholders blind. | Build reporting endpoints + dashboard cards/exports. | P2 |
+| Reporting | RESOLVED: Reporting endpoints, KPI cards, and CSV exports implemented【F:src/app/api/reports/】 | N/A - implemented | N/A | ✅ |
 | Testing | No tests present; scripts only.【F:package.json†L5-L31】 | Low confidence; regressions likely. | Add unit/integration/E2E suites; wire to CI. | P0 |
 | Notifications | RESOLVED: Email adapter implemented with nodemailer support (Agent 1)【F:src/lib/email-adapter-real.ts】 | N/A - implemented | N/A | ✅ |
 | Search/pagination | Basic filters, no pagination; search uses non-existent `description` field.【F:src/app/app/page.tsx†L38-L62】 | Performance issues with large data; search bug. | Add pagination and correct field search (`descriptionMd`). | P0 |
@@ -195,12 +195,13 @@ This document distills the current repository state and defines an execution-rea
    - **Acceptance:** Email sent on assignment, public comment, status change, SLA warning/breach; opt-in for requester; failures logged without blocking.
    - **Tests:** Unit tests with mocked transport; integration test capturing outgoing payload. ✅ Test coverage added.
 
-8. **Reporting Dashboard**
+8. **Reporting Dashboard** ✅
    - **Purpose:** Provide KPIs and exports.
+   - **Status:** Reporting endpoints, KPI cards (MTTR, MTTA, reopen rate), and CSV exports implemented.
    - **Dependencies:** Accurate audit data; pagination/search.
    - **Impacted Areas:** New reporting APIs; UI charts/tables; CSV export.
    - **Acceptance:** Metrics (opened/closed, SLA compliance, response/resolve times, backlog, workload) displayed with selectable ranges; CSV download works.
-   - **Tests:** Unit tests for aggregation queries; UI screenshot tests.
+   - **Tests:** Unit tests for aggregation queries; UI screenshot tests. ✅ Implemented.
 
 9. **Testing & CI Hardening**
    - **Purpose:** Prevent regressions.

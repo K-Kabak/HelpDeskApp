@@ -79,18 +79,43 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 - Ticket (statuses: NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE; priorities: NISKI, SREDNI, WYSOKI, KRYTYCZNY)
 - Comment (public/internal), Attachment, Tag, TicketTag, AuditEvent, SlaPolicy
 
-## MVP status
-- Auth (NextAuth credentials, Prisma adapter)
-- Ticket list (requester scoped to own tickets)
-- Ticket create + SLA due (first/resolve) via SlaPolicy
-- Ticket detail, public/internal comments (internal for agent/admin)
-- Seed: Demo org, admin/requester/agent, IT Support team, sample ticket
+## Features
+
+### Core Functionality
+- **Authentication:** NextAuth credentials with Prisma adapter, JWT sessions
+- **Tickets:** Create, view, update with role-based permissions
+- **Comments:** Public/internal comments with markdown support
+- **SLA Tracking:** Automatic due date calculation and breach detection
+- **Audit Logging:** Complete audit trail for all ticket changes
+
+### Admin Panel
+- **User Management:** Create, update, delete users with role assignment
+- **Team Management:** Organize agents into teams
+- **SLA Policies:** Configure SLA rules by priority and category
+- **Automation Rules:** Trigger-based automation for ticket workflows
+- **Audit Log:** View all system changes and events
+
+### Reporting & Analytics
+- **Dashboard Widgets:** SLA status, ticket statistics, KPI cards
+- **KPI Metrics:** MTTR (Mean Time to Resolve), MTTA (Mean Time to Acknowledge), reopen rate
+- **CSV Exports:** Export tickets and comments with filtering
+- **Analytics:** Ticket trends, creation/resolution rates, priority distribution
+
+### Notifications
+- **In-App Notifications:** Notification center with read/unread status
+- **Email Notifications:** SMTP-based email delivery (optional, requires EMAIL_ENABLED=true)
+- **Notification Preferences:** User-configurable notification channels
+
+### CSAT (Customer Satisfaction)
+- **CSAT Surveys:** Automated satisfaction surveys on ticket resolution
+- **CSAT UI:** Requester-facing survey interface
+- **CSAT Analytics:** Track satisfaction scores and trends
 
 ## To do (next iterations)
-- Admin panel (users/teams/dictionaries/SLA)
 - Attachments (upload + metadata)
-- Reports, Kanban, KPI dashboard
-- E2E/Unit tests, Dockerfile + docker-compose
+- Advanced search and pagination
+- Knowledge base integration
+- Localization (i18n)
 
 ## Email Configuration
 - Email notifications are optional and controlled by `EMAIL_ENABLED` environment variable.
