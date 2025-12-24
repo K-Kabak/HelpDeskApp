@@ -580,35 +580,120 @@ paths:
         - REQUESTER role: Returns only tickets created by the user
         - AGENT/ADMIN roles: Returns tickets within the user's organization
         
-        Supports filtering by status, priority, category, and tags.
+        Supports filtering by status, priority, category, tags, date ranges, assignees, and text search.
         Uses cursor-based pagination for efficient navigation.
       security:
         - cookieAuth: []
       parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-        - name: status
+        - name: limit
           in: query
+          description: Number of tickets per page (1-100, default: 20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: Base64-encoded cursor for pagination
           schema:
             type: string
+        - name: direction
+          in: query
+          description: Pagination direction
+          schema:
+            type: string
+            enum: [next, prev]
+            default: next
+        - name: status
+          in: query
+          description: Filter by ticket status
+          schema:
+            type: string
+            enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
         - name: priority
           in: query
+          description: Filter by ticket priority
+          schema:
+            type: string
+            enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        - name: q
+          in: query
+          description: Search in title and description (case-insensitive)
           schema:
             type: string
         - name: category
           in: query
+          description: Filter by category ID
           schema:
             type: string
-          description: Filter by category name.
         - name: tags
           in: query
-          description: Tag IDs (comma-separated or repeated values).
-          style: form
-          explode: false
+          description: Tag IDs (comma-separated)
           schema:
-            type: array
-            items:
-              type: string
+            type: string
+        - name: createdAtFrom
+          in: query
+          description: Filter tickets created on or after this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: createdAtTo
+          in: query
+          description: Filter tickets created on or before this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: updatedAtFrom
+          in: query
+          description: Filter tickets updated on or after this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: updatedAtTo
+          in: query
+          description: Filter tickets updated on or before this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: resolvedAtFrom
+          in: query
+          description: Filter tickets resolved on or after this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: resolvedAtTo
+          in: query
+          description: Filter tickets resolved on or before this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: assigneeUserId
+          in: query
+          description: Filter tickets assigned to a specific user
+          schema:
+            type: string
+            format: uuid
+        - name: assigneeTeamId
+          in: query
+          description: Filter tickets assigned to a specific team
+          schema:
+            type: string
+            format: uuid
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, resolvedAt, priority, status]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
       responses:
         '200':
           description: Tickets list

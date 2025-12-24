@@ -25,6 +25,21 @@ const querySchema = z.object({
   status: z.nativeEnum(TicketStatus).optional(),
   priority: z.nativeEnum(TicketPriority).optional(),
   q: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.string().optional(), // Comma-separated tag IDs
+  // Date range filters
+  createdAtFrom: z.string().datetime().optional(),
+  createdAtTo: z.string().datetime().optional(),
+  updatedAtFrom: z.string().datetime().optional(),
+  updatedAtTo: z.string().datetime().optional(),
+  resolvedAtFrom: z.string().datetime().optional(),
+  resolvedAtTo: z.string().datetime().optional(),
+  // Assignee filters
+  assigneeUserId: z.string().uuid().optional(),
+  assigneeTeamId: z.string().uuid().optional(),
+  // Sorting
+  sortBy: z.enum(["createdAt", "updatedAt", "resolvedAt", "priority", "status"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
 });
 
 /**
@@ -36,7 +51,12 @@ const querySchema = z.object({
  * - REQUESTER: Returns only tickets created by the user
  * - AGENT/ADMIN: Returns tickets within the user's organization
  * 
- * Supports cursor-based pagination and filtering by status, priority, and search query.
+ * Supports cursor-based pagination and filtering by:
+ * - Status, priority, category, tags
+ * - Text search (title and description)
+ * - Date ranges (createdAt, updatedAt, resolvedAt)
+ * - Assignees (userId or teamId)
+ * - Sorting (by date, priority, or status)
  */
 export async function GET(req?: Request) {
   const auth = await requireAuth();
@@ -60,7 +80,29 @@ export async function GET(req?: Request) {
     return NextResponse.json({ error: parsedQuery.error.flatten() }, { status: 400 });
   }
 
-  const { limit, cursor, direction, status, priority, q } = parsedQuery.data;
+  const {
+    limit,
+    cursor,
+    direction,
+    status,
+    priority,
+    q,
+    category,
+    tags,
+    createdAtFrom,
+    createdAtTo,
+    updatedAtFrom,
+    updatedAtTo,
+    resolvedAtFrom,
+    resolvedAtTo,
+    assigneeUserId,
+    assigneeTeamId,
+    sortBy,
+    sortOrder,
+  } = parsedQuery.data;
+
+  // Parse comma-separated tag IDs
+  const tagIds = tags ? tags.split(",").filter((id) => id.trim().length > 0) : undefined;
 
   const page = await getTicketPage(auth.user, {
     limit,
@@ -69,6 +111,18 @@ export async function GET(req?: Request) {
     status,
     priority,
     search: q?.trim() || undefined,
+    category,
+    tagIds,
+    createdAtFrom,
+    createdAtTo,
+    updatedAtFrom,
+    updatedAtTo,
+    resolvedAtFrom,
+    resolvedAtTo,
+    assigneeUserId,
+    assigneeTeamId,
+    sortBy,
+    sortOrder,
   });
 
   logger.info("tickets.list.success", {
