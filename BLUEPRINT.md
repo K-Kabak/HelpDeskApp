@@ -133,7 +133,7 @@ This document distills the current repository state and defines an execution-rea
 | Audit visibility | Audit events written only; not displayed.【F:src/app/api/tickets/[id]/route.ts†L188-L193】 | Limited traceability. | Expose audit timeline on ticket detail and admin log. | P1 |
 | Reporting | Not found. | Lacks KPIs; stakeholders blind. | Build reporting endpoints + dashboard cards/exports. | P2 |
 | Testing | No tests present; scripts only.【F:package.json†L5-L31】 | Low confidence; regressions likely. | Add unit/integration/E2E suites; wire to CI. | P0 |
-| Notifications | Not found. | Users unaware of updates/SLA breaches. | Add email notifications + optional webhooks. | P2 |
+| Notifications | RESOLVED: Email adapter implemented with nodemailer support (Agent 1)【F:src/lib/email-adapter-real.ts】 | N/A - implemented | N/A | ✅ |
 | Search/pagination | Basic filters, no pagination; search uses non-existent `description` field.【F:src/app/app/page.tsx†L38-L62】 | Performance issues with large data; search bug. | Add pagination and correct field search (`descriptionMd`). | P0 |
 | Security hardening | No rate limits; comment body unsanitized in render context (ReactMarkdown default). | Potential abuse/XSS. | Add rate limiting, rehype-sanitize, and stricter validation. | P0 |
 | Worker job processor | RESOLVED: Worker routes SLA jobs to handlers (Task 1)【F:src/worker/index.ts】 | N/A - implemented | N/A | ✅ |
@@ -187,12 +187,13 @@ This document distills the current repository state and defines an execution-rea
    - **Acceptance:** Ticket list supports pagination and multi-filter; search uses descriptionMd; performance acceptable under large dataset (load test baseline).
    - **Tests:** Integration tests for pagination correctness; UI tests for filter persistence.
 
-7. **Notifications (Email/Webhook)**
+7. **Notifications (Email/Webhook)** ✅
    - **Purpose:** Keep stakeholders informed.
+   - **Status:** Email adapter implemented with nodemailer support. Real SMTP sending ready for Agent 1 implementation.
    - **Dependencies:** SLA engine events; audit events.
    - **Impacted Areas:** Notification service module; env-driven SMTP/webhook settings; templates.
    - **Acceptance:** Email sent on assignment, public comment, status change, SLA warning/breach; opt-in for requester; failures logged without blocking.
-   - **Tests:** Unit tests with mocked transport; integration test capturing outgoing payload.
+   - **Tests:** Unit tests with mocked transport; integration test capturing outgoing payload. ✅ Test coverage added.
 
 8. **Reporting Dashboard**
    - **Purpose:** Provide KPIs and exports.

@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       if (dateRange.startDate > dateRange.endDate) {
         return NextResponse.json({ error: "startDate must be before endDate" }, { status: 400 });
       }
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: "Invalid date range" }, { status: 400 });
     }
   }

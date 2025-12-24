@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 interface AnalyticsData {
@@ -59,13 +59,7 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (days !== initialDays) {
-      fetchData();
-    }
-  }, [days]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -90,7 +84,13 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
     } finally {
       setLoading(false);
     }
-  };
+  }, [days]);
+
+  useEffect(() => {
+    if (days !== initialDays) {
+      fetchData();
+    }
+  }, [days, initialDays, fetchData]);
 
   const formatTime = (hours: number, minutes: number) => {
     if (hours > 0) {

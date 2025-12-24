@@ -5,14 +5,7 @@ import { createRequestLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
-import { z } from "zod";
-
-const createUserSchema = z.object({
-  email: z.string().email().toLowerCase(),
-  name: z.string().min(1).max(255),
-  role: z.enum(["REQUESTER", "AGENT", "ADMIN"]),
-  password: z.string().min(8).max(255),
-});
+// Note: createUserSchema removed - validation done inline in POST method
 
 // GET /api/admin/users - List users for admin
 export async function GET(req: Request) {
