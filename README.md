@@ -79,18 +79,54 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 - Ticket (statuses: NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE; priorities: NISKI, SREDNI, WYSOKI, KRYTYCZNY)
 - Comment (public/internal), Attachment, Tag, TicketTag, AuditEvent, SlaPolicy
 
-## MVP status
-- Auth (NextAuth credentials, Prisma adapter)
-- Ticket list (requester scoped to own tickets)
-- Ticket create + SLA due (first/resolve) via SlaPolicy
-- Ticket detail, public/internal comments (internal for agent/admin)
-- Seed: Demo org, admin/requester/agent, IT Support team, sample ticket
+## Features
+
+### Core Functionality
+- **Authentication:** NextAuth credentials with Prisma adapter, JWT sessions
+- **Tickets:** Create, view, update with role-based permissions
+- **Comments:** Public/internal comments with markdown support
+- **SLA Tracking:** Automatic due date calculation and breach detection
+- **Audit Logging:** Complete audit trail for all ticket changes
+
+### Admin Panel
+- **User Management:** Create, update, delete users with role assignment
+- **Team Management:** Organize agents into teams
+- **SLA Policies:** Configure SLA rules by priority and category
+- **Automation Rules:** Trigger-based automation for ticket workflows
+- **Audit Log:** View all system changes and events
+
+### Reporting & Analytics
+- **Dashboard Widgets:** SLA status, ticket statistics, KPI cards with tooltips
+- **Dashboard Features:** Refresh button for data updates, responsive layout
+- **KPI Metrics:** MTTR (Mean Time to Resolve), MTTA (Mean Time to Acknowledge), reopen rate, SLA compliance
+- **CSV Exports:** Export tickets and comments with filtering
+- **Analytics:** Ticket trends, creation/resolution rates, priority distribution
+
+### Notifications
+- **In-App Notifications:** Notification center with read/unread status and type filters (Ticket Updates, Comments, Assignments, SLA Breaches)
+- **Email Notifications:** SMTP-based email delivery via nodemailer (optional, requires EMAIL_ENABLED=true)
+- **Notification Preferences:** User-configurable notification channels
+
+### CSAT (Customer Satisfaction)
+- **CSAT Surveys:** Automated satisfaction surveys on ticket resolution
+- **CSAT UI:** Requester-facing survey interface
+- **CSAT Analytics:** Track satisfaction scores and trends
 
 ## To do (next iterations)
-- Admin panel (users/teams/dictionaries/SLA)
 - Attachments (upload + metadata)
-- Reports, Kanban, KPI dashboard
-- E2E/Unit tests, Dockerfile + docker-compose
+- Advanced search and pagination
+- Knowledge base integration
+- Localization (i18n)
+
+## Email Configuration
+- Email notifications are optional and controlled by `EMAIL_ENABLED` environment variable.
+- When `EMAIL_ENABLED=true`, configure SMTP settings:
+  - `SMTP_HOST` - SMTP server hostname
+  - `SMTP_PORT` - SMTP port (587 for STARTTLS, 465 for SSL)
+  - `SMTP_USER` - SMTP username
+  - `SMTP_PASSWORD` - SMTP password
+  - `SMTP_FROM` - From email address (defaults to `noreply@helpdesk.local`)
+- If `EMAIL_ENABLED` is not set or `false`, the application uses a stub adapter that queues emails without sending.
 
 ## Email Configuration
 - Email notifications are optional and controlled by `EMAIL_ENABLED` environment variable.

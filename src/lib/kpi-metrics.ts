@@ -45,6 +45,19 @@ export type KpiMetrics = {
  * @param dateRange - Optional date range to filter tickets (defaults to last 30 days)
  * @returns KPI metrics including MTTR, MTTA, and reopen rate
  */
+/**
+ * Calculates KPI metrics for an organization within a date range.
+ * 
+ * Computes four key performance indicators:
+ * - MTTR (Mean Time to Resolve): Average time from ticket creation to resolution
+ * - MTTA (Mean Time to Acknowledge): Average time to first agent response
+ * - Reopen Rate: Percentage of closed tickets that were reopened
+ * - SLA Compliance: Percentage of tickets resolved within SLA deadlines
+ * 
+ * @param organizationId - Organization to calculate metrics for
+ * @param dateRange - Optional date range (defaults to last 30 days)
+ * @returns KPI metrics object with calculated values or null if insufficient data
+ */
 export async function calculateKpiMetrics(
   organizationId: string,
   dateRange?: DateRange

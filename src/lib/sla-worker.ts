@@ -21,6 +21,23 @@ export type SlaWorkerResult = {
 
 const closedStatuses: TicketStatus[] = [TicketStatus.ZAMKNIETE, TicketStatus.ROZWIAZANE];
 
+/**
+ * Handles SLA breach detection and notification for scheduled SLA jobs.
+ * 
+ * This function processes SLA jobs queued by the worker system. It checks if a ticket
+ * has breached its SLA deadline (first response or resolution) and creates audit events
+ * and notifications accordingly.
+ * 
+ * The function skips processing if:
+ * - Ticket is closed/resolved
+ * - Ticket is waiting on requester (SLA paused)
+ * - Due date has been rescheduled (different from job payload)
+ * - First response/resolution already recorded
+ * 
+ * @param payload - SLA job payload containing ticket ID, job type, and due date
+ * @param options - Optional overrides for testing (client, notifier, now)
+ * @returns Result indicating if job was processed or skipped with reason
+ */
 export async function handleSlaJob(payload: SlaJobPayload, options: WorkerOptions = {}): Promise<SlaWorkerResult> {
   const parsed = slaJobPayloadSchema.parse(payload);
   const client = options.client ?? prisma;

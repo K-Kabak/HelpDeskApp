@@ -104,9 +104,19 @@ class NotificationServiceImpl implements NotificationService {
     this.emailAdapter = emailAdapter;
   }
 
+  /**
+   * Sends a notification via the specified channel (email or in-app).
+   * 
+   * Handles idempotency, user preference checks, and notification type detection.
+   * For in-app notifications, stores notificationType in the data field for filtering.
+   * 
+   * @param request - Notification request with channel, recipient, content, and metadata
+   * @returns Notification result with ID, status, and deduplication flag
+   */
   async send(request: NotificationRequest): Promise<NotificationResult> {
     const payload = notificationSchema.parse(request);
 
+    // Check idempotency: if we've already sent this notification, return cached result
     if (payload.idempotencyKey) {
       const existing = this.sentByKey.get(payload.idempotencyKey);
       if (existing) {
@@ -114,11 +124,14 @@ class NotificationServiceImpl implements NotificationService {
       }
     }
 
+    // Determine notification type from metadata or default to ticketUpdate
     const notificationType =
       (payload.metadata?.notificationType as NotificationType) ?? "ticketUpdate";
 
+    // Resolve user ID from email or user ID string
     const userId = await resolveUserId(payload.to);
     if (userId) {
+      // Check user's notification preferences before sending
       const allowed = await shouldSendNotification(
         userId,
         payload.channel,
@@ -192,12 +205,31 @@ class NotificationServiceImpl implements NotificationService {
         return result;
       }
 
+      // Determine more specific notification type for filtering
+      // Store extended type in data field (not limited to NotificationType enum)
+      let specificType: string = notificationType;
+      if (payload.data) {
+        const data = payload.data as Record<string, unknown>;
+        // Check for SLA-related fields
+        if (data.jobType || payload.subject?.toLowerCase().includes("sla")) {
+          specificType = "slaBreach";
+        }
+        // Check for assignment (would need to be passed in metadata or inferred)
+        // For now, we'll infer from subject in the API endpoint
+      }
+
+      // Store notificationType in data field for filtering
+      const notificationData = {
+        ...(payload.data || {}),
+        notificationType: specificType,
+      } as Prisma.JsonValue;
+
       const notification = await prisma.inAppNotification.create({
         data: {
           userId,
           subject: payload.subject ?? undefined,
           body: payload.body ?? undefined,
-          data: payload.data as Prisma.JsonValue,
+          data: notificationData,
         },
       });
 

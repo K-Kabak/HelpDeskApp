@@ -14,13 +14,42 @@ type Notification = {
   createdAt: Date;
 };
 
+type NotificationFilter = "all" | "ticketUpdate" | "commentUpdate" | "assignment" | "slaBreach";
+
 type Props = {
   initialNotifications: Notification[];
 };
 
 export function NotificationsList({ initialNotifications }: Props) {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [filter, setFilter] = useState<NotificationFilter>("all");
   const [pending, startTransition] = useTransition();
+
+  const fetchNotifications = async (type: NotificationFilter) => {
+    startTransition(async () => {
+      try {
+        const url = type === "all" 
+          ? "/api/notifications" 
+          : `/api/notifications?type=${type}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch notifications");
+        }
+        
+        const data = await response.json();
+        setNotifications(data.notifications);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+        toast.error("Błąd podczas pobierania powiadomień");
+      }
+    });
+  };
+
+  const handleFilterChange = (newFilter: NotificationFilter) => {
+    setFilter(newFilter);
+    fetchNotifications(newFilter);
+  };
 
   const markAsRead = async (notificationId: string) => {
     startTransition(async () => {
@@ -52,6 +81,14 @@ export function NotificationsList({ initialNotifications }: Props) {
 
   const unreadCount = notifications.filter(n => !n.readAt).length;
 
+  const filterOptions: { value: NotificationFilter; label: string }[] = [
+    { value: "all", label: "Wszystkie" },
+    { value: "ticketUpdate", label: "Aktualizacje zgłoszeń" },
+    { value: "commentUpdate", label: "Komentarze" },
+    { value: "assignment", label: "Przypisania" },
+    { value: "slaBreach", label: "Naruszenia SLA" },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -63,6 +100,26 @@ export function NotificationsList({ initialNotifications }: Props) {
             {unreadCount} nieprzeczytanych
           </span>
         )}
+      </div>
+
+      {/* Filter Dropdown */}
+      <div className="flex items-center gap-2">
+        <label htmlFor="notification-filter" className="text-sm font-medium text-slate-700">
+          Filtruj:
+        </label>
+        <select
+          id="notification-filter"
+          value={filter}
+          onChange={(e) => handleFilterChange(e.target.value as NotificationFilter)}
+          disabled={pending}
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
+        >
+          {filterOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {notifications.length === 0 ? (

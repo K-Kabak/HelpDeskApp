@@ -3,11 +3,55 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+// Helper function to determine notification type from data/subject
+function getNotificationType(notification: {
+  data: unknown;
+  subject: string | null;
+  body: string | null;
+}): "ticketUpdate" | "commentUpdate" | "assignment" | "slaBreach" {
+  const data = notification.data as Record<string, unknown> | null;
+  
+  // Check if notificationType is stored in data
+  if (data?.notificationType) {
+    const type = data.notificationType as string;
+    if (type === "commentUpdate") return "commentUpdate";
+    if (type === "assignment") return "assignment";
+    if (type === "slaBreach") return "slaBreach";
+    if (type === "ticketUpdate") return "ticketUpdate";
+  }
+  
+  // Infer from subject/body for backward compatibility
+  const subject = (notification.subject?.toLowerCase() || "");
+  const body = (notification.body?.toLowerCase() || "");
+  const combined = `${subject} ${body}`;
+  
+  // Check for SLA breaches/reminders
+  if (combined.includes("sla") && (combined.includes("breach") || combined.includes("reminder") || data?.jobType)) {
+    return "slaBreach";
+  }
+  
+  // Check for assignments
+  if (combined.includes("assigned") || combined.includes("przypisano") || combined.includes("przypisany")) {
+    return "assignment";
+  }
+  
+  // Check for comments
+  if (combined.includes("comment") || combined.includes("komentarz") || combined.includes("dodał komentarz")) {
+    return "commentUpdate";
+  }
+  
+  // Default to ticketUpdate
+  return "ticketUpdate";
+}
+
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { searchParams } = new URL(req.url);
+  const typeFilter = searchParams.get("type");
 
   const notifications = await prisma.inAppNotification.findMany({
     where: { userId: session.user.id },
@@ -15,6 +59,19 @@ export async function GET() {
     take: 50,
   });
 
-  return NextResponse.json({ notifications });
+  // Filter by type if specified
+  let filteredNotifications = notifications;
+  if (typeFilter && typeFilter !== "all") {
+    filteredNotifications = notifications.filter((notif) => {
+      const notifType = getNotificationType({
+        data: notif.data,
+        subject: notif.subject,
+        body: notif.body,
+      });
+      return notifType === typeFilter;
+    });
+  }
+
+  return NextResponse.json({ notifications: filteredNotifications });
 }
 
