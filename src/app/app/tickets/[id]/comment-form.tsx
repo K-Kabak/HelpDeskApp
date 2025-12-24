@@ -26,9 +26,7 @@ export default function CommentForm({
     });
     setLoading(false);
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      console.error("Błąd podczas dodawania komentarza:", errorData);
-      toast.error("Nie udało się dodać komentarza. Sprawdź połączenie internetowe i spróbuj ponownie.");
+      toast.error("Nie udało się dodać komentarza");
       return;
     }
     toast.success("Komentarz dodany");

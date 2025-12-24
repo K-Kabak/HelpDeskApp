@@ -63,8 +63,7 @@ export function ExportButton({ label, endpoint, className }: ExportButtonProps) 
       document.body.removeChild(a);
     } catch (error) {
       console.error("Export error:", error);
-      // TODO: Replace alert with toast notification
-      alert("Nie udało się wyeksportować danych. Sprawdź połączenie internetowe i spróbuj ponownie.");
+      alert("Nie udało się wyeksportować danych. Spróbuj ponownie.");
     } finally {
       setExporting(false);
     }
