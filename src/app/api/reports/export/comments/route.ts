@@ -32,6 +32,7 @@ export async function GET(req: Request) {
 
   // Build where clause with organization scoping and visibility rules
   const where: Prisma.CommentWhereInput = {
+>>>>>>> origin/main
     internal: includeInternal ? undefined : false, // Requesters only see public comments
   };
 

@@ -128,5 +128,15 @@ Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
   - `SMTP_FROM` - From email address (defaults to `noreply@helpdesk.local`)
 - If `EMAIL_ENABLED` is not set or `false`, the application uses a stub adapter that queues emails without sending.
 
+## Email Configuration
+- Email notifications are optional and controlled by `EMAIL_ENABLED` environment variable.
+- When `EMAIL_ENABLED=true`, configure SMTP settings:
+  - `SMTP_HOST` - SMTP server hostname
+  - `SMTP_PORT` - SMTP port (587 for STARTTLS, 465 for SSL)
+  - `SMTP_USER` - SMTP username
+  - `SMTP_PASSWORD` - SMTP password
+  - `SMTP_FROM` - From email address (defaults to `noreply@helpdesk.local`)
+- If `EMAIL_ENABLED` is not set or `false`, the application uses a stub adapter that queues emails without sending.
+
 ## Operations runbooks
 - `docs/worker-deployment-runbook.md`: Restart, drain, rollback guidance for BullMQ workers along with failure mode troubleshooting.
