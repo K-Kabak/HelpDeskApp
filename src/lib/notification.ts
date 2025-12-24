@@ -192,12 +192,31 @@ class NotificationServiceImpl implements NotificationService {
         return result;
       }
 
+      // Determine more specific notification type for filtering
+      // Store extended type in data field (not limited to NotificationType enum)
+      let specificType: string = notificationType;
+      if (payload.data) {
+        const data = payload.data as Record<string, unknown>;
+        // Check for SLA-related fields
+        if (data.jobType || payload.subject?.toLowerCase().includes("sla")) {
+          specificType = "slaBreach";
+        }
+        // Check for assignment (would need to be passed in metadata or inferred)
+        // For now, we'll infer from subject in the API endpoint
+      }
+
+      // Store notificationType in data field for filtering
+      const notificationData = {
+        ...(payload.data || {}),
+        notificationType: specificType,
+      } as Prisma.JsonValue;
+
       const notification = await prisma.inAppNotification.create({
         data: {
           userId,
           subject: payload.subject ?? undefined,
           body: payload.body ?? undefined,
-          data: payload.data as Prisma.JsonValue,
+          data: notificationData,
         },
       });
 
