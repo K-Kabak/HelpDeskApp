@@ -61,8 +61,6 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-  const fetchData = useCallback(async () => {
->>>>>>> origin/main
     setLoading(true);
     setError(null);
     try {
@@ -83,7 +81,8 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
       setAnalytics(analyticsData);
       setKpi(kpiData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      console.error("Błąd podczas ładowania danych raportów:", err);
+      setError("Nie udało się załadować danych raportów. Sprawdź połączenie internetowe i spróbuj ponownie.");
     } finally {
       setLoading(false);
     }

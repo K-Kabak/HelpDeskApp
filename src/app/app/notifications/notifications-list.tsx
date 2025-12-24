@@ -123,8 +123,25 @@ export function NotificationsList({ initialNotifications }: Props) {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
-          Brak powiadomień
+        <div className="text-center py-12">
+          <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak powiadomień</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            {filter === "all"
+              ? "Nie masz żadnych powiadomień."
+              : `Nie masz powiadomień typu "${filterOptions.find(f => f.value === filter)?.label}".`
+            }
+          </p>
+          {filter !== "all" && (
+            <button
+              onClick={() => handleFilterChange("all")}
+              className="mt-3 text-sm text-sky-600 hover:text-sky-500"
+            >
+              Pokaż wszystkie powiadomienia
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

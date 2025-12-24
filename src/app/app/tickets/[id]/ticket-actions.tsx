@@ -86,7 +86,8 @@ export default function TicketActions({
       router.refresh();
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      console.error("Błąd podczas zapisywania zmian statusu:", err);
+      toast.error("Nie udało się zapisać zmian statusu. Spróbuj ponownie.");
     },
   });
 
@@ -106,7 +107,7 @@ export default function TicketActions({
         status
       )
     ) {
-      toast.error("Nie możesz ustawić tego statusu.");
+      toast.error("Nie masz uprawnień do zmiany statusu na wybrany. Skontaktuj się z administratorem jeśli potrzebujesz pomocy.");
       return;
     }
     const payload: Record<string, unknown> = { status };

@@ -33,10 +33,6 @@ export async function GET(req: Request) {
     logger.warn("admin.required");
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  }
-
-  if (auth.user.role !== "ADMIN") {
     logger.warn("admin.required");
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
