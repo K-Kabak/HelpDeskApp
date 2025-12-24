@@ -29,6 +29,24 @@ const updateSchema = z
     }
   );
 
+/**
+ * PATCH /api/tickets/{id}
+ * 
+ * Updates ticket fields with role-based authorization and automatic SLA management.
+ * 
+ * Authorization:
+ * - REQUESTER: Can only close/reopen their own tickets (requires reopenReason)
+ * - AGENT/ADMIN: Can update all fields within their organization
+ * 
+ * Business logic:
+ * - Validates status transitions and reopen reasons
+ * - Updates SLA pause state when status changes to/from "waiting on user"
+ * - Reschedules SLA jobs if priority or due dates change
+ * - Creates audit events for all changes
+ * - Triggers automation rules on status/priority changes
+ * - Sends notifications for assignments and status changes
+ * - Generates CSAT token when ticket is resolved
+ */
 async function updateTicket(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

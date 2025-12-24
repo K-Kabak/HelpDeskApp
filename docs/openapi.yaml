@@ -574,7 +574,14 @@ paths:
   /api/tickets:
     get:
       summary: List tickets
-      description: Returns all tickets scoped by role/organization. No server-side pagination, filtering, or sorting is applied.
+      description: |
+        Returns tickets scoped by user role and organization.
+        
+        - REQUESTER role: Returns only tickets created by the user
+        - AGENT/ADMIN roles: Returns tickets within the user's organization
+        
+        Supports filtering by status, priority, category, and tags.
+        Uses cursor-based pagination for efficient navigation.
       security:
         - cookieAuth: []
       parameters:
@@ -622,7 +629,17 @@ paths:
                 $ref: '#/components/schemas/ErrorAsIs'
     post:
       summary: Create ticket
-      description: Validates basic fields and creates a ticket; no idempotency is enforced.
+      description: |
+        Creates a new ticket with the provided title, description, and priority.
+        
+        Automatically:
+        - Sets requester to the authenticated user
+        - Assigns to the user's organization
+        - Calculates SLA due dates based on priority and category
+        - Schedules SLA breach detection jobs
+        - Creates initial audit event
+        
+        Requires: title (min 3 chars), descriptionMd (min 3 chars), priority.
       security:
         - cookieAuth: []
       requestBody:
@@ -656,7 +673,17 @@ paths:
   /api/tickets/{id}:
     patch:
       summary: Update ticket
-      description: Updates status/priority/assignees with role and organization checks; no If-Match/etag enforcement.
+      description: |
+        Updates ticket fields (status, priority, assignees) with role-based authorization.
+        
+        Authorization:
+        - REQUESTER: Can only close/reopen their own tickets
+        - AGENT/ADMIN: Can update all fields within their organization
+        
+        Automatically:
+        - Reschedules SLA jobs if due dates change
+        - Creates audit events for all changes
+        - Triggers automation rules on status/priority changes
       security:
         - cookieAuth: []
       parameters:
