@@ -166,6 +166,45 @@ docs/                     # Documentation
 - PR #204: CI fixes (TypeScript, ESLint errors)
 
 ### 🔄 Remaining Tasks
+- ✅ **Task 6:** Ticket detail enhancements - COMPLETED (all features implemented)
+- ✅ **Real Email Notification Delivery:** EmailAdapterReal uses nodemailer - COMPLETED
+- ✅ **Mobile Responsiveness (Prompt 8):** Mobile improvements - COMPLETED
+- ✅ **Error Messages & UX Polish (Prompt 9):** UX improvements - COMPLETED
+- ✅ **Accessibility Improvements (Prompt 10):** Accessibility audit and fixes - COMPLETED
+- ✅ **Code Comments & Documentation (Prompt 11):** Code documentation - COMPLETED
+
+### ⏳ Pending Tasks (Prompts 12-15)
+- ❌ **PROMPT 12: Bulk Actions** - NIE WYKONANE (Backend API + Frontend UI)
+  - Brak endpointu `/api/tickets/bulk`
+  - Brak UI z checkboxami i bulk actions toolbar
+  
+- ❌ **PROMPT 13: Saved Views** - NIE WYKONANE (Backend + Frontend)
+  - Brak modelu SavedView w schema.prisma
+  - Brak endpointów `/api/views`
+  - Brak UI komponentów
+  
+- ❌ **PROMPT 14: Test Coverage** - NIE WYKONANE (wymaga promptów 12-13)
+  
+- ❌ **PROMPT 15: Advanced Search** - NIE WYKONANE (Backend)
+
+### 📋 Next Priorities
+
+**✅ Completed Features:**
+- ✅ Reporting/analytics endpoints and UI
+- ✅ CSAT improvements (Customer Satisfaction surveys)
+- ✅ Automation rules UI enhancements
+- ✅ Dashboard widgets (SLA status, ticket stats, KPI cards)
+- ✅ Export functionality (CSV exports)
+- ✅ Mobile responsiveness improvements
+- ✅ Error messages and UX polish
+- ✅ Accessibility improvements (ARIA labels, keyboard navigation, semantic HTML)
+- ✅ Code comments and documentation
+
+**🔄 Next Steps - Prompts 12-15:**
+1. **PROMPT 12:** Bulk Actions (Backend + Frontend) - Implementować jako pierwsze
+2. **PROMPT 13:** Saved Views (Backend + Frontend)
+3. **PROMPT 15:** Advanced Search (Backend)
+4. **PROMPT 14:** Test Coverage (po zakończeniu 12-13)
 - **Task 6:** Verify ticket detail enhancements (reopen reason, assignment suggestions, audit timeline)
 
 ### 📋 Next Priorities (from backlog)
