@@ -18,6 +18,7 @@ const createViewSchema = z.object({
   name: z.string().min(1).max(50),
   filters: filterSchema,
   isShared: z.boolean().optional().default(false),
+  isTeam: z.boolean().optional().default(false),
 });
 
 const updateViewSchema = z.object({
@@ -52,10 +53,14 @@ export async function GET() {
     return NextResponse.json({ error: "User has no organization" }, { status: 403 });
   }
 
+  // Get user's own views and team views in the organization
   const views = await prisma.savedView.findMany({
     where: {
-      userId: auth.user.id,
       organizationId: auth.user.organizationId,
+      OR: [
+        { userId: auth.user.id },
+        { isTeam: true },
+      ],
     },
     orderBy: [
       { isDefault: "desc" },
@@ -132,6 +137,7 @@ export async function POST(req: Request) {
       name: parsed.data.name,
       filters: parsed.data.filters as Prisma.InputJsonValue,
       isShared: parsed.data.isShared ?? false,
+      isTeam: parsed.data.isTeam ?? false,
       isDefault: false,
     },
   });
