@@ -18,6 +18,7 @@ const updateViewSchema = z.object({
   name: z.string().min(1).max(50).optional(),
   filters: filterSchema.optional(),
   isShared: z.boolean().optional(),
+  isTeam: z.boolean().optional(),
 });
 
 /**
@@ -55,12 +56,20 @@ export async function PATCH(
     return NextResponse.json({ error: "User has no organization" }, { status: 403 });
   }
 
-  // Fetch view and verify ownership
+  // Fetch view and verify ownership or team access
   const view = await prisma.savedView.findUnique({
     where: { id },
   });
 
-  if (!view || view.userId !== auth.user.id || view.organizationId !== auth.user.organizationId) {
+  if (!view || view.organizationId !== auth.user.organizationId) {
+    return NextResponse.json({ error: "View not found" }, { status: 404 });
+  }
+
+  // User can update their own views or team views (if they have access)
+  const isOwner = view.userId === auth.user.id;
+  const isTeamView = view.isTeam;
+  
+  if (!isOwner && !isTeamView) {
     return NextResponse.json({ error: "View not found" }, { status: 404 });
   }
 
@@ -99,6 +108,9 @@ export async function PATCH(
   }
   if (parsed.data.isShared !== undefined) {
     updateData.isShared = parsed.data.isShared;
+  }
+  if (parsed.data.isTeam !== undefined) {
+    updateData.isTeam = parsed.data.isTeam;
   }
 
   const updatedView = await prisma.savedView.update({
@@ -143,12 +155,20 @@ export async function DELETE(
     return NextResponse.json({ error: "User has no organization" }, { status: 403 });
   }
 
-  // Fetch view and verify ownership
+  // Fetch view and verify ownership or team access
   const view = await prisma.savedView.findUnique({
     where: { id },
   });
 
-  if (!view || view.userId !== auth.user.id || view.organizationId !== auth.user.organizationId) {
+  if (!view || view.organizationId !== auth.user.organizationId) {
+    return NextResponse.json({ error: "View not found" }, { status: 404 });
+  }
+
+  // User can delete their own views or team views (if they have access)
+  const isOwner = view.userId === auth.user.id;
+  const isTeamView = view.isTeam;
+  
+  if (!isOwner && !isTeamView) {
     return NextResponse.json({ error: "View not found" }, { status: 404 });
   }
 

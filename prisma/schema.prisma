@@ -362,6 +362,7 @@ model SavedView {
   filters        Json
   isDefault      Boolean      @default(false)
   isShared       Boolean      @default(false)
+  isTeam         Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

@@ -222,6 +222,32 @@ export default async function DashboardPage({
     ]);
   }
 
+  // Fetch saved views
+  let savedViews: Array<{
+    id: string;
+    name: string;
+    filters: unknown;
+    isShared: boolean;
+    isDefault: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }> = [];
+  try {
+    savedViews = await prisma.savedView.findMany({
+      where: {
+        userId: session.user.id,
+        organizationId: session.user.organizationId ?? undefined,
+      },
+      orderBy: [
+        { isDefault: "desc" },
+        { createdAt: "desc" },
+      ],
+    });
+  } catch (error) {
+    console.error("Error fetching saved views:", error);
+    // Continue without saved views if there's an error
+  }
+
   const { tickets: allTickets, nextCursor, prevCursor } = await getTicketPage(
     {
       id: session.user.id,
@@ -408,6 +434,26 @@ export default async function DashboardPage({
         </Link>
       </div>
 
+      {/* Saved Views */}
+      <SavedViews
+        initialViews={savedViews.map((v) => ({
+          id: v.id,
+          name: v.name,
+          filters: v.filters as {
+            status?: TicketStatus;
+            priority?: TicketPriority;
+            search?: string;
+            category?: string;
+            tagIds?: string[];
+          },
+          isShared: v.isShared,
+          isDefault: v.isDefault,
+          createdAt: v.createdAt.toISOString(),
+          updatedAt: v.updatedAt.toISOString(),
+        }))}
+      />
+
+      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
       <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get" action="/app">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
