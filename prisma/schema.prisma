@@ -50,6 +50,7 @@ model Organization {
   adminAudits         AdminAudit[]
   slaEscalationLevels SlaEscalationLevel[]
   automationRules     AutomationRule[]
+  savedViews          SavedView[]
 }
 
 model User {
@@ -75,6 +76,7 @@ model User {
   sessions               Session[]
   notificationPreference NotificationPreference?
   inAppNotifications     InAppNotification[]
+  savedViews             SavedView[]
 
   @@index([organizationId], name: "User_organizationId_idx")
   @@index([role], name: "User_role_idx")
@@ -109,38 +111,6 @@ model TeamMembership {
 }
 
 model Ticket {
-  id               String         @id @default(uuid())
-  number           Int            @default(autoincrement())
-  title            String
-  descriptionMd    String
-  status           TicketStatus   @default(NOWE)
-  priority         TicketPriority @default(SREDNI)
-  category         String?
-  requesterId      String
-  requester        User           @relation("TicketRequester", fields: [requesterId], references: [id])
-  assigneeUserId   String?
-  assigneeUser     User?          @relation("TicketAssigneeUser", fields: [assigneeUserId], references: [id])
-  assigneeTeamId   String?
-  assigneeTeam     Team?          @relation("TicketAssigneeTeam", fields: [assigneeTeamId], references: [id])
-  organizationId   String
-  organization     Organization   @relation(fields: [organizationId], references: [id])
-  tags             TicketTag[]
-  comments         Comment[]
-  attachments      Attachment[]
-  auditEvents      AuditEvent[]
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  resolvedAt       DateTime?
-  closedAt         DateTime?
-  firstResponseAt  DateTime?
-  firstResponseDue DateTime?
-  resolveDue       DateTime?
-  slaPausedAt      DateTime?
-  slaResumedAt     DateTime?
-  slaPauseTotalSeconds Int    @default(0)
-  lastReopenedAt   DateTime?
-  csatRequest      CsatRequest?
-  csatResponse     CsatResponse? @relation("TicketCsatResponse")
   id                   String         @id @default(uuid())
   number               Int            @default(autoincrement())
   title                String
@@ -203,17 +173,6 @@ model Comment {
   @@index([ticketId], name: "Comment_ticketId_idx")
   @@index([authorId], name: "Comment_authorId_idx")
   @@index([createdAt], name: "Comment_createdAt_idx")
-  id        String   @id @default(uuid())
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  isInternal Boolean @default(false)
-  bodyMd    String
-  createdAt DateTime @default(now())
-
-  @@index([ticketId, createdAt])
-  @@index([authorId])
 }
 
 model Attachment {
@@ -232,10 +191,6 @@ model Attachment {
 
   @@index([ticketId], name: "Attachment_ticketId_idx")
   @@index([uploaderId], name: "Attachment_uploaderId_idx")
-  createdAt  DateTime @default(now())
-
-  @@index([ticketId])
-  @@index([uploaderId])
 }
 
 model Tag {
@@ -395,6 +350,24 @@ model AutomationRule {
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, enabled])
+}
+
+model SavedView {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  filters        Json
+  isDefault      Boolean      @default(false)
+  isShared       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId], name: "SavedView_userId_idx")
+  @@index([organizationId], name: "SavedView_organizationId_idx")
 }
 
 // NextAuth adapter models
