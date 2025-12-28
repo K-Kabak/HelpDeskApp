@@ -173,19 +173,26 @@ docs/                     # Documentation
 - ✅ **Accessibility Improvements (Prompt 10):** Accessibility audit and fixes - COMPLETED
 - ✅ **Code Comments & Documentation (Prompt 11):** Code documentation - COMPLETED
 
-### ⏳ Pending Tasks (Prompts 12-15)
-- ❌ **PROMPT 12: Bulk Actions** - NIE WYKONANE (Backend API + Frontend UI)
-  - Brak endpointu `/api/tickets/bulk`
-  - Brak UI z checkboxami i bulk actions toolbar
+### ✅ Completed Tasks (Prompts 12-15)
+- ✅ **PROMPT 12: Bulk Actions Backend** - COMPLETED
+  - Endpoint `/api/tickets/bulk` implemented
+  - Bulk status change and assignment support
+  - Audit logging for bulk operations
   
-- ❌ **PROMPT 13: Saved Views** - NIE WYKONANE (Backend + Frontend)
-  - Brak modelu SavedView w schema.prisma
-  - Brak endpointów `/api/views`
-  - Brak UI komponentów
+- ✅ **PROMPT 13: Bulk Actions UI** - COMPLETED
+  - Checkboxes on ticket cards
+  - Bulk actions toolbar
+  - Status change and assignment dialogs
   
-- ❌ **PROMPT 14: Test Coverage** - NIE WYKONANE (wymaga promptów 12-13)
+- ✅ **PROMPT 14: Saved Views Backend** - COMPLETED
+  - SavedView model in Prisma schema
+  - API endpoints `/api/views` (GET, POST, PATCH, DELETE)
+  - Team views support
   
-- ❌ **PROMPT 15: Advanced Search** - NIE WYKONANE (Backend)
+- ✅ **PROMPT 15: Saved Views UI** - COMPLETED
+  - Saved views component with tabs
+  - Save current view dialog
+  - View management (edit, delete, set default)
 
 ### 📋 Next Priorities
 
@@ -200,7 +207,11 @@ docs/                     # Documentation
 - ✅ Accessibility improvements (ARIA labels, keyboard navigation, semantic HTML)
 - ✅ Code comments and documentation
 
-**🔄 Next Steps - Prompts 12-15:**
+**✅ Completed - Prompts 12-15:**
+- ✅ Bulk Actions (Backend + UI)
+- ✅ Saved Views (Backend + UI)
+
+**🔄 Next Steps - Stabilization & Polish:**
 1. **PROMPT 12:** Bulk Actions (Backend + Frontend) - Implementować jako pierwsze
 2. **PROMPT 13:** Saved Views (Backend + Frontend)
 3. **PROMPT 15:** Advanced Search (Backend)

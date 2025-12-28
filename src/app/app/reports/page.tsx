@@ -4,17 +4,7 @@ import { redirect } from "next/navigation";
 import { ReportsClient } from "./reports-client";
 import { calculateKpiMetrics, DateRange, type KpiMetrics } from "@/lib/kpi-metrics";
 import { prisma } from "@/lib/prisma";
-import type { Session } from "next-auth";
-
-type SessionWithUser = Session & {
-  user: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    role?: string;
-    organizationId?: string | null;
-  };
-};
+import type { SessionWithUser } from "@/lib/session-types";
 import { calculateKpiMetrics, DateRange } from "@/lib/kpi-metrics";
 import { prisma } from "@/lib/prisma";
 
@@ -97,8 +87,7 @@ export default async function ReportsPage({
 }: {
   searchParams?: { days?: string } | Promise<{ days?: string }>;
 }) {
-  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }

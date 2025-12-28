@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -14,18 +14,7 @@ export default function CsatPage() {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
 
-  // Validate token on mount if present
-  useEffect(() => {
-    if (token) {
-      // Token validation happens server-side, but we can show a loading state
-      setTokenValid(true);
-    } else {
-      // No token - session-based auth will be used
-      setTokenValid(true);
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

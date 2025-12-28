@@ -2,6 +2,12 @@
 
 Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
 
+## 📖 Instrukcja Uruchomienia
+
+**Pełna instrukcja uruchomienia i wyłączenia aplikacji:** [`docs/setup-instructions.md`](docs/setup-instructions.md)
+
+Zawiera gotowe komendy PowerShell, rozwiązania problemów i szczegółowe kroki konfiguracji.
+
 ## Quick start (local)
 
 ### Option 1: Docker Compose (recommended)
