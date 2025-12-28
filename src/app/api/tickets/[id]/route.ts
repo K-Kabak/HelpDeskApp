@@ -3,12 +3,23 @@ import { prisma } from "@/lib/prisma";
 import { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { Session } from "next-auth";
 import { z } from "zod";
 import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 import { notificationService } from "@/lib/notification";
 import { needsReopenReason, validateReopenReason } from "@/lib/reopen-reason";
 import { generateCsatToken } from "@/lib/csat-token";
+
+type SessionWithUser = Session & {
+  user: {
+    id: string;
+    role: string;
+    organizationId?: string;
+    name?: string | null;
+    email?: string | null;
+  };
+};
 
 const updateSchema = z
   .object({
@@ -52,7 +63,7 @@ async function updateTicket(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -310,9 +321,9 @@ async function updateTicket(
       await prisma.csatRequest.create({
         data: {
           ticketId: updatedTicket.id,
-          token,
-          expiresAt,
-        },
+          token: token,
+          expiresAt: expiresAt,
+        } as Prisma.CsatRequestUncheckedCreateInput,
       });
 
       await notificationService.send({
