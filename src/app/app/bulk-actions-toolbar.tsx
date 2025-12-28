@@ -1,6 +1,6 @@
 "use client";
 
-import { Role, TicketStatus } from "@prisma/client";
+import { TicketStatus } from "@prisma/client";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -55,28 +55,42 @@ export function BulkActionsToolbar({
 
     setIsUpdating(true);
     try {
-      const results = await Promise.allSettled(
-        selectedTickets.map(ticketId =>
-          fetch(`/api/tickets/${ticketId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus }),
-          })
-        )
-      );
+      const response = await fetch("/api/tickets/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketIds: selectedTickets,
+          action: "status",
+          value: newStatus,
+        }),
+      });
 
-      const successful = results.filter(r => r.status === "fulfilled").length;
-      const failed = results.filter(r => r.status === "rejected").length;
+      const result = await response.json();
 
-      if (successful > 0) {
-        toast.success(`Zaktualizowano status ${successful} zgłoszeń`);
+      if (!response.ok) {
+        toast.error(result.error || "Wystąpił błąd podczas aktualizacji statusów");
+        return;
+      }
+
+      // Show success message with counts
+      if (result.success > 0) {
+        toast.success(`Zaktualizowano status ${result.success} zgłoszeń`);
         onTicketsUpdated();
         onClearSelection();
         setShowStatusDialog(false);
       }
 
-      if (failed > 0) {
-        toast.error(`Nie udało się zaktualizować ${failed} zgłoszeń`);
+      // Show failure details if any tickets failed
+      if (result.failed > 0) {
+        const errorDetails = result.errors
+          .map((err: { ticketId: string; error: string }) => {
+            const ticket = tickets.find(t => t.id === err.ticketId);
+            const ticketTitle = ticket ? `#${ticket.number} ${ticket.title}` : err.ticketId;
+            return `${ticketTitle}: ${err.error}`;
+          })
+          .join("\n");
+
+        toast.error(`Nie udało się zaktualizować ${result.failed} zgłoszeń:\n${errorDetails}`);
       }
     } catch (error) {
       console.error("Bulk status update error:", error);
@@ -91,32 +105,47 @@ export function BulkActionsToolbar({
 
     setIsUpdating(true);
     try {
-      const payload: Record<string, unknown> = {};
-      if (newAssigneeUserId) payload.assigneeUserId = newAssigneeUserId;
-      if (newAssigneeTeamId) payload.assigneeTeamId = newAssigneeTeamId;
+      // Determine the value for bulk assignment
+      // For assignment, we need to decide between user and team assignment
+      // Since the UI allows selecting both, we'll prioritize user assignment
+      const value = newAssigneeUserId || newAssigneeTeamId || "";
 
-      const results = await Promise.allSettled(
-        selectedTickets.map(ticketId =>
-          fetch(`/api/tickets/${ticketId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-        )
-      );
+      const response = await fetch("/api/tickets/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketIds: selectedTickets,
+          action: "assign",
+          value,
+        }),
+      });
 
-      const successful = results.filter(r => r.status === "fulfilled").length;
-      const failed = results.filter(r => r.status === "rejected").length;
+      const result = await response.json();
 
-      if (successful > 0) {
-        toast.success(`Przypisano ${successful} zgłoszeń`);
+      if (!response.ok) {
+        toast.error(result.error || "Wystąpił błąd podczas przypisywania");
+        return;
+      }
+
+      // Show success message with counts
+      if (result.success > 0) {
+        toast.success(`Przypisano ${result.success} zgłoszeń`);
         onTicketsUpdated();
         onClearSelection();
         setShowAssignmentDialog(false);
       }
 
-      if (failed > 0) {
-        toast.error(`Nie udało się przypisać ${failed} zgłoszeń`);
+      // Show failure details if any tickets failed
+      if (result.failed > 0) {
+        const errorDetails = result.errors
+          .map((err: { ticketId: string; error: string }) => {
+            const ticket = tickets.find(t => t.id === err.ticketId);
+            const ticketTitle = ticket ? `#${ticket.number} ${ticket.title}` : err.ticketId;
+            return `${ticketTitle}: ${err.error}`;
+          })
+          .join("\n");
+
+        toast.error(`Nie udało się przypisać ${result.failed} zgłoszeń:\n${errorDetails}`);
       }
     } catch (error) {
       console.error("Bulk assignment update error:", error);
