@@ -289,8 +289,8 @@ Sources: `docs/ui-ux-spec.md`, `docs/ux-acceptance.md`, `docs/openapi.yaml`, `do
    - Permissions/Auth: ADMIN.
    - Loading/Empty/Error states: progress indicator; disable export button while pending; toast on completion/failure.
 
-37) **Saved views (Proposed user feature)** — Purpose: persist dashboard filter presets.
-   - Endpoint: unknown (not in OpenAPI; likely `POST/GET /api/views`).
+37) **Saved views (Implemented)** — Purpose: persist dashboard filter presets.
+   - Endpoint: `POST/GET/PATCH/DELETE /api/views` (implemented).
    - Request: `{"name":"My queue","filters":{"status":"NOWE","priority":"WYSOKI"}}`.
    - Response: `{ viewId, name, filters }`.
    - Errors shown: 400 invalid filters; 403 if role restricted (TBD).

@@ -57,7 +57,7 @@
 12. **Card data**: Given tickets render, when viewing a card, then it shows ticket number, title, status label, priority pill, requester, optional assignee user/team, and created timestamp.
 13. **Card navigation**: Given a ticket card is visible, when clicked, then the user navigates to `/app/tickets/[id]` for that ticket.
 14. **Proposed pagination**: Given more tickets than the page size, when pagination controls are used, then tickets load in pages without duplicating items.
-15. **Proposed saved views**: Given a user saves current filters/search as a view, when selecting that view later, then filters and search text reapply automatically.
+15. **Saved views (Implemented)**: Given a user saves current filters/search as a view, when selecting that view later, then filters and search text reapply automatically.
 
 ## Ticket Creation
 16. **Quick create validation**: Given the inline form on `/app`, when required fields violate length rules, then inline errors appear and submission is blocked.
