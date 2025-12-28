@@ -12,9 +12,10 @@ import { KpiCards } from "./kpi-cards";
 import { calculateKpiMetrics } from "@/lib/kpi-metrics";
 import { ExportButton } from "./export-button";
 import { RefreshButton } from "./refresh-button";
+import { BulkActionsToolbar } from "./bulk-actions-toolbar";
 import { TicketList } from "./ticket-list";
 import { SavedViews } from "./saved-views";
-import { Suspense } from "react";
+import { Suspense, useState, useCallback } from "react";
 
 type SessionWithUser = Session & {
   user: {
@@ -452,6 +453,7 @@ export default async function DashboardPage({
         }))}
       />
 
+      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
       <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get" action="/app">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
