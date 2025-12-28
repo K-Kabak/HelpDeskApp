@@ -300,3 +300,4 @@ W razie problemów:
 
 **Ostatnia aktualizacja:** 2025-12-28
 
+

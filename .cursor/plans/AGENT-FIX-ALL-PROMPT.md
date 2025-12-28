@@ -187,3 +187,4 @@ Po zakończeniu pracy:
 **Zacznij od przeczytania problematycznych plików i analizy sytuacji.**
 
 
+

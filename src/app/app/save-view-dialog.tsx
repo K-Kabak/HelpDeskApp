@@ -23,6 +23,7 @@ export function SaveViewDialog({
       setName("");
       setSetAsDefault(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {

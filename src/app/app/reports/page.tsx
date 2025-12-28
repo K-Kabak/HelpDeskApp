@@ -97,7 +97,6 @@ export default async function ReportsPage({
 }: {
   searchParams?: { days?: string } | Promise<{ days?: string }>;
 }) {
-  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/login");

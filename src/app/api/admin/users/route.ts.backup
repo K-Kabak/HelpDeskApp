@@ -1,4 +1,4 @@
-﻿import { requireAuth } from "@/lib/authorization";
+import { requireAuth } from "@/lib/authorization";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";

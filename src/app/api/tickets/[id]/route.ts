@@ -63,7 +63,7 @@ async function updateTicket(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
