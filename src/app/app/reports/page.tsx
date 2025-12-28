@@ -15,8 +15,6 @@ type SessionWithUser = Session & {
     organizationId?: string | null;
   };
 };
-import { calculateKpiMetrics, DateRange } from "@/lib/kpi-metrics";
-import { prisma } from "@/lib/prisma";
 
 async function fetchAnalytics(organizationId: string, days: number) {
   const endDate = new Date();
@@ -97,7 +95,7 @@ export default async function ReportsPage({
 }: {
   searchParams?: { days?: string } | Promise<{ days?: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }
@@ -118,7 +116,6 @@ export default async function ReportsPage({
   // Fetch data server-side
   let analytics = null;
   let kpi: KpiMetrics | null = null;
-  let kpi = null;
 
   try {
     const dateRange: DateRange = {
@@ -127,8 +124,6 @@ export default async function ReportsPage({
     };
     dateRange.startDate.setDate(dateRange.startDate.getDate() - validDays);
 
-    kpi = await calculateKpiMetrics(session.user.organizationId, dateRange);
-    analytics = await fetchAnalytics(session.user.organizationId, validDays);
     [analytics, kpi] = await Promise.all([
       fetchAnalytics(session.user.organizationId, validDays),
       calculateKpiMetrics(session.user.organizationId, dateRange),

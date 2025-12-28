@@ -21,11 +21,11 @@ const createViewSchema = z.object({
   isTeam: z.boolean().optional().default(false),
 });
 
-// const updateViewSchema = z.object({
-//   name: z.string().min(1).max(50).optional(),
-//   filters: filterSchema.optional(),
-//   isShared: z.boolean().optional(),
-// });
+const updateViewSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  filters: filterSchema.optional(),
+  isShared: z.boolean().optional(),
+});
 
 /**
  * GET /api/views

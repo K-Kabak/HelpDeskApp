@@ -14,13 +14,13 @@ export default function CsatPage() {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
 
   // Validate token on mount if present
   useEffect(() => {
     if (token) {
       // Token validation happens server-side, but we can show a loading state
-      // setTokenValid(true);
+      setTokenValid(true);
     } else {
       // No token - session-based auth will be used
       setTokenValid(true);
