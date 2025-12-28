@@ -9,8 +9,8 @@
 - Data source: `src/app/app/page.tsx` queries Prisma without pagination; scope by requester vs organization from session.
 - Filters: status select, priority select, text search (title + currently incorrect `description` field). Show applied filters in inputs; clearing returns all. Recommended: fix search to use `descriptionMd`, add pagination (page size 20 default, max 100), and persistent query params for deep links.
 - Layout: Card grid with ticket number, priority pill, title, status label, requester, assignee user/team, created timestamp. Empty state rendered when no results with CTA to create ticket.
-- Bulk ops (Proposed): Add multi-select with bulk status change and assignment for agents/admins; show confirmation dialogs and per-item failure toasts.
-- Saved views (Proposed): Allow saving filter/search combos as named views per user; expose as tabs above list.
+- Bulk ops (Implemented): Multi-select with bulk status change and assignment for agents/admins; confirmation dialogs and per-item failure toasts.
+- Saved views (Implemented): Saving filter/search combos as named views per user; exposed as tabs above list.
 
 ## Ticket detail / timeline
 - Data: Ticket with requester/assignee/team/comments, audit fields, SLA timestamps; requester visibility hides internal notes (`src/app/app/tickets/[id]/page.tsx`).
@@ -55,7 +55,7 @@
 - Attachments not validated (Proposed) -> Enforce MIME/size server-side, virus scanning, and signed URLs.
 - Admin actions could lock out all admins -> Prevent removing last admin and surface warning.
 - SLA clocks inaccurate -> Compute on status/comment events and show "unknown" when timestamps missing.
-- Saved views/bulk ops (Proposed) could surprise -> Require confirmation, show preview of affected count, allow undo where possible.
+- Saved views/bulk ops could surprise -> Require confirmation, show preview of affected count, allow undo where possible (implemented with confirmations).
 - Reporting exports could include unauthorized data -> Apply org scoping and logged-in user role on export requests; include audit trail.
 # UI/UX Specification
 
@@ -84,7 +84,7 @@
 - **Results**: card grid shows number, priority pill, title, status, requester, optional assignee user/team, and created timestamp; click opens detail. 
 - **Empty state**: dashed card with CTA to create when no tickets match. 
 - **Quick create**: inline form at bottom of list uses same validation, markdown preview, loading/disabled controls, and success/error toasts. 
-- **Proposed**: cursor-based pagination to cap result count, bulk select for agent/admin to apply status/assignment updates, and saved views (personal/team) storing filter/search combinations.
+- **Implemented**: cursor-based pagination to cap result count, bulk select for agent/admin to apply status/assignment updates, and saved views (personal/team) storing filter/search combinations.
 
 ## Ticket Detail UX
 - **Header**: ticket number, title, created timestamp, requester, assignee team/user, priority pill, and status pill. 
