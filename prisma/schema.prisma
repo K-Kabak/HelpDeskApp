@@ -321,10 +321,14 @@ model InAppNotification {
 }
 
 model CsatRequest {
-  id        String   @id @default(uuid())
-  ticketId  String   @unique
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
-  createdAt DateTime @default(now())
+  id        String    @id @default(uuid())
+  ticketId  String    @unique
+  ticket    Ticket    @relation(fields: [ticketId], references: [id])
+  token     String?   @unique
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
 }
 
 model CsatResponse {
