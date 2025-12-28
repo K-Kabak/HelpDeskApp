@@ -18,36 +18,53 @@ export async function GET(req: Request) {
   }
 
   const organizationId = auth.user.organizationId;
-  const { searchParams } = new URL(req.url);
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
 
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.organizationId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if user is admin (analytics are typically admin-only)
+  if (session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
+  }
+
+  const organizationId = session.user.organizationId;
+  const { searchParams } = new URL(req.url);
+  
   // Support both days parameter and custom date range
   const daysParam = searchParams.get("days");
   const startDateParam = searchParams.get("startDate");
   const endDateParam = searchParams.get("endDate");
-
+  
   let startDate: Date;
   let endDate: Date;
   let days: number;
-
+  
   if (startDateParam && endDateParam) {
     // Custom date range
     startDate = new Date(startDateParam);
     endDate = new Date(endDateParam);
-
+    
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
-
+    
     if (startDate > endDate) {
       return NextResponse.json({ error: "startDate must be before endDate" }, { status: 400 });
     }
-
+    
     days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   } else {
     // Use days parameter (default 30)
     const daysValue = daysParam ? parseInt(daysParam, 10) : 30;
     days = Math.min(Math.max(daysValue, 7), 365);
-
+    
     endDate = new Date();
     startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - days);

@@ -587,7 +587,7 @@ paths:
       parameters:
         - name: limit
           in: query
-          description: "Number of tickets per page (1-100, default: 20)"
+          description: Number of tickets per page (1-100, default: 20)
           schema:
             type: integer
             minimum: 1
