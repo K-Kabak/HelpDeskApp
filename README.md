@@ -1,6 +1,6 @@
 # SerwisDesk (MVP)
 
-Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind).
+Web helpdesk/ticketing app (Next.js + Prisma + NextAuth + Tailwind)
 
 ## 📖 Instrukcja Uruchomienia
 
