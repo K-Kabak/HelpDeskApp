@@ -6,7 +6,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
 // Note: createUserSchema removed - validation done inline in POST method
-import { z } from "zod";
 
 // GET /api/admin/users - List users for admin
 export async function GET(req: Request) {
