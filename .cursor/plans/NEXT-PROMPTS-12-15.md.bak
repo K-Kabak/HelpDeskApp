@@ -1,0 +1,297 @@
+# 🚀 Prompty 12-15 - Bulk Actions & Saved Views
+
+## ✅ Status: Prompty 1-11 Zakończone
+
+**Wykonane:**
+- ✅ Prompty 1-7: Email, Tests, Docs, Notification Filters, Dashboard Polish
+- ✅ Prompty 8-11: Mobile, Error Messages, Accessibility, Code Comments
+- ✅ Wszystkie PR-y zostały zmergowane
+
+---
+
+## PROMPT 12: Agent 1 (Backend) - Bulk Actions Backend
+
+**SKOPIUJ CAŁOŚĆ:**
+
+```
+[Wklej najpierw zawartość całego pliku .cursor/plans/master-agent-prompt.md]
+
+---
+
+## TASK: Bulk Actions Backend API
+
+**Status:** Bulk actions feature needs backend API endpoint.
+
+**YOUR MISSION:**
+1. **Create bulk actions endpoint:**
+   - Create `src/app/api/tickets/bulk/route.ts`
+   - Accept `PATCH` requests with body: `{ ticketIds: string[], action: 'assign' | 'status', value: string }`
+   - Validate all tickets belong to user's organization
+   - Check permissions per ticket (user must have AGENT/ADMIN role)
+   - Execute bulk operation (assign or change status)
+   - Create audit events for each ticket
+   - Return results: `{ success: number, failed: number, errors: Array<{ticketId, error}> }`
+
+2. **Security:**
+   - Always enforce organization scoping
+   - Check role permissions (AGENT/ADMIN only)
+   - Validate ticket IDs exist and belong to org
+   - Rate limiting (prevent abuse)
+
+3. **Error handling:**
+   - Return partial success if some tickets fail
+   - Include error details for failed tickets
+   - Log all failures
+
+**SIMPLIFIED WORKFLOW:**
+- Create endpoint file
+- Implement bulk logic
+- Add audit logging
+- Test with Postman/curl
+- Commit when done
+
+**ACCEPTANCE CRITERIA:**
+- Endpoint accepts bulk requests
+- Validates permissions per ticket
+- Creates audit events
+- Returns success/failure counts
+- Handles errors gracefully
+
+**WHEN READY TO COMMIT:**
+- After endpoint works
+- Run: `pnpm lint && pnpm exec tsc --noEmit`
+- Commit: `git commit -m "feat: add bulk actions API endpoint"`
+- Push and create PR with auto-merge
+```
+
+---
+
+## PROMPT 13: Agent 2 (Frontend) - Bulk Actions UI
+
+**SKOPIUJ CAŁOŚĆ:**
+
+```
+[Wklej najpierw zawartość całego pliku .cursor/plans/master-agent-prompt.md]
+
+---
+
+## TASK: Bulk Actions UI
+
+**Status:** Backend API exists (from Prompt 12), now build UI.
+
+**YOUR MISSION:**
+1. **Add checkboxes to ticket list:**
+   - Add checkbox to each ticket card in `src/app/app/page.tsx`
+   - Track selected tickets in state
+   - Show count of selected tickets
+
+2. **Add bulk actions toolbar:**
+   - Show toolbar when tickets are selected
+   - Actions: "Assign to Agent", "Change Status"
+   - Disable for REQUESTER role (only AGENT/ADMIN)
+
+3. **Implement bulk operations:**
+   - Call `/api/tickets/bulk` endpoint
+   - Show loading state during operation
+   - Display success/failure toasts
+   - Refresh ticket list after success
+   - Handle partial failures (some tickets may fail)
+
+4. **UI/UX:**
+   - Confirmation dialog before bulk action
+   - Show preview of action (e.g., "Change 5 tickets to 'Resolved'?")
+   - Clear selection after action
+   - Disable checkboxes for tickets user can't modify
+
+**SIMPLIFIED WORKFLOW:**
+- Add checkboxes first
+- Then add toolbar
+- Then implement API calls
+- Test in browser
+- Commit when done
+
+**ACCEPTANCE CRITERIA:**
+- Checkboxes visible on ticket cards
+- Toolbar appears when tickets selected
+- Bulk actions work
+- Confirmation dialogs shown
+- Errors handled gracefully
+
+**WHEN READY TO COMMIT:**
+- After UI works
+- Run: `pnpm lint && pnpm exec tsc --noEmit`
+- Commit: `git commit -m "feat: add bulk actions UI"`
+- Push and create PR with auto-merge
+```
+
+---
+
+## PROMPT 14: Agent 1 (Backend) - Saved Views Backend
+
+**SKOPIUJ CAŁOŚĆ:**
+
+```
+[Wklej najpierw zawartość całego pliku .cursor/plans/master-agent-prompt.md]
+
+---
+
+## TASK: Saved Views Backend
+
+**Status:** Saved views feature needs backend model and API.
+
+**YOUR MISSION:**
+1. **Add SavedView model to Prisma:**
+   - Edit `prisma/schema.prisma`
+   - Add model: `SavedView { id, name, filters (JSON), userId, organizationId, isTeam (boolean), createdAt, updatedAt }`
+   - Add indexes: `organizationId`, `userId`
+   - Create migration: `pnpm prisma migrate dev --name add_saved_views`
+
+2. **Create API endpoints:**
+   - `GET /api/views` - List user's saved views (org-scoped)
+   - `POST /api/views` - Create saved view
+   - `PATCH /api/views/[id]` - Update saved view
+   - `DELETE /api/views/[id]` - Delete saved view
+   - All endpoints enforce org scoping
+
+3. **Validation:**
+   - Validate filters structure
+   - Ensure user owns view (or is team view and user has access)
+   - Prevent duplicate names per user
+
+**SIMPLIFIED WORKFLOW:**
+- Add Prisma model
+- Create migration
+- Create API endpoints
+- Test with Postman/curl
+- Commit when done
+
+**ACCEPTANCE CRITERIA:**
+- SavedView model exists
+- Migration created
+- API endpoints work
+- Org scoping enforced
+- Validation works
+
+**WHEN READY TO COMMIT:**
+- After backend works
+- Run: `pnpm lint && pnpm exec tsc --noEmit`
+- Commit: `git commit -m "feat: add saved views backend"`
+- Push and create PR with auto-merge
+```
+
+---
+
+## PROMPT 15: Agent 2 (Frontend) - Saved Views UI
+
+**SKOPIUJ CAŁOŚĆ:**
+
+```
+[Wklej najpierw zawartość całego pliku .cursor/plans/master-agent-prompt.md]
+
+---
+
+## TASK: Saved Views UI
+
+**Status:** Backend API exists (from Prompt 14), now build UI.
+
+**YOUR MISSION:**
+1. **Add saved views UI to ticket list:**
+   - Add tabs/dropdown above ticket list in `src/app/app/page.tsx`
+   - Show saved views as tabs or dropdown options
+   - "All Tickets" as default view
+   - "Save Current View" button
+
+2. **Save view dialog:**
+   - Dialog to name the view
+   - Option: Personal or Team view
+   - Save current filters/search as view
+   - Call `POST /api/views` API
+
+3. **Load view:**
+   - Clicking saved view applies its filters
+   - Update URL query params to match view
+   - Highlight active view
+
+4. **Manage views:**
+   - Edit view name
+   - Delete view
+   - Show view count
+
+**SIMPLIFIED WORKFLOW:**
+- Add UI for displaying views
+- Then add save dialog
+- Then implement load/apply
+- Test in browser
+- Commit when done
+
+**ACCEPTANCE CRITERIA:**
+- Saved views visible in UI
+- Can save current view
+- Can load saved view
+- Can delete view
+- Works with existing filters
+
+**WHEN READY TO COMMIT:**
+- After UI works
+- Run: `pnpm lint && pnpm exec tsc --noEmit`
+- Commit: `git commit -m "feat: add saved views UI"`
+- Push and create PR with auto-merge
+```
+
+---
+
+## 📝 FINAL COMMIT PROMPT (używaj po każdym zadaniu)
+
+```
+Jeśli po zakończeniu wszystkich zmian i wszystko działa, wykonaj:
+
+### 1. Check & Commit
+git status
+pnpm lint && pnpm exec tsc --noEmit
+git checkout -b feature/[nazwa-funkcji]
+git add .
+git commit -m "feat: [opis zmian]"
+git push origin feature/[nazwa-funkcji]
+
+### 2. Create PR with AUTO-MERGE (RECOMMENDED)
+
+**GitHub CLI (fastest):**
+gh pr create --title "feat: [opis]" --body "Implements changes. Auto-merge enabled." --fill
+
+**GitHub UI:**
+1. Click "Compare & pull request"
+2. Enable "Auto-merge" → "Squash and merge"
+3. Create PR
+
+**PR will auto-merge after CI passes! ✅**
+
+### Alternative: Direct commit (only for very small changes - 1-2 files)
+git checkout main && git pull origin main
+git add . && git commit -m "fix: [opis]"
+git push origin main  # Only if branch protection allows
+
+---
+
+**RECOMMENDATION: Always use PR with auto-merge** - safer, CI checks, clean history.
+
+**Commit format:** `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `perf:`
+```
+
+---
+
+## 🎯 Kolejność Uruchamiania
+
+**Prompty 12-15 (wszystkie są średnie - wymagają backend + frontend):**
+
+1. **Agent 1** - PROMPT 12 (Bulk Actions Backend) - najpierw backend
+2. **Agent 2** - PROMPT 13 (Bulk Actions UI) - po Prompt 12
+3. **Agent 1** - PROMPT 14 (Saved Views Backend) - może równolegle z Prompt 13 jeśli różne pliki
+4. **Agent 2** - PROMPT 15 (Saved Views UI) - po Prompt 14
+
+**Zależności:**
+- Prompt 13 wymaga Prompt 12 (backend musi być gotowy)
+- Prompt 15 wymaga Prompt 14 (backend musi być gotowy)
+- Prompt 12 i 14 mogą być równolegle (różne pliki)
+
+**Wszystkie są średnie - wymagają backend + frontend współpracy!**
+

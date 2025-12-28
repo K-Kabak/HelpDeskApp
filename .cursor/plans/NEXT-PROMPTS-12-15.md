@@ -480,3 +480,4 @@ git push origin main  # Only if branch protection allows
 **Uwaga:** Bulk Actions i Saved Views są średnio trudne - wymagają współpracy backend+frontend.
 
 
+

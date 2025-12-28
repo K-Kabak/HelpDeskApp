@@ -8,13 +8,6 @@ import { hash } from "bcryptjs";
 // Note: createUserSchema removed - validation done inline in POST method
 import { z } from "zod";
 
-const createUserSchema = z.object({
-  email: z.string().email().toLowerCase(),
-  name: z.string().min(1).max(255),
-  role: z.enum(["REQUESTER", "AGENT", "ADMIN"]),
-  password: z.string().min(8).max(255),
-});
-
 // GET /api/admin/users - List users for admin
 export async function GET(req: Request) {
   const auth = await requireAuth();
@@ -30,9 +23,6 @@ export async function GET(req: Request) {
   }
 
   if (auth.user.role !== "ADMIN") {
-    logger.warn("admin.required");
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
     logger.warn("admin.required");
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

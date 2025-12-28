@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
@@ -63,6 +64,7 @@ async function updateTicket(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
