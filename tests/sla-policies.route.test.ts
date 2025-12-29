@@ -2,11 +2,12 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { TicketPriority } from "@prisma/client";
 
 const mocks = vi.hoisted(() => ({
-  jsonMock: vi.fn((body, init?: { status?: number; headers?: Record<string, string> }) => ({
-    status: init?.status ?? 200,
-    body,
-    headers: init?.headers,
-  })),
+  jsonMock: vi.fn((body, init?: { status?: number; headers?: Record<string, string> }) =>
+    new Response(JSON.stringify(body), {
+      status: init?.status ?? 200,
+      headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    })
+  ),
   requireAuth: vi.fn(),
   findMany: vi.fn(),
   findFirst: vi.fn(),

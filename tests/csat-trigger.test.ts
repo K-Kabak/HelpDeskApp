@@ -26,13 +26,13 @@ const mockPrisma = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
-const mockGetServerSession = vi.fn();
-vi.mock("next-auth", () => ({
+const mockGetServerSession = vi.hoisted(() => vi.fn());
+vi.mock("next-auth/next", () => ({
   getServerSession: () => mockGetServerSession(),
   authOptions: {},
 }));
 
-const mockScheduleSlaJobs = vi.fn();
+const mockScheduleSlaJobs = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/sla-scheduler", () => ({
   scheduleSlaJobsForTicket: mockScheduleSlaJobs,
 }));
@@ -288,4 +288,3 @@ describe("CSAT trigger on resolution/closure", () => {
     expect(mockNotificationService.send).not.toHaveBeenCalled();
   });
 });
-

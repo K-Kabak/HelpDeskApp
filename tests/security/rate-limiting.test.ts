@@ -6,6 +6,7 @@ const originalEnv = {
   enabled: process.env.RATE_LIMIT_ENABLED,
   window: process.env.RATE_LIMIT_WINDOW_MS,
   max: process.env.RATE_LIMIT_MAX_REQUESTS,
+  disabledRoutes: process.env.RATE_LIMIT_DISABLED_ROUTES,
 };
 
 beforeEach(() => {
@@ -13,6 +14,7 @@ beforeEach(() => {
   process.env.RATE_LIMIT_ENABLED = "true";
   process.env.RATE_LIMIT_WINDOW_MS = "60000"; // 1 minute
   process.env.RATE_LIMIT_MAX_REQUESTS = "5";
+  delete process.env.RATE_LIMIT_DISABLED_ROUTES;
 });
 
 afterEach(() => {
@@ -20,6 +22,11 @@ afterEach(() => {
   process.env.RATE_LIMIT_ENABLED = originalEnv.enabled;
   process.env.RATE_LIMIT_WINDOW_MS = originalEnv.window;
   process.env.RATE_LIMIT_MAX_REQUESTS = originalEnv.max;
+  if (originalEnv.disabledRoutes === undefined) {
+    delete process.env.RATE_LIMIT_DISABLED_ROUTES;
+  } else {
+    process.env.RATE_LIMIT_DISABLED_ROUTES = originalEnv.disabledRoutes;
+  }
 });
 
 describe("Rate Limiting Security Tests", () => {
@@ -210,13 +217,14 @@ describe("Rate Limiting Security Tests", () => {
         headers: { "x-forwarded-for": "203.0.113.1" },
       });
 
-      // Exhaust limit (5 requests)
+      // Exhaust limit (5 requests allowed, so make 5 requests to reach limit)
       for (let i = 0; i < 5; i++) {
-        checkRateLimit(req, "test:route", { maxRequests: 5 });
+        const result = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
+        expect(result.allowed).toBe(true);
       }
 
-      // 6th request should be blocked
-      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5 });
+      // 6th request should be blocked (count is now 5, which equals maxRequests)
+      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
       expect(blocked.allowed).toBe(false);
       if (!blocked.allowed) {
         expect(blocked.response?.headers.get("Retry-After")).toBeDefined();
@@ -229,13 +237,14 @@ describe("Rate Limiting Security Tests", () => {
         headers: { "x-forwarded-for": "203.0.113.1" },
       });
 
-      // Exhaust limit (5 requests)
+      // Exhaust limit (5 requests allowed, so make 5 requests to reach limit)
       for (let i = 0; i < 5; i++) {
-        checkRateLimit(req, "test:route", { maxRequests: 5 });
+        const result = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
+        expect(result.allowed).toBe(true);
       }
 
-      // 6th request should be blocked
-      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5 });
+      // 6th request should be blocked (count is now 5, which equals maxRequests)
+      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
       expect(blocked.allowed).toBe(false);
       if (!blocked.allowed) {
         expect(blocked.response?.headers.get("X-RateLimit-Remaining")).toBe("0");
@@ -247,13 +256,14 @@ describe("Rate Limiting Security Tests", () => {
         headers: { "x-forwarded-for": "203.0.113.1" },
       });
 
-      // Exhaust limit (5 requests)
+      // Exhaust limit (5 requests allowed, so make 5 requests to reach limit)
       for (let i = 0; i < 5; i++) {
-        checkRateLimit(req, "test:route", { maxRequests: 5 });
+        const result = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
+        expect(result.allowed).toBe(true);
       }
 
-      // 6th request should be blocked
-      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5 });
+      // 6th request should be blocked (count is now 5, which equals maxRequests)
+      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
       expect(blocked.allowed).toBe(false);
       if (!blocked.allowed) {
         const resetHeader = blocked.response?.headers.get("X-RateLimit-Reset");
@@ -268,13 +278,14 @@ describe("Rate Limiting Security Tests", () => {
         headers: { "x-forwarded-for": "203.0.113.1" },
       });
 
-      // Exhaust limit (5 requests)
+      // Exhaust limit (5 requests allowed, so make 5 requests to reach limit)
       for (let i = 0; i < 5; i++) {
-        checkRateLimit(req, "test:route", { maxRequests: 5 });
+        const result = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
+        expect(result.allowed).toBe(true);
       }
 
-      // 6th request should be blocked
-      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5 });
+      // 6th request should be blocked (count is now 5, which equals maxRequests)
+      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
       expect(blocked.allowed).toBe(false);
       if (!blocked.allowed) {
         expect(blocked.response?.headers.get("X-RateLimit-Limit")).toBe("5");
@@ -286,13 +297,14 @@ describe("Rate Limiting Security Tests", () => {
         headers: { "x-forwarded-for": "203.0.113.1" },
       });
 
-      // Exhaust limit (5 requests)
+      // Exhaust limit (5 requests allowed, so make 5 requests to reach limit)
       for (let i = 0; i < 5; i++) {
-        checkRateLimit(req, "test:route", { maxRequests: 5 });
+        const result = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
+        expect(result.allowed).toBe(true);
       }
 
-      // 6th request should be blocked
-      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5 });
+      // 6th request should be blocked (count is now 5, which equals maxRequests)
+      const blocked = checkRateLimit(req, "test:route", { maxRequests: 5, windowMs: 60000 });
       expect(blocked.allowed).toBe(false);
       if (!blocked.allowed) {
         const retryAfter = Number.parseInt(blocked.response?.headers.get("Retry-After") || "0", 10);
@@ -392,4 +404,3 @@ describe("Rate Limiting Security Tests", () => {
     });
   });
 });
-

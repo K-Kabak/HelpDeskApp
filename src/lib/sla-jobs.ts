@@ -5,15 +5,15 @@ import { Queue } from "bullmq";
 export const slaJobTypeSchema = z.enum(["first-response", "resolve", "reminder"]);
 
 export const slaJobPayloadSchema = z.object({
-  jobId: z.string().uuid(),
+  jobId: z.string().min(1),
   jobType: slaJobTypeSchema,
-  ticketId: z.string().uuid(),
+  ticketId: z.string().min(1),
   organizationId: z.string(),
   dueAt: z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
     message: "dueAt must be a valid ISO date string",
   }),
   priority: z.string(),
-  categoryId: z.string().uuid().nullable(),
+  categoryId: z.string().min(1).nullable(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   idempotencyKey: z.string().min(1).optional(),
 });
@@ -21,7 +21,7 @@ export const slaJobPayloadSchema = z.object({
 export type SlaJobPayload = z.infer<typeof slaJobPayloadSchema>;
 
 export const slaJobResultSchema = z.object({
-  jobId: z.string().uuid(),
+  jobId: z.string().min(1),
   enqueued: z.boolean(),
   deduped: z.boolean(),
   jobType: slaJobTypeSchema,

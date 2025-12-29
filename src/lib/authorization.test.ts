@@ -13,18 +13,17 @@ vi.mock("next/server", () => ({
   },
 }));
 
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
+const mockGetServerSession = vi.hoisted(() => vi.fn());
+
+vi.mock("next-auth/next", () => ({
+  getServerSession: () => mockGetServerSession(),
 }));
 
 vi.mock("@/lib/auth", () => ({
   authOptions: {},
 }));
 
-import { getServerSession } from "next-auth/next";
 import { isAgentOrAdmin, isSameOrganization, requireAuth, ticketScope, type AuthenticatedUser } from "./authorization";
-
-const mockGetServerSession = getServerSession as unknown as vi.Mock;
 
 describe("authorization helpers", () => {
   const requester: AuthenticatedUser = {

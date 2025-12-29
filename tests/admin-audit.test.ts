@@ -57,7 +57,7 @@ describe("recordAdminAudit", () => {
         resource: "USER",
         resourceId: "user-2",
         action: "DELETE",
-        data: null,
+        data: undefined,
       },
     });
   });

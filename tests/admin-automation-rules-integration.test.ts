@@ -4,10 +4,12 @@ import { GET, POST } from "@/app/api/admin/automation-rules/route";
 import { PATCH, DELETE } from "@/app/api/admin/automation-rules/[id]/route";
 
 const mocks = vi.hoisted(() => ({
-  jsonMock: vi.fn((body, init?: { status?: number }) => ({
-    status: init?.status ?? 200,
-    body,
-  })),
+  jsonMock: vi.fn((body, init?: { status?: number }) =>
+    new Response(JSON.stringify(body), {
+      status: init?.status ?? 200,
+      headers: { "content-type": "application/json" },
+    })
+  ),
   requireAuth: vi.fn(),
   findMany: vi.fn(),
   findFirst: vi.fn(),

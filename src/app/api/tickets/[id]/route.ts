@@ -15,8 +15,8 @@ const updateSchema = z
   .object({
     status: z.nativeEnum(TicketStatus).optional(),
     priority: z.nativeEnum(TicketPriority).optional(),
-    assigneeUserId: z.string().uuid().nullable().optional(),
-    assigneeTeamId: z.string().uuid().nullable().optional(),
+    assigneeUserId: z.string().min(1).nullable().optional(),
+    assigneeTeamId: z.string().min(1).nullable().optional(),
     reopenReason: z.string().max(1000).optional(),
   })
   .refine(

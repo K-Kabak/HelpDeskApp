@@ -19,7 +19,7 @@ const mockPrisma = vi.hoisted(() => ({
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
 const mockGetServerSession = vi.fn();
-vi.mock("next-auth", () => ({
+vi.mock("next-auth/next", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
   authOptions: {},
 }));

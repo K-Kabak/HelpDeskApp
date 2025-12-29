@@ -12,8 +12,8 @@ const mockPrisma = vi.hoisted(() => ({
   },
 }));
 
-const mockRequireAuth = vi.fn();
-const mockIsSameOrganization = vi.fn(() => true);
+const mockRequireAuth = vi.hoisted(() => vi.fn());
+const mockIsSameOrganization = vi.hoisted(() => vi.fn(() => true));
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/authorization", () => ({

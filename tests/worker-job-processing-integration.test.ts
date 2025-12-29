@@ -7,7 +7,7 @@ import { NotificationService } from "@/lib/notification";
 
 describe("Worker Job Processing Integration", () => {
   const mockTicket = {
-    id: "ticket-1",
+    id: "00000000-0000-0000-0000-000000000001",
     number: 100,
     requesterId: "user-1",
     assigneeUserId: "agent-1",
@@ -276,7 +276,7 @@ describe("Worker Job Processing Integration", () => {
     it("processes reminder job successfully", async () => {
       const payload = createSlaJobPayload({
         jobType: "reminder",
-        ticketId: "ticket-1",
+        ticketId: mockTicket.id,
         organizationId: "org-1",
         dueAt: new Date(Date.now() + 60000).toISOString(),
         priority: TicketPriority.SREDNI,
@@ -303,7 +303,7 @@ describe("Worker Job Processing Integration", () => {
     it("skips reminder when no recipient provided", async () => {
       const payload = createSlaJobPayload({
         jobType: "reminder",
-        ticketId: "ticket-1",
+        ticketId: mockTicket.id,
         organizationId: "org-1",
         dueAt: new Date(Date.now() + 60000).toISOString(),
         priority: TicketPriority.SREDNI,
@@ -320,7 +320,7 @@ describe("Worker Job Processing Integration", () => {
     it("skips reminder when job type is not reminder", async () => {
       const payload = createSlaJobPayload({
         jobType: "resolve", // Wrong type
-        ticketId: "ticket-1",
+        ticketId: mockTicket.id,
         organizationId: "org-1",
         dueAt: new Date(Date.now() + 60000).toISOString(),
         priority: TicketPriority.SREDNI,

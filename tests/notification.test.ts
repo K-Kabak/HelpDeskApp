@@ -75,7 +75,9 @@ describe("Notification service", () => {
         userId: "user-1",
         subject: "Test",
         body: "Body",
-        data: null,
+        data: {
+          notificationType: "ticketUpdate",
+        },
       },
     });
     expect(result.id).toBe("notif-1");

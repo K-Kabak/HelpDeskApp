@@ -5,7 +5,7 @@ import { handleSlaReminder } from "@/lib/sla-reminder";
 import { createNotificationService, NotificationService } from "@/lib/notification";
 import type { EmailAdapter } from "@/lib/notification";
 
-const mockPrismaGlobal = {
+const mockPrismaGlobal = vi.hoisted(() => ({
   user: {
     findUnique: vi.fn(),
   },
@@ -15,7 +15,7 @@ const mockPrismaGlobal = {
   inAppNotification: {
     create: vi.fn(),
   },
-};
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: mockPrismaGlobal,

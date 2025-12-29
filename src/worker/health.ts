@@ -96,4 +96,7 @@ async function runCli() {
   }
 }
 
-runCli();
+const isTestRun = process.env.VITEST === "true" || process.env.NODE_ENV === "test";
+if (!isTestRun) {
+  runCli();
+}

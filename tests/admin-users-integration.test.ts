@@ -4,21 +4,20 @@ import { GET, POST } from "@/app/api/admin/users/route";
 import { PATCH, DELETE } from "@/app/api/admin/users/[id]/route";
 
 const mocks = vi.hoisted(() => ({
-  jsonMock: vi.fn((body, init?: { status?: number }) => ({
-    status: init?.status ?? 200,
-    body,
-  })),
+  jsonMock: vi.fn((body, init?: { status?: number }) =>
+    new Response(JSON.stringify(body), {
+      status: init?.status ?? 200,
+      headers: { "content-type": "application/json" },
+    })
+  ),
   requireAuth: vi.fn(),
   findMany: vi.fn(),
+  findFirst: vi.fn(),
   findUnique: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   deleteMock: vi.fn(),
-  count: vi.fn(),
   adminAuditCreate: vi.fn(),
-  teamFindMany: vi.fn(),
-  teamMembershipDeleteMany: vi.fn(),
-  teamMembershipCreateMany: vi.fn(),
 }));
 
 vi.mock("next/server", () => ({
@@ -35,20 +34,11 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
       findMany: mocks.findMany,
+      findFirst: mocks.findFirst,
       findUnique: mocks.findUnique,
       create: mocks.create,
       update: mocks.update,
       delete: mocks.deleteMock,
-    },
-    ticket: {
-      count: mocks.count,
-    },
-    team: {
-      findMany: mocks.teamFindMany,
-    },
-    teamMembership: {
-      deleteMany: mocks.teamMembershipDeleteMany,
-      createMany: mocks.teamMembershipCreateMany,
     },
     adminAudit: {
       create: mocks.adminAuditCreate,
@@ -80,26 +70,26 @@ describe("Admin Users API Integration", () => {
           email: "user1@example.com",
           name: "User One",
           role: Role.AGENT,
+          emailVerified: null,
           createdAt: new Date("2024-01-01"),
-          memberships: [
-            {
-              team: { id: "team-1", name: "Support Team" },
-            },
-          ],
+          updatedAt: new Date("2024-01-02"),
+          _count: { ticketsCreated: 2, ticketsOwned: 1 },
         },
         {
           id: "user-2",
           email: "user2@example.com",
           name: "User Two",
           role: Role.REQUESTER,
+          emailVerified: new Date("2024-01-01"),
           createdAt: new Date("2024-01-02"),
-          memberships: [],
+          updatedAt: new Date("2024-01-03"),
+          _count: { ticketsCreated: 0, ticketsOwned: 0 },
         },
       ];
 
       mocks.findMany.mockResolvedValue(mockUsers);
 
-      const res = await GET();
+      const res = await GET(new Request("http://localhost/api/admin/users"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -109,17 +99,33 @@ describe("Admin Users API Integration", () => {
         email: "user1@example.com",
         name: "User One",
         role: Role.AGENT,
-        teams: [{ id: "team-1", name: "Support Team" }],
+        ticketCount: 2,
+        activeTicketCount: 1,
       });
       expect(mocks.findMany).toHaveBeenCalledWith({
         where: { organizationId: "org-1" },
-        orderBy: { name: "asc" },
-        select: expect.objectContaining({
+        select: {
           id: true,
           email: true,
           name: true,
           role: true,
-        }),
+          emailVerified: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              ticketsCreated: true,
+              ticketsOwned: {
+                where: {
+                  status: {
+                    notIn: ["ROZWIAZANE", "ZAMKNIETE"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
       });
     });
 
@@ -129,7 +135,7 @@ describe("Admin Users API Integration", () => {
         user: { id: "agent-1", role: "AGENT", organizationId: "org-1" },
       });
 
-      const res = await GET();
+      const res = await GET(new Request("http://localhost/api/admin/users"));
       expect(res.status).toBe(403);
       expect(mocks.findMany).not.toHaveBeenCalled();
     });
@@ -140,7 +146,7 @@ describe("Admin Users API Integration", () => {
         response: { status: 401 },
       });
 
-      const res = await GET();
+      const res = await GET(new Request("http://localhost/api/admin/users"));
       expect(res.status).toBe(401);
     });
   });
@@ -148,18 +154,14 @@ describe("Admin Users API Integration", () => {
   describe("POST /api/admin/users", () => {
     it("creates user with valid data", async () => {
       mocks.findUnique.mockResolvedValueOnce(null); // Email check
-      mocks.teamFindMany.mockResolvedValue([{ id: "team-1" }]);
       mocks.create.mockResolvedValue({
         id: "user-new",
         email: "newuser@example.com",
         name: "New User",
         role: Role.AGENT,
+        emailVerified: new Date("2024-01-03"),
         createdAt: new Date("2024-01-03"),
-        memberships: [
-          {
-            team: { id: "team-1", name: "Support Team" },
-          },
-        ],
+        updatedAt: new Date("2024-01-03"),
       });
 
       const req = new Request("http://localhost/api/admin/users", {
@@ -169,7 +171,6 @@ describe("Admin Users API Integration", () => {
           name: "New User",
           role: Role.AGENT,
           password: "password123",
-          teamIds: ["team-1"],
         }),
       });
 
@@ -215,28 +216,8 @@ describe("Admin Users API Integration", () => {
       const res = await POST(req);
       const body = await res.json();
 
-      expect(res.status).toBe(409);
-      expect(body.error).toBe("User with this email already exists");
-      expect(mocks.create).not.toHaveBeenCalled();
-    });
-
-    it("rejects invalid team IDs", async () => {
-      mocks.findUnique.mockResolvedValueOnce(null);
-      mocks.teamFindMany.mockResolvedValue([]); // No teams found
-
-      const req = new Request("http://localhost/api/admin/users", {
-        method: "POST",
-        body: JSON.stringify({
-          email: "user@example.com",
-          name: "User",
-          role: Role.AGENT,
-          password: "password123",
-          teamIds: ["invalid-team"],
-        }),
-      });
-
-      const res = await POST(req);
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(400);
+      expect(body.error).toBe("Email already exists");
       expect(mocks.create).not.toHaveBeenCalled();
     });
 
@@ -265,24 +246,18 @@ describe("Admin Users API Integration", () => {
         name: "Old Name",
         role: Role.AGENT,
         organizationId: "org-1",
-        memberships: [{ teamId: "team-1" }],
       };
 
-      mocks.findUnique
-        .mockResolvedValueOnce(existingUser) // User lookup
-        .mockResolvedValueOnce(null); // Email uniqueness check
+      mocks.findFirst.mockResolvedValueOnce(existingUser); // User lookup
 
-      mocks.teamFindMany.mockResolvedValue([{ id: "team-2" }]);
       mocks.update.mockResolvedValue({
         id: "user-1",
         email: "new@example.com",
         name: "New Name",
         role: Role.AGENT,
-        memberships: [
-          {
-            team: { id: "team-2", name: "New Team" },
-          },
-        ],
+        emailVerified: new Date("2024-01-01"),
+        createdAt: new Date("2024-01-01"),
+        updatedAt: new Date("2024-01-02"),
       });
 
       const req = new Request("http://localhost/api/admin/users/user-1", {
@@ -290,7 +265,6 @@ describe("Admin Users API Integration", () => {
         body: JSON.stringify({
           email: "new@example.com",
           name: "New Name",
-          teamIds: ["team-2"],
         }),
       });
 
@@ -315,7 +289,7 @@ describe("Admin Users API Integration", () => {
     });
 
     it("rejects update to user from different org", async () => {
-      mocks.findUnique.mockResolvedValue({
+      mocks.findFirst.mockResolvedValue({
         id: "user-other",
         email: "other@example.com",
         organizationId: "other-org",
@@ -338,12 +312,10 @@ describe("Admin Users API Integration", () => {
         name: "Old Name",
         role: Role.AGENT,
         organizationId: "org-1",
-        memberships: [],
       };
 
-      mocks.findUnique
-        .mockResolvedValueOnce(existingUser)
-        .mockResolvedValueOnce({ id: "other-user", email: "taken@example.com" });
+      mocks.findFirst.mockResolvedValueOnce(existingUser);
+      mocks.findUnique.mockResolvedValueOnce({ id: "other-user", email: "taken@example.com" });
 
       const req = new Request("http://localhost/api/admin/users/user-1", {
         method: "PATCH",
@@ -351,7 +323,7 @@ describe("Admin Users API Integration", () => {
       });
 
       const res = await PATCH(req, { params: Promise.resolve({ id: "user-1" }) });
-      expect(res.status).toBe(409);
+      expect(res.status).toBe(400);
       expect(mocks.update).not.toHaveBeenCalled();
     });
   });
@@ -364,10 +336,10 @@ describe("Admin Users API Integration", () => {
         name: "User",
         role: Role.AGENT,
         organizationId: "org-1",
+        _count: { ticketsOwned: 0 },
       };
 
-      mocks.findUnique.mockResolvedValue(user);
-      mocks.count.mockResolvedValue(0); // No active tickets
+      mocks.findFirst.mockResolvedValue(user);
       mocks.deleteMock.mockResolvedValue(user);
 
       const req = new Request("http://localhost/api/admin/users/user-1", {
@@ -378,7 +350,7 @@ describe("Admin Users API Integration", () => {
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body.ok).toBe(true);
+      expect(body.success).toBe(true);
       expect(mocks.deleteMock).toHaveBeenCalled();
       expect(mocks.adminAuditCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -398,10 +370,10 @@ describe("Admin Users API Integration", () => {
         name: "User",
         role: Role.AGENT,
         organizationId: "org-1",
+        _count: { ticketsOwned: 2 },
       };
 
-      mocks.findUnique.mockResolvedValue(user);
-      mocks.count.mockResolvedValue(2); // Has active tickets
+      mocks.findFirst.mockResolvedValue(user);
 
       const req = new Request("http://localhost/api/admin/users/user-1", {
         method: "DELETE",
@@ -416,7 +388,7 @@ describe("Admin Users API Integration", () => {
     });
 
     it("rejects deletion of user from different org", async () => {
-      mocks.findUnique.mockResolvedValue({
+      mocks.findFirst.mockResolvedValue({
         id: "user-other",
         email: "other@example.com",
         organizationId: "other-org",

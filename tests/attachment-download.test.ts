@@ -75,14 +75,15 @@ describe("attachment download logging", () => {
     expect(body.attachment.id).toBe("att-1");
     expect(body.downloadUrl).toContain("/uploads/internal/");
     expect(mockCreateLogger.info).toHaveBeenCalledWith(
+      "attachment download",
       expect.objectContaining({
         event: "attachment_download",
         ticketId: "t1",
         attachmentId: "att-1",
         userId: "user-1",
         sizeBytes: 1024,
-      }),
-      "attachment download"
+        status: "success",
+      })
     );
   });
 });

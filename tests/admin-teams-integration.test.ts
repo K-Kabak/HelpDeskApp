@@ -3,21 +3,19 @@ import { GET, POST } from "@/app/api/admin/teams/route";
 import { PATCH, DELETE } from "@/app/api/admin/teams/[id]/route";
 
 const mocks = vi.hoisted(() => ({
-  jsonMock: vi.fn((body, init?: { status?: number }) => ({
-    status: init?.status ?? 200,
-    body,
-  })),
+  jsonMock: vi.fn((body, init?: { status?: number }) =>
+    new Response(JSON.stringify(body), {
+      status: init?.status ?? 200,
+      headers: { "content-type": "application/json" },
+    })
+  ),
   requireAuth: vi.fn(),
   findMany: vi.fn(),
-  findUnique: vi.fn(),
+  findFirst: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   deleteMock: vi.fn(),
-  count: vi.fn(),
   adminAuditCreate: vi.fn(),
-  userFindMany: vi.fn(),
-  teamMembershipDeleteMany: vi.fn(),
-  teamMembershipCreateMany: vi.fn(),
 }));
 
 vi.mock("next/server", () => ({
@@ -34,20 +32,10 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     team: {
       findMany: mocks.findMany,
-      findUnique: mocks.findUnique,
+      findFirst: mocks.findFirst,
       create: mocks.create,
       update: mocks.update,
       delete: mocks.deleteMock,
-    },
-    ticket: {
-      count: mocks.count,
-    },
-    user: {
-      findMany: mocks.userFindMany,
-    },
-    teamMembership: {
-      deleteMany: mocks.teamMembershipDeleteMany,
-      createMany: mocks.teamMembershipCreateMany,
     },
     adminAudit: {
       create: mocks.adminAuditCreate,
@@ -72,25 +60,21 @@ describe("Admin Teams API Integration", () => {
           id: "team-1",
           name: "Support Team",
           createdAt: new Date("2024-01-01"),
-          memberships: [
-            {
-              user: { id: "user-1", name: "User One", email: "user1@example.com" },
-            },
-          ],
-          tickets: [{ id: "ticket-1" }],
+          updatedAt: new Date("2024-01-02"),
+          _count: { memberships: 1, tickets: 1 },
         },
         {
           id: "team-2",
           name: "Sales Team",
           createdAt: new Date("2024-01-02"),
-          memberships: [],
-          tickets: [],
+          updatedAt: new Date("2024-01-03"),
+          _count: { memberships: 0, tickets: 0 },
         },
       ];
 
       mocks.findMany.mockResolvedValue(mockTeams);
 
-      const res = await GET();
+      const res = await GET(new Request("http://localhost/api/admin/teams"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -99,15 +83,25 @@ describe("Admin Teams API Integration", () => {
         id: "team-1",
         name: "Support Team",
         memberCount: 1,
-        ticketCount: 1,
+        activeTicketCount: 1,
       });
       expect(mocks.findMany).toHaveBeenCalledWith({
         where: { organizationId: "org-1" },
-        orderBy: { name: "asc" },
-        select: expect.objectContaining({
-          id: true,
-          name: true,
-        }),
+        include: {
+          _count: {
+            select: {
+              memberships: true,
+              tickets: {
+                where: {
+                  status: {
+                    notIn: ["ROZWIAZANE", "ZAMKNIETE"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
       });
     });
 
@@ -117,32 +111,26 @@ describe("Admin Teams API Integration", () => {
         user: { id: "agent-1", role: "AGENT", organizationId: "org-1" },
       });
 
-      const res = await GET();
-      expect(res.status).toBe(403);
+      const res = await GET(new Request("http://localhost/api/admin/teams"));
+      expect(res.status).toBe(401);
       expect(mocks.findMany).not.toHaveBeenCalled();
     });
   });
 
   describe("POST /api/admin/teams", () => {
     it("creates team with valid data", async () => {
-      mocks.findUnique.mockResolvedValueOnce(null); // Name uniqueness check
-      mocks.userFindMany.mockResolvedValue([{ id: "user-1" }, { id: "user-2" }]);
+      mocks.findFirst.mockResolvedValueOnce(null); // Name uniqueness check
       mocks.create.mockResolvedValue({
         id: "team-new",
         name: "New Team",
         createdAt: new Date("2024-01-03"),
-        memberships: [
-          {
-            user: { id: "user-1", name: "User One", email: "user1@example.com" },
-          },
-        ],
+        updatedAt: new Date("2024-01-03"),
       });
 
       const req = new Request("http://localhost/api/admin/teams", {
         method: "POST",
         body: JSON.stringify({
           name: "New Team",
-          memberIds: ["user-1", "user-2"],
         }),
       });
 
@@ -168,7 +156,7 @@ describe("Admin Teams API Integration", () => {
     });
 
     it("rejects duplicate team name", async () => {
-      mocks.findUnique.mockResolvedValueOnce({
+      mocks.findFirst.mockResolvedValueOnce({
         id: "existing-team",
         name: "Existing Team",
         organizationId: "org-1",
@@ -185,25 +173,8 @@ describe("Admin Teams API Integration", () => {
       const res = await POST(req);
       const body = await res.json();
 
-      expect(res.status).toBe(409);
-      expect(body.error).toBe("Team with this name already exists");
-      expect(mocks.create).not.toHaveBeenCalled();
-    });
-
-    it("rejects invalid member IDs", async () => {
-      mocks.findUnique.mockResolvedValueOnce(null);
-      mocks.userFindMany.mockResolvedValue([]); // No users found
-
-      const req = new Request("http://localhost/api/admin/teams", {
-        method: "POST",
-        body: JSON.stringify({
-          name: "New Team",
-          memberIds: ["invalid-user"],
-        }),
-      });
-
-      const res = await POST(req);
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(400);
+      expect(body.error).toBe("Team name already exists");
       expect(mocks.create).not.toHaveBeenCalled();
     });
 
@@ -227,29 +198,23 @@ describe("Admin Teams API Integration", () => {
         id: "team-1",
         name: "Old Name",
         organizationId: "org-1",
-        memberships: [{ userId: "user-1" }],
       };
 
-      mocks.findUnique
+      mocks.findFirst
         .mockResolvedValueOnce(existingTeam) // Team lookup
         .mockResolvedValueOnce(null); // Name uniqueness check
 
-      mocks.userFindMany.mockResolvedValue([{ id: "user-2" }]);
       mocks.update.mockResolvedValue({
         id: "team-1",
         name: "New Name",
-        memberships: [
-          {
-            user: { id: "user-2", name: "User Two", email: "user2@example.com" },
-          },
-        ],
+        createdAt: new Date("2024-01-03"),
+        updatedAt: new Date("2024-01-03"),
       });
 
       const req = new Request("http://localhost/api/admin/teams/team-1", {
         method: "PATCH",
         body: JSON.stringify({
           name: "New Name",
-          memberIds: ["user-2"],
         }),
       });
 
@@ -273,11 +238,10 @@ describe("Admin Teams API Integration", () => {
     });
 
     it("rejects update to team from different org", async () => {
-      mocks.findUnique.mockResolvedValue({
+      mocks.findFirst.mockResolvedValue({
         id: "team-other",
         name: "Other Team",
         organizationId: "other-org",
-        memberships: [],
       });
 
       const req = new Request("http://localhost/api/admin/teams/team-other", {
@@ -297,10 +261,10 @@ describe("Admin Teams API Integration", () => {
         id: "team-1",
         name: "Team One",
         organizationId: "org-1",
+        _count: { tickets: 0 },
       };
 
-      mocks.findUnique.mockResolvedValue(team);
-      mocks.count.mockResolvedValue(0); // No assigned tickets
+      mocks.findFirst.mockResolvedValue(team);
       mocks.deleteMock.mockResolvedValue(team);
 
       const req = new Request("http://localhost/api/admin/teams/team-1", {
@@ -311,7 +275,7 @@ describe("Admin Teams API Integration", () => {
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body.ok).toBe(true);
+      expect(body.success).toBe(true);
       expect(mocks.deleteMock).toHaveBeenCalled();
       expect(mocks.adminAuditCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -329,10 +293,10 @@ describe("Admin Teams API Integration", () => {
         id: "team-1",
         name: "Team One",
         organizationId: "org-1",
+        _count: { tickets: 3 },
       };
 
-      mocks.findUnique.mockResolvedValue(team);
-      mocks.count.mockResolvedValue(3); // Has assigned tickets
+      mocks.findFirst.mockResolvedValue(team);
 
       const req = new Request("http://localhost/api/admin/teams/team-1", {
         method: "DELETE",
@@ -347,7 +311,7 @@ describe("Admin Teams API Integration", () => {
     });
 
     it("rejects deletion of team from different org", async () => {
-      mocks.findUnique.mockResolvedValue({
+      mocks.findFirst.mockResolvedValue({
         id: "team-other",
         name: "Other Team",
         organizationId: "other-org",

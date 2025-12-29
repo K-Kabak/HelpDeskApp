@@ -214,20 +214,14 @@ describe("EmailAdapterReal", () => {
 
 describe("EmailAdapterReal with nodemailer (when implemented)", () => {
   // These tests mock nodemailer and will work once Agent 1 implements real email sending
-  const mockTransporter = {
+  const mockTransporter = vi.hoisted(() => ({
     sendMail: vi.fn(),
-  };
+  }));
 
-  const mockCreateTransport = vi.fn(() => mockTransporter);
+  const mockCreateTransport = vi.hoisted(() => vi.fn(() => mockTransporter));
 
   beforeEach(() => {
-    vi.resetModules();
-    // Mock nodemailer module
-    vi.mock("nodemailer", () => ({
-      default: {
-        createTransport: mockCreateTransport,
-      },
-    }));
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
