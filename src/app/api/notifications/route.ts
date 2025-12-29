@@ -1,8 +1,8 @@
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/authorization";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 // Helper function to determine notification type from data/subject
 function getNotificationType(notification: {
@@ -46,16 +46,29 @@ function getNotificationType(notification: {
 }
 
 export async function GET(req: Request) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user) {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/notifications",
+    method: "GET",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rate = checkRateLimit(req, "notifications:list", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   const { searchParams } = new URL(req.url);
   const typeFilter = searchParams.get("type");
 
   const notifications = await prisma.inAppNotification.findMany({
-    where: { userId: session.user.id },
+    where: { userId: auth.user.id },
     orderBy: { createdAt: "desc" },
     take: 50,
   });

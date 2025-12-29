@@ -260,3 +260,5 @@ Po zakończeniu wszystkich promptów 16-18:
 
 
 
+
+

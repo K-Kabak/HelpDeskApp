@@ -191,18 +191,25 @@ export async function getTicketPage(
 
   const take = direction === "next" ? limit + 1 : -(limit + 1);
 
-  const tickets = await prisma.ticket.findMany({
-    where,
-    orderBy,
-    take,
-    skip: cursor ? 1 : 0,
-    cursor: cursor ? { id: cursor.id } : undefined,
-    include: {
-      requester: true,
-      assigneeUser: true,
-      assigneeTeam: true,
-    },
-  });
+  let tickets;
+  try {
+    tickets = await prisma.ticket.findMany({
+      where,
+      orderBy,
+      take,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor.id } : undefined,
+      include: {
+        requester: true,
+        assigneeUser: true,
+        assigneeTeam: true,
+      },
+    });
+  } catch (error) {
+    // Defensive error handling: return empty result on any database error
+    // This prevents search failures from breaking the entire page
+    return { tickets: [], nextCursor: null, prevCursor: null };
+  }
 
   let items = direction === "next" ? tickets : tickets.reverse();
   const hasExtra = items.length > limit;

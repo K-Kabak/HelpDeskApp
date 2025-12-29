@@ -2,221 +2,162 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, develop]
   pull_request:
+    branches: [main, develop]
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 8
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-        env:
-          CI: true
-
-  typecheck:
+  type-check:
+    name: Type Check
     runs-on: ubuntu-latest
-    needs: lint
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 8
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Prisma generate
-
-        run: pnpm exec prisma generate  
-
-      - name: Typecheck
-        run: pnpm exec tsc -p tsconfig.ci.json --noEmit
-        env:
-          CI: true
-
-  openapi-lint:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint OpenAPI
-        run: pnpm openapi:lint
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm exec tsc --noEmit
 
   unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
-    needs: typecheck
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 8
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma client
-        run: pnpm prisma:generate
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/ci
-
-      - name: Run unit and integration tests
-        run: pnpm test -- --coverage
-        env:
-          CI: true
-          DATABASE_URL: postgresql://user:pass@localhost:5432/ci
-          NEXTAUTH_SECRET: test-secret-for-ci
-          NEXTAUTH_URL: http://localhost:3000
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm test
 
   contract-tests:
+    name: Contract Tests
     runs-on: ubuntu-latest
-    needs: openapi-lint
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 8
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma:generate
+      - run: pnpm test:contract
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma client
-        run: pnpm prisma:generate
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/ci
-
-      - name: Run contract tests
-        run: pnpm test:contract
-        env:
-          CI: true
-          DATABASE_URL: postgresql://user:pass@localhost:5432/ci
+  openapi-lint:
+    name: OpenAPI Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm openapi:lint
 
   e2e-tests:
+    name: E2E Tests
     runs-on: ubuntu-latest
-    needs: unit-tests
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: helpdesk
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 8
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
-
+          node-version: 22
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Setup PostgreSQL
-        uses: ankane/setup-postgres@v1
-        with:
-          postgresql-version: 16
-
       - name: Generate Prisma client
         run: pnpm prisma:generate
+      - name: Setup test database
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/helpdesk_test
-
-      - name: Run database migrations
-        run: pnpm prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/helpdesk_test
-
-      - name: Seed test database
-        run: pnpm prisma db seed
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/helpdesk_test
-          NODE_ENV: test
-
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/helpdesk
+        run: |
+          pnpm prisma migrate deploy
+          pnpm prisma:seed
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
-
       - name: Run E2E tests
-        run: pnpm test:e2e
         env:
-          CI: true
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/helpdesk_test
-          NEXTAUTH_SECRET: test-secret-for-ci-e2e
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/helpdesk
+          NEXTAUTH_SECRET: test-secret-key-for-ci
           NEXTAUTH_URL: http://localhost:3000
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+          REDIS_URL: redis://localhost:6379
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level=high

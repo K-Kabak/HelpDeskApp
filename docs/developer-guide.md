@@ -70,10 +70,12 @@ HelpDeskApp/
 │   │   ├── api/                # API route handlers
 │   │   │   ├── tickets/        # Ticket endpoints
 │   │   │   ├── admin/          # Admin endpoints
+│   │   │   ├── reports/        # Reporting endpoints
 │   │   │   └── auth/           # NextAuth handler
 │   │   ├── app/                # Authenticated pages
 │   │   │   ├── admin/          # Admin panel pages
 │   │   │   ├── tickets/        # Ticket pages
+│   │   │   ├── reports/        # Reports page (admin-only)
 │   │   │   └── page.tsx        # Dashboard
 │   │   ├── login/              # Login page
 │   │   ├── layout.tsx          # Root layout
@@ -83,6 +85,10 @@ HelpDeskApp/
 │   │   ├── auth.ts             # NextAuth configuration
 │   │   ├── prisma.ts           # Prisma client
 │   │   ├── authorization.ts    # Auth helpers
+│   │   ├── storage.ts          # File storage adapter
+│   │   ├── attachment-validation.ts  # Attachment validation
+│   │   ├── av-scanner.ts       # Antivirus scanning
+│   │   ├── kpi-metrics.ts      # KPI calculations
 │   │   └── ...
 │   └── types/                  # TypeScript types
 ├── prisma/
@@ -925,6 +931,145 @@ logger.securityEvent("unauthorized_access", {
 
 ---
 
+## File Attachments
+
+### Attachment Upload Flow
+
+1. **Client requests upload URL:**
+   ```typescript
+   POST /api/tickets/{id}/attachments
+   Body: { fileName, mimeType, sizeBytes, visibility? }
+   ```
+
+2. **Server validates and creates presigned URL:**
+   - Validates MIME type against `ATTACH_ALLOWED_MIME`
+   - Validates file size against `ATTACH_MAX_BYTES`
+   - Creates attachment record with `PENDING` status
+   - Generates presigned upload URL
+   - Returns upload URL and attachment ID
+
+3. **Client uploads file directly to storage:**
+   - Uses presigned URL to upload file
+   - File is stored in `{visibility}/{key}/{fileName}` structure
+
+4. **Server scans file (async):**
+   - AV scanner runs on uploaded file
+   - Updates attachment status to `CLEAN` or `QUARANTINED`
+   - Records audit event
+
+### Attachment Validation
+
+```typescript
+import { isMimeAllowed, isSizeAllowed, uploadRequestSchema } from "@/lib/attachment-validation";
+
+// Validate MIME type
+if (!isMimeAllowed(mimeType)) {
+  return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
+}
+
+// Validate file size
+if (!isSizeAllowed(sizeBytes)) {
+  return NextResponse.json({ error: "File too large" }, { status: 400 });
+}
+
+// Validate request body
+const parsed = uploadRequestSchema.safeParse(body);
+if (!parsed.success) {
+  return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+}
+```
+
+### Storage Adapter
+
+```typescript
+import { createPresignedUpload, resolveDownloadUrl } from "@/lib/storage";
+
+// Create upload URL
+const { uploadUrl, storagePath } = createPresignedUpload(fileName, "public");
+
+// Resolve download URL
+const downloadUrl = resolveDownloadUrl(storagePath);
+```
+
+### Attachment Download
+
+```typescript
+GET /api/tickets/{id}/attachments/{attachmentId}
+Response: { attachment: {...}, downloadUrl: "https://..." }
+```
+
+- Only accessible when attachment status is `CLEAN`
+- Download URLs are time-limited (presigned)
+- Organization and ticket ownership are validated
+
+### AV Scanning
+
+```typescript
+import { runAttachmentScan } from "@/lib/av-scanner";
+
+// Run scan (typically in background job)
+const result = await runAttachmentScan(attachmentId, filePath);
+// result: { status: "clean" | "quarantined", signature?: string }
+```
+
+---
+
+## Reporting & Analytics
+
+### KPI Metrics
+
+```typescript
+import { calculateKpiMetrics } from "@/lib/kpi-metrics";
+
+const metrics = await calculateKpiMetrics(organizationId, dateRange);
+// Returns: { mttr, mtta, reopenRate, slaCompliance }
+```
+
+### Analytics Endpoint
+
+```typescript
+GET /api/reports/analytics?days=30&startDate=...&endDate=...
+Response: {
+  period: { startDate, endDate },
+  trends: [...],
+  summary: { totalCreated, totalResolved, byPriority }
+}
+```
+
+### CSAT Analytics
+
+```typescript
+GET /api/reports/csat?startDate=...&endDate=...
+Response: {
+  period: { startDate, endDate },
+  summary: {
+    totalResponses,
+    averageScore,
+    responseRate,
+    distribution: { 5, 4, 3, 2, 1 }
+  },
+  responses: [...]
+}
+```
+
+### CSV Export
+
+```typescript
+GET /api/reports/export/tickets?status=...&priority=...&startDate=...
+Response: CSV file with ticket data
+
+GET /api/reports/export/comments?ticketId=...&startDate=...
+Response: CSV file with comment data
+```
+
+### Access Control
+
+- **KPI and Analytics:** Admin-only (`role === "ADMIN"`)
+- **CSAT Analytics:** Admin-only
+- **CSV Export:** Agents and Admins (requesters cannot export)
+
+---
+
 ## Additional Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
@@ -938,5 +1083,6 @@ logger.securityEvent("unauthorized_access", {
 ---
 
 *Last updated: 2025*
+
 
 

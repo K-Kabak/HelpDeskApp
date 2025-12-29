@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { FormField } from "@/components/form-field";
 
 export default function CommentForm({
   ticketId,
@@ -74,14 +75,23 @@ export default function CommentForm({
 
   return (
     <form className="space-y-3" onSubmit={submit} aria-label="Formularz dodawania komentarza">
-      <div className="grid gap-1">
-        <label htmlFor="comment-body" className="text-sm text-slate-700">Treść</label>
+      <FormField
+        label="Treść"
+        htmlFor="comment-body"
+        required
+        error={error || undefined}
+        helpText="Minimum 3 znaki, maksimum 5000 znaków"
+      >
         <textarea
           id="comment-body"
-          className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-            error ? "border-red-500" : "border-slate-300"
+          className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+            error
+              ? "border-red-500 focus:ring-red-500"
+              : bodyMd.trim().length >= 3 && bodyMd.trim().length <= 5000
+              ? "border-green-500"
+              : "border-slate-300"
           }`}
-          rows={3}
+          rows={4}
           value={bodyMd}
           onChange={(e) => {
             setBody(e.target.value);
@@ -91,29 +101,26 @@ export default function CommentForm({
           maxLength={5000}
           disabled={loading}
           aria-invalid={!!error}
-          aria-describedby={error ? "comment-body-error" : "comment-body-help"}
-          aria-label="Treść komentarza"
+          placeholder="Dodaj komentarz..."
         />
-        {error ? (
-          <p id="comment-body-error" className="text-xs text-red-600" role="alert">
-            {error}
-          </p>
-        ) : (
-          <p id="comment-body-help" className="text-xs text-slate-500">
-            Minimum 3 znaki, maksimum 5000 znaków
-          </p>
-        )}
-      </div>
+      </FormField>
       {allowInternal && (
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <div className="flex items-center gap-2">
           <input
+            id="comment-internal"
             type="checkbox"
             checked={isInternal}
             onChange={(e) => setIsInternal(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-500"
             aria-label="Oznacz jako komentarz wewnętrzny"
           />
-          Komentarz wewnętrzny (widoczny tylko dla agentów/admina)
-        </label>
+          <label
+            htmlFor="comment-internal"
+            className="text-sm text-slate-700 cursor-pointer"
+          >
+            Komentarz wewnętrzny (widoczny tylko dla agentów/admina)
+          </label>
+        </div>
       )}
       <button
         type="submit"

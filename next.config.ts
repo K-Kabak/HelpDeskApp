@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Request body size limits
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb", // 10MB for file uploads
+    },
+    responseLimit: "10mb",
+  },
   async headers() {
     return [
       {
@@ -37,6 +44,10 @@ const nextConfig: NextConfig = {
               "form-action 'self'",
               "upgrade-insecure-requests",
             ].join("; "),
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
           },
         ],
       },

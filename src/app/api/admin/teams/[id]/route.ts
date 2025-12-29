@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 // GET /api/admin/teams/[id] - Get specific team with members
 export async function GET(
@@ -11,7 +12,14 @@ export async function GET(
 ) {
   const resolvedParams = await params;
   const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const logger = createRequestLogger({
+    route: `/api/admin/teams/${resolvedParams.id}`,
+    method: "GET",
+    userId: session?.user?.id,
+  });
+
   if (!session?.user || session.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -73,7 +81,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error("Error fetching team:", error);
+    logger.error("team.get.error", { error, teamId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -85,7 +93,14 @@ export async function PATCH(
 ) {
   const resolvedParams = await params;
   const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const logger = createRequestLogger({
+    route: `/api/admin/teams/${resolvedParams.id}`,
+    method: "PATCH",
+    userId: session?.user?.id,
+  });
+
   if (!session?.user || session.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -158,7 +173,7 @@ export async function PATCH(
       }
     });
   } catch (error) {
-    console.error("Error updating team:", error);
+    logger.error("team.update.error", { error, teamId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -170,7 +185,14 @@ export async function DELETE(
 ) {
   const resolvedParams = await params;
   const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const logger = createRequestLogger({
+    route: `/api/admin/teams/${resolvedParams.id}`,
+    method: "DELETE",
+    userId: session?.user?.id,
+  });
+
   if (!session?.user || session.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -226,7 +248,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting team:", error);
+    logger.error("team.delete.error", { error, teamId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

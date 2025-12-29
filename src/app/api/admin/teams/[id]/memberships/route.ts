@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 // POST /api/admin/teams/[id]/memberships - Add user to team
 export async function POST(
@@ -112,7 +113,12 @@ export async function POST(
       }
     }, { status: 201 });
   } catch (error) {
-    console.error("Error adding team member:", error);
+    const logger = createRequestLogger({
+      route: `/api/admin/teams/${resolvedParams.id}/memberships`,
+      method: "POST",
+      userId: session?.user?.id,
+    });
+    logger.error("team.member.add.error", { error, teamId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -205,7 +211,12 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error removing team member:", error);
+    const logger = createRequestLogger({
+      route: `/api/admin/teams/${resolvedParams.id}/memberships`,
+      method: "DELETE",
+      userId: session?.user?.id,
+    });
+    logger.error("team.member.remove.error", { error, teamId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

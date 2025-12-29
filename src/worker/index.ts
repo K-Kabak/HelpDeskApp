@@ -1,5 +1,8 @@
 import { Queue, QueueEvents, Worker } from "bullmq";
 import { decideRetry } from "./retry-policy";
+import { handleSlaJob } from "@/lib/sla-worker";
+import { handleSlaReminder } from "@/lib/sla-reminder";
+import type { SlaJobPayload } from "@/lib/sla-jobs";
 
 // Simple structured logger for worker process
 type LogLevel = "info" | "warn" | "error";
@@ -47,23 +50,63 @@ const dlq = dlqEnabled ? new Queue(dlqName, { connection, prefix }) : null;
 const worker = new Worker(
   queueName,
   async (job) => {
-    // Placeholder processor; replace with real handlers per job name.
-    // TODO: Implement actual job handlers based on job.name
     log("info", "worker.job.received", {
       jobId: job.id,
       jobName: job.name,
       attemptsMade: job.attemptsMade,
     });
-    
-    // For now, just log - actual handlers should be implemented per job type
-    // Example structure:
-    // switch (job.name) {
-    //   case "sla-check":
-    //     await handleSlaCheck(job.data);
-    //     break;
-    //   default:
-    //     throw new Error(`Unknown job type: ${job.name}`);
-    // }
+
+    // Route to appropriate handler based on job name
+    switch (job.name) {
+      case "first-response":
+      case "resolve": {
+        // Handle SLA breach detection jobs
+        const payload = job.data as SlaJobPayload;
+        const result = await handleSlaJob(payload);
+        
+        if (result.skipped) {
+          log("info", "worker.job.skipped", {
+            jobId: job.id,
+            jobName: job.name,
+            reason: result.reason,
+          });
+          return; // Job completed successfully but was skipped
+        }
+
+        log("info", "worker.job.processed", {
+          jobId: job.id,
+          jobName: job.name,
+          auditId: result.auditId,
+          notificationId: result.notificationId,
+        });
+        break;
+      }
+
+      case "reminder": {
+        // Handle SLA reminder jobs
+        const payload = job.data as SlaJobPayload;
+        const result = await handleSlaReminder(payload);
+        
+        if (result.skipped) {
+          log("info", "worker.job.skipped", {
+            jobId: job.id,
+            jobName: job.name,
+            reason: result.reason,
+          });
+          return; // Job completed successfully but was skipped
+        }
+
+        log("info", "worker.job.processed", {
+          jobId: job.id,
+          jobName: job.name,
+          notificationId: result.notificationId,
+        });
+        break;
+      }
+
+      default:
+        throw new Error(`Unknown job type: ${job.name}`);
+    }
   },
   { connection, concurrency, prefix }
 );

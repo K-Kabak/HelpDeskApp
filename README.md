@@ -111,6 +111,7 @@ Zawiera gotowe komendy PowerShell, rozwiązania problemów i szczegółowe kroki
 - **Authentication:** NextAuth credentials with Prisma adapter, JWT sessions
 - **Tickets:** Create, view, update with role-based permissions
 - **Comments:** Public/internal comments with markdown support
+- **Attachments:** File upload and download with MIME type validation, size limits, and presigned URLs
 - **SLA Tracking:** Automatic due date calculation and breach detection
 - **Audit Logging:** Complete audit trail for all ticket changes
 - **Bulk Actions:** Multi-select tickets and perform bulk status changes and assignments (agents/admins)
@@ -128,9 +129,10 @@ Zawiera gotowe komendy PowerShell, rozwiązania problemów i szczegółowe kroki
 ### Reporting & Analytics
 - **Dashboard Widgets:** SLA status, ticket statistics, KPI cards with tooltips
 - **Dashboard Features:** Refresh button for data updates, responsive layout
-- **KPI Metrics:** MTTR (Mean Time to Resolve), MTTA (Mean Time to Acknowledge), reopen rate, SLA compliance
-- **CSV Exports:** Export tickets and comments with filtering
-- **Analytics:** Ticket trends, creation/resolution rates, priority distribution
+- **KPI Metrics:** MTTR (Mean Time to Resolve), MTTA (Mean Time to Acknowledge), reopen rate, SLA compliance (admin-only)
+- **CSV Exports:** Export tickets and comments with filtering (agents/admins)
+- **Analytics:** Ticket trends, creation/resolution rates, priority distribution with date range filtering (admin-only)
+- **CSAT Analytics:** Customer satisfaction score tracking, response rates, and distribution analysis (admin-only)
 - **Reports Page:** Comprehensive reporting interface with analytics and export capabilities
 
 ### Notifications
@@ -186,10 +188,11 @@ Key production requirements:
 - Object storage (S3-compatible) for attachments
 - SSL certificate for HTTPS
 
-## To do (next iterations)
-- Advanced attachment management (upload + metadata)
+## Future Enhancements
 - Knowledge base integration
 - Localization (i18n)
+- Advanced workflow automation
+- Mobile app support
 
 ## Email Configuration
 - Email notifications are optional and controlled by `EMAIL_ENABLED` environment variable.

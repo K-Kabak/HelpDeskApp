@@ -1,21 +1,35 @@
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/authorization";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { calculateKpiMetrics, DateRange } from "@/lib/kpi-metrics";
-import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 export async function GET(req: Request) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user?.organizationId) {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/reports/kpi",
+    method: "GET",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok || !auth.user.organizationId) {
+    logger.warn("auth.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Check if user is admin (KPIs are typically admin-only)
-  if (session.user.role !== "ADMIN") {
+  if (auth.user.role !== "ADMIN") {
+    logger.securityEvent("authorization_failure", { reason: "insufficient_role", requiredRole: "ADMIN" });
     return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
   }
 
-  const organizationId = session.user.organizationId;
+  const rate = checkRateLimit(req, "reports:kpi", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
+
+  const organizationId = auth.user.organizationId;
 
   // Parse date range from query params (optional)
   const { searchParams } = new URL(req.url);
@@ -48,7 +62,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(metrics);
   } catch (error) {
-    console.error("Error calculating KPI metrics:", error);
+    logger.error("kpi.calculate.error", { error, organizationId });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

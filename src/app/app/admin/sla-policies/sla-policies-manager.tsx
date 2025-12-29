@@ -3,7 +3,9 @@
 import { TicketPriority } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { validateSlaInput } from "./validation";
+import { FormField } from "@/components/form-field";
 
 type SlaPolicyRow = {
   id: string;
@@ -210,16 +212,21 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
 
   return (
     <div className="space-y-6">
-      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" onSubmit={handleCreate}>
+      <form
+        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+        onSubmit={handleCreate}
+        aria-label="Formularz dodawania polityki SLA"
+      >
         <h2 className="text-lg font-semibold text-slate-900">Dodaj politykę SLA</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="grid gap-1">
-            <label className="text-sm text-slate-700">Priorytet</label>
+          <FormField label="Priorytet" htmlFor="sla-priority" required>
             <select
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              id="sla-priority"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               value={form.priority}
               onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value as TicketPriority }))}
               disabled={loading}
+              aria-label="Priorytet zgłoszenia"
             >
               {priorities.map((p) => (
                 <option key={p} value={p}>
@@ -227,11 +234,11 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="grid gap-1">
-            <label className="text-sm text-slate-700">Kategoria (opcjonalnie)</label>
+          </FormField>
+          <FormField label="Kategoria (opcjonalnie)" htmlFor="sla-category">
             <select
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              id="sla-category"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               value={form.categoryId}
               onChange={(e) =>
                 setForm((prev) => ({
@@ -240,6 +247,7 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
                 }))
               }
               disabled={loading || categoriesWithNone.length === 0}
+              aria-label="Kategoria zgłoszenia"
             >
               {categoriesWithNone.map((cat) => (
                 <option key={cat.id} value={cat.id}>
@@ -247,36 +255,54 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="grid gap-1">
-            <label className="text-sm text-slate-700">Czas pierwszej reakcji (h)</label>
+          </FormField>
+          <FormField
+            label="Czas pierwszej reakcji (h)"
+            htmlFor="sla-first-response"
+            required
+            helpText="Liczba godzin"
+          >
             <input
+              id="sla-first-response"
               type="number"
               min={1}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               value={form.firstResponseHours}
               onChange={(e) => setForm((prev) => ({ ...prev, firstResponseHours: e.target.value }))}
               disabled={loading}
+              aria-label="Czas pierwszej reakcji w godzinach"
             />
-          </div>
-          <div className="grid gap-1">
-            <label className="text-sm text-slate-700">Czas rozwiązania (h)</label>
+          </FormField>
+          <FormField
+            label="Czas rozwiązania (h)"
+            htmlFor="sla-resolve"
+            required
+            helpText="Liczba godzin"
+          >
             <input
+              id="sla-resolve"
               type="number"
               min={1}
-              className="rounded-lg border border-slate-300 px-3 py-2"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               value={form.resolveHours}
               onChange={(e) => setForm((prev) => ({ ...prev, resolveHours: e.target.value }))}
               disabled={loading}
+              aria-label="Czas rozwiązania w godzinach"
             />
-          </div>
+          </FormField>
         </div>
-        {formError && <p className="mt-2 text-xs text-red-600">{formError}</p>}
+        {formError && (
+          <p className="mt-2 text-xs text-red-600" role="alert" aria-live="polite">
+            {formError}
+          </p>
+        )}
         <div className="mt-3 flex items-center gap-3">
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-sky-600 px-4 py-2 text-white font-semibold hover:bg-sky-700 disabled:opacity-50"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-white font-semibold hover:bg-sky-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px]"
+            aria-label={loading ? "Zapisywanie polityki SLA..." : "Dodaj politykę SLA"}
+            aria-busy={loading}
           >
             {loading ? "Zapisywanie..." : "Dodaj politykę"}
           </button>
@@ -292,25 +318,27 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
           <span className="text-xs text-slate-500">{policies.length} pozycji</span>
         </div>
         {policies.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-slate-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak polityk SLA</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Utwórz polityki SLA, aby definiować czasy reakcji i rozwiązania dla zgłoszeń o różnych priorytetach.
-            </p>
+          <div className="mt-6">
+            <EmptyState
+              title="Brak polityk SLA"
+              description="Utwórz polityki SLA, aby definiować czasy reakcji i rozwiązania dla zgłoszeń o różnych priorytetach."
+              icon={
+                <svg
+                  className="mx-auto h-12 w-12 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              }
+            />
           </div>
         ) : (
           <div className="mt-3 space-y-2">

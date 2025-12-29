@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SafeMarkdown } from "@/components/safe-markdown";
+import { FormField } from "@/components/form-field";
+import { AutocompleteInput } from "@/components/autocomplete-input";
 
 type CategoryOption = {
   id: string;
@@ -183,13 +185,35 @@ export default function TicketForm() {
     }
   };
 
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((cat) => ({
+        id: cat.id,
+        label: cat.name,
+        description: cat.description || undefined,
+      })),
+    [categories]
+  );
+
   return (
-    <form className="grid gap-4" onSubmit={submit}>
-      <div className="grid gap-1">
-        <label htmlFor="title" className="text-sm text-slate-700">Tytuł</label>
+    <form className="grid gap-4" onSubmit={submit} aria-label="Formularz tworzenia zgłoszenia">
+      <FormField
+        label="Tytuł"
+        htmlFor="title"
+        required
+        error={errors.title}
+        helpText={`Minimum ${validationRules.title.min}, maksimum ${validationRules.title.max} znaków`}
+      >
         <input
           id="title"
-          className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${errors.title ? "border-red-500" : "border-slate-300"}`}
+          type="text"
+          className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+            errors.title
+              ? "border-red-500 focus:ring-red-500"
+              : title.trim().length >= validationRules.title.min && title.trim().length <= validationRules.title.max
+              ? "border-green-500"
+              : "border-slate-300"
+          }`}
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
@@ -199,79 +223,93 @@ export default function TicketForm() {
           maxLength={validationRules.title.max}
           disabled={loading}
           aria-invalid={!!errors.title}
-          aria-describedby={errors.title ? "title-error" : undefined}
+          autoComplete="off"
         />
-        {errors.title && (
-          <p id="title-error" className="text-xs text-red-600">
-            {errors.title}
-          </p>
-        )}
-      </div>
-      <div className="grid gap-1">
-        <div className="flex items-center justify-between">
-          <label className="text-sm text-slate-700" htmlFor="description">
-            Opis (Markdown)
-          </label>
+      </FormField>
+      <FormField
+        label="Opis (Markdown)"
+        htmlFor="description"
+        required
+        error={errors.descriptionMd}
+        helpText={`Minimum ${validationRules.descriptionMd.min}, maksimum ${validationRules.descriptionMd.max} znaków`}
+      >
+        <div className="space-y-2">
           <div className="flex gap-2 text-xs font-semibold text-slate-600" role="group" aria-label="Tryb edycji opisu">
             <button
               type="button"
-              className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 ${previewMode === "edit" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
+              className={`rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 transition-colors ${
+                previewMode === "edit"
+                  ? "bg-sky-100 text-sky-700 ring-2 ring-sky-500"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
               onClick={() => setPreviewMode("edit")}
               disabled={loading}
               aria-pressed={previewMode === "edit"}
               aria-label="Tryb edycji"
             >
-              Edycja
+              ✏️ Edycja
             </button>
             <button
               type="button"
-              className={`rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 ${previewMode === "preview" ? "bg-sky-100 text-sky-700" : "bg-slate-100"}`}
+              className={`rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 transition-colors ${
+                previewMode === "preview"
+                  ? "bg-sky-100 text-sky-700 ring-2 ring-sky-500"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
               onClick={() => setPreviewMode("preview")}
               disabled={loading}
               aria-pressed={previewMode === "preview"}
               aria-label="Tryb podglądu"
             >
-              Podgląd
+              👁️ Podgląd
             </button>
           </div>
+          {previewMode === "edit" ? (
+            <textarea
+              id="description"
+              className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                errors.descriptionMd
+                  ? "border-red-500 focus:ring-red-500"
+                  : descriptionMd.trim().length >= validationRules.descriptionMd.min &&
+                    descriptionMd.trim().length <= validationRules.descriptionMd.max
+                  ? "border-green-500"
+                  : "border-slate-300"
+              }`}
+              rows={6}
+              value={descriptionMd}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (errors.descriptionMd)
+                  setErrors((prev) => ({ ...prev, descriptionMd: "" }));
+              }}
+              minLength={validationRules.descriptionMd.min}
+              maxLength={validationRules.descriptionMd.max}
+              disabled={loading}
+              aria-invalid={!!errors.descriptionMd}
+              placeholder="Opisz problem używając Markdown..."
+            />
+          ) : (
+            <div className="min-h-[150px] rounded-lg border border-slate-200 bg-slate-50 p-4 prose prose-sm max-w-none">
+              {descriptionMd ? (
+                <SafeMarkdown>{descriptionMd}</SafeMarkdown>
+              ) : (
+                <p className="text-slate-400 italic">Podgląd pojawi się po wpisaniu treści.</p>
+              )}
+            </div>
+          )}
         </div>
-        {previewMode === "edit" ? (
-          <textarea
-            id="description"
-            className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${errors.descriptionMd ? "border-red-500" : "border-slate-300"}`}
-            rows={4}
-            value={descriptionMd}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              if (errors.descriptionMd)
-                setErrors((prev) => ({ ...prev, descriptionMd: "" }));
-            }}
-            minLength={validationRules.descriptionMd.min}
-            maxLength={validationRules.descriptionMd.max}
-            disabled={loading}
-            aria-invalid={!!errors.descriptionMd}
-            aria-describedby="description-error"
-          />
-        ) : (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 prose prose-sm max-w-none">
-            <SafeMarkdown>
-              {descriptionMd || "Podgląd pojawi się po wpisaniu treści."}
-            </SafeMarkdown>
-          </div>
-        )}
-        {errors.descriptionMd && (
-          <p id="description-error" className="text-xs text-red-600">
-            {errors.descriptionMd}
-          </p>
-        )}
-      </div>
-      <div className="grid gap-1">
-        <label className="text-sm text-slate-700" htmlFor="priority">
-          Priorytet
-        </label>
+      </FormField>
+      <FormField
+        label="Priorytet"
+        htmlFor="priority"
+        required
+        error={errors.priority}
+      >
         <select
           id="priority"
-          className={`rounded-lg border px-3 py-2 ${errors.priority ? "border-red-500" : "border-slate-300"}`}
+          className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+            errors.priority ? "border-red-500 focus:ring-red-500" : "border-slate-300"
+          }`}
           value={priority}
           onChange={(e) => {
             setPriority(e.target.value as TicketPriority);
@@ -279,62 +317,80 @@ export default function TicketForm() {
           }}
           disabled={loading}
           aria-invalid={!!errors.priority}
-          aria-describedby="priority-error"
         >
           <option value={TicketPriority.NISKI}>Niski</option>
           <option value={TicketPriority.SREDNI}>Średni</option>
           <option value={TicketPriority.WYSOKI}>Wysoki</option>
           <option value={TicketPriority.KRYTYCZNY}>Krytyczny</option>
         </select>
-        {errors.priority && (
-          <p id="priority-error" className="text-xs text-red-600">
-            {errors.priority}
+      </FormField>
+      <FormField
+        label="Kategoria"
+        htmlFor="category"
+        required
+        error={errors.category}
+        helpText={`Minimum ${validationRules.category.min}, maksimum ${validationRules.category.max} znaków`}
+      >
+        {categoriesStatus === "loading" && (
+          <p className="text-xs text-slate-500" role="status" aria-live="polite">
+            Ładowanie listy kategorii...
           </p>
         )}
-      </div>
-      <div className="grid gap-1">
-        <label className="text-sm text-slate-700" htmlFor="category">
-          Kategoria
-        </label>
-        {categoriesStatus === "loading" && (
-          <p className="text-xs text-slate-500">Ładowanie listy kategorii...</p>
-        )}
         {categoriesStatus === "error" && (
-          <p className="text-xs text-amber-600">
+          <p className="text-xs text-amber-600" role="alert">
             Nie udało się pobrać kategorii. Możesz wpisać własną.
           </p>
         )}
-        {categoriesStatus === "ready" && categoryMode === "select" && (
-          <select
-            id="category"
-            className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
-            value={selectedCategoryId}
-            onChange={(e) => {
-              const id = e.target.value;
-              setSelectedCategoryId(id);
-              const match = categories.find((c) => c.id === id);
-              const name = match?.name ?? "";
-              setCategory(name);
-              if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
-              if (!id) {
+        {categoriesStatus === "ready" && categoryMode === "select" ? (
+          <div className="space-y-2">
+            <AutocompleteInput
+              id="category"
+              options={categoryOptions}
+              value={category}
+              onChange={(value) => {
+                setCategory(value);
+                const match = categories.find((c) => c.name === value);
+                if (match) {
+                  setSelectedCategoryId(match.id);
+                }
+                if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
+              }}
+              onSelect={(option) => {
+                setCategory(option.label);
+                setSelectedCategoryId(option.id);
+                if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
+              }}
+              placeholder="Wybierz lub wpisz kategorię..."
+              disabled={loading}
+              error={errors.category}
+              aria-label="Kategoria zgłoszenia"
+            />
+            <button
+              type="button"
+              className="text-xs font-semibold text-sky-700 underline hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 rounded px-1"
+              onClick={() => {
                 setCategoryMode("custom");
-              }
-            }}
-            disabled={loading}
-            aria-invalid={!!errors.category}
-            aria-describedby="category-error"
-          >
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-            <option value="">Wpisz ręcznie…</option>
-          </select>
-        )}
-        {(categoryMode === "custom" || categoriesStatus !== "ready" || selectedCategoryId === "") && (
+                setSelectedCategoryId("");
+                setCategory("");
+              }}
+              disabled={loading}
+              aria-label="Przełącz na ręczne wpisywanie kategorii"
+            >
+              Wpisz kategorię ręcznie
+            </button>
+          </div>
+        ) : (
           <input
-            className={`rounded-lg border px-3 py-2 ${errors.category ? "border-red-500" : "border-slate-300"}`}
+            id="category"
+            type="text"
+            className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+              errors.category
+                ? "border-red-500 focus:ring-red-500"
+                : category.trim().length >= validationRules.category.min &&
+                  category.trim().length <= validationRules.category.max
+                ? "border-green-500"
+                : "border-slate-300"
+            }`}
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
@@ -345,29 +401,10 @@ export default function TicketForm() {
             maxLength={validationRules.category.max}
             disabled={loading}
             aria-invalid={!!errors.category}
-            aria-describedby="category-error"
+            autoComplete="off"
           />
         )}
-        {categoriesStatus === "ready" && categoryMode === "select" && (
-          <button
-            type="button"
-            className="text-xs font-semibold text-sky-700 underline"
-            onClick={() => {
-              setCategoryMode("custom");
-              setSelectedCategoryId("");
-              setCategory("");
-            }}
-            disabled={loading}
-          >
-            Wpisz kategorię ręcznie
-          </button>
-        )}
-        {errors.category && (
-          <p id="category-error" className="text-xs text-red-600">
-            {errors.category}
-          </p>
-        )}
-      </div>
+      </FormField>
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-slate-800">Podgląd SLA</p>
@@ -400,7 +437,9 @@ export default function TicketForm() {
       <button
         type="submit"
         disabled={loading}
-        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-white font-semibold hover:bg-sky-700 disabled:opacity-50 min-h-[44px]"
+        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-white font-semibold hover:bg-sky-700 disabled:opacity-50 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-colors"
+        aria-label={loading ? "Zapisywanie zgłoszenia..." : "Utwórz zgłoszenie"}
+        aria-busy={loading}
       >
         {loading && (
           <svg

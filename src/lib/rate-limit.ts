@@ -30,8 +30,20 @@ const buckets = new Map<string, Bucket>();
 const routeConfigs: Record<string, { maxRequests: number; windowMs: number }> = {
   "auth:login": { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 attempts per 15 minutes
   "tickets:create": { maxRequests: 60, windowMs: 10 * 60 * 1000 }, // 60 per 10 minutes
+  "tickets:list": { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
+  "tickets:update": { maxRequests: 60, windowMs: 10 * 60 * 1000 }, // 60 per 10 minutes
   "comments:create": { maxRequests: 60, windowMs: 10 * 60 * 1000 }, // 60 per 10 minutes
   "tickets:bulk": { maxRequests: 20, windowMs: 10 * 60 * 1000 }, // 20 per 10 minutes
+  "tickets:audit": { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
+  "admin:users:list": { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
+  "admin:users:create": { maxRequests: 10, windowMs: 10 * 60 * 1000 }, // 10 per 10 minutes
+  "admin:users:get": { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
+  "admin:users:update": { maxRequests: 20, windowMs: 10 * 60 * 1000 }, // 20 per 10 minutes
+  "admin:users:delete": { maxRequests: 10, windowMs: 10 * 60 * 1000 }, // 10 per 10 minutes
+  "admin:teams:list": { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
+  "admin:teams:create": { maxRequests: 10, windowMs: 10 * 60 * 1000 }, // 10 per 10 minutes
+  "reports:kpi": { maxRequests: 60, windowMs: 60 * 1000 }, // 60 per minute
+  "notifications:list": { maxRequests: 100, windowMs: 60 * 1000 }, // 100 per minute
 };
 
 function getConfig() {

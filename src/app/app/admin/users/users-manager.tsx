@@ -3,6 +3,9 @@
 import { Role } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { FormField } from "@/components/form-field";
 
 type UserRow = {
   id: string;
@@ -57,23 +60,40 @@ export function UsersManager({ initialUsers }: Props) {
   const [formError, setFormError] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditingState>({});
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+    
+    if (!form.email.trim()) {
+      errors.email = "Email jest wymagany.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      errors.email = "Podaj prawidłowy adres email.";
+    }
+    
+    if (!form.name.trim()) {
+      errors.name = "Imię i nazwisko jest wymagane.";
+    }
+    
+    if (!form.password) {
+      errors.password = "Hasło jest wymagane.";
+    } else if (form.password.length < 8) {
+      errors.password = "Hasło musi mieć przynajmniej 8 znaków.";
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setFieldErrors({});
 
-    // Basic validation
-    if (!form.email || !form.name || !form.password) {
-      const message = "Wszystkie pola są wymagane.";
-      setFormError(message);
-      toast.error(message);
-      return;
-    }
-
-    if (form.password.length < 8) {
-      const message = "Hasło musi mieć przynajmniej 8 znaków.";
-      setFormError(message);
-      toast.error(message);
+    if (!validateForm()) {
+      const firstError = Object.values(fieldErrors)[0];
+      if (firstError) toast.error(firstError);
       return;
     }
 
@@ -104,6 +124,7 @@ export function UsersManager({ initialUsers }: Props) {
     ]);
     setForm(defaultForm);
     setShowCreateForm(false);
+    setFieldErrors({});
     toast.success("Użytkownik dodany.");
   };
 
@@ -173,10 +194,18 @@ export function UsersManager({ initialUsers }: Props) {
     toast.success("Użytkownik zaktualizowany.");
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Czy na pewno chcesz usunąć tego użytkownika? Tej akcji nie można cofnąć.")) {
+  const handleDeleteClick = (id: string, name: string) => {
+    const user = users.find((u) => u.id === id);
+    if (user?.activeTicketCount > 0) {
+      toast.error("Nie można usunąć użytkownika z aktywnymi zgłoszeniami.");
       return;
     }
+    setDeleteConfirm({ id, name });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    const { id } = deleteConfirm;
 
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "DELETE",
@@ -186,10 +215,12 @@ export function UsersManager({ initialUsers }: Props) {
       const body = await res.json().catch(() => ({}));
       const message = typeof body?.error === "string" ? body.error : "Nie udało się usunąć użytkownika.";
       toast.error(message);
+      setDeleteConfirm(null);
       return;
     }
 
     setUsers((prev) => prev.filter((u) => u.id !== id));
+    setDeleteConfirm(null);
     toast.success("Użytkownik usunięty.");
   };
 
@@ -213,39 +244,70 @@ export function UsersManager({ initialUsers }: Props) {
         </div>
 
         {showCreateForm && (
-          <form onSubmit={handleCreate} className="mt-4 space-y-4">
+          <form onSubmit={handleCreate} className="mt-4 space-y-4" aria-label="Formularz dodawania użytkownika">
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="user-email" className="text-sm font-semibold text-slate-700">Email</label>
+              <FormField
+                label="Email"
+                htmlFor="user-email"
+                required
+                error={fieldErrors.email}
+              >
                 <input
                   id="user-email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, email: e.target.value }));
+                    if (fieldErrors.email) {
+                      setFieldErrors((prev) => ({ ...prev, email: "" }));
+                    }
+                  }}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                    fieldErrors.email
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-slate-300"
+                  }`}
                   required
                   aria-required="true"
+                  autoComplete="email"
                 />
-              </div>
-              <div>
-                <label htmlFor="user-name" className="text-sm font-semibold text-slate-700">Imię i nazwisko</label>
+              </FormField>
+              <FormField
+                label="Imię i nazwisko"
+                htmlFor="user-name"
+                required
+                error={fieldErrors.name}
+              >
                 <input
                   id="user-name"
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, name: e.target.value }));
+                    if (fieldErrors.name) {
+                      setFieldErrors((prev) => ({ ...prev, name: "" }));
+                    }
+                  }}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                    fieldErrors.name
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-slate-300"
+                  }`}
                   required
                   aria-required="true"
+                  autoComplete="name"
                 />
-              </div>
-              <div>
-                <label htmlFor="user-role" className="text-sm font-semibold text-slate-700">Rola</label>
+              </FormField>
+              <FormField
+                label="Rola"
+                htmlFor="user-role"
+                required
+              >
                 <select
                   id="user-role"
                   value={form.role}
                   onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as Role }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   aria-label="Rola użytkownika"
                 >
                   {Object.entries(roleLabels).map(([value, label]) => (
@@ -254,22 +316,35 @@ export function UsersManager({ initialUsers }: Props) {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label htmlFor="user-password" className="text-sm font-semibold text-slate-700">Hasło</label>
+              </FormField>
+              <FormField
+                label="Hasło"
+                htmlFor="user-password"
+                required
+                error={fieldErrors.password}
+                helpText="Minimum 8 znaków"
+              >
                 <input
                   id="user-password"
                   type="password"
                   value={form.password}
-                  onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, password: e.target.value }));
+                    if (fieldErrors.password) {
+                      setFieldErrors((prev) => ({ ...prev, password: "" }));
+                    }
+                  }}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                    fieldErrors.password
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-slate-300"
+                  }`}
                   required
                   minLength={8}
                   aria-required="true"
-                  aria-describedby="password-help"
+                  autoComplete="new-password"
                 />
-                <p id="password-help" className="mt-1 text-xs text-slate-500">Minimum 8 znaków</p>
-              </div>
+              </FormField>
             </div>
             {formError && (
               <p className="text-sm text-red-600" role="alert" aria-live="polite">{formError}</p>
@@ -304,26 +379,26 @@ export function UsersManager({ initialUsers }: Props) {
       {/* Users List */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-6 py-4">
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold" id="users-heading">
             Użytkownicy ({users.length})
           </h2>
         </div>
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-slate-200" role="list" aria-labelledby="users-heading">
           {sortedUsers.length === 0 ? (
-            <div className="p-12 text-center">
-              <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-              <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak użytkowników</h3>
-              <p className="mt-1 text-sm text-slate-500">
-                W organizacji nie ma jeszcze żadnych użytkowników.
-              </p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="mt-4 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
-              >
-                Dodaj pierwszego użytkownika
-              </button>
+            <div className="p-12">
+              <EmptyState
+                title="Brak użytkowników"
+                description="W organizacji nie ma jeszcze żadnych użytkowników."
+                icon={
+                  <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                }
+                action={{
+                  label: "Dodaj pierwszego użytkownika",
+                  onClick: () => setShowCreateForm(true),
+                }}
+              />
             </div>
           ) : (
             sortedUsers.map((user) => {
@@ -331,7 +406,7 @@ export function UsersManager({ initialUsers }: Props) {
               const isEditing = !!editState;
 
               return (
-                <div key={user.id} className="p-6">
+                <div key={user.id} className="p-6" role="listitem">
                   {isEditing ? (
                     <form
                       onSubmit={(e) => {
@@ -344,6 +419,7 @@ export function UsersManager({ initialUsers }: Props) {
                         handleUpdate(user.id, updates);
                       }}
                       className="space-y-4"
+                      aria-label={`Formularz edycji użytkownika ${user.name}`}
                     >
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
@@ -474,9 +550,14 @@ export function UsersManager({ initialUsers }: Props) {
                           Edytuj
                         </button>
                         <button
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDeleteClick(user.id, user.name)}
                           disabled={user.activeTicketCount > 0}
-                          className="rounded-lg border border-red-200 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="rounded-lg border border-red-200 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px]"
+                          aria-label={
+                            user.activeTicketCount > 0
+                              ? `Nie można usunąć użytkownika ${user.name} z aktywnymi zgłoszeniami`
+                              : `Usuń użytkownika ${user.name}`
+                          }
                           title={
                             user.activeTicketCount > 0
                               ? "Nie można usunąć użytkownika z aktywnymi zgłoszeniami"
@@ -494,6 +575,17 @@ export function UsersManager({ initialUsers }: Props) {
           )}
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDelete}
+        title="Usuń użytkownika"
+        message={`Czy na pewno chcesz usunąć użytkownika "${deleteConfirm?.name}"? Tej akcji nie można cofnąć.`}
+        confirmLabel="Usuń"
+        cancelLabel="Anuluj"
+        variant="danger"
+      />
     </div>
   );
 }

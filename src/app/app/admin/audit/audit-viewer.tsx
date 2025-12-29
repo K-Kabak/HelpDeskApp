@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 type AuditEvent = {
   id: string;
@@ -37,7 +40,7 @@ export function AuditViewer() {
   const [offset, setOffset] = useState(0);
   const limit = 20;
 
-  const fetchEvents = async (currentOffset: number) => {
+  const fetchEvents = useCallback(async (currentOffset: number) => {
     setLoading(true);
     setError(null);
     try {
@@ -57,11 +60,11 @@ export function AuditViewer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEvents(offset);
-  }, [offset]);
+  }, [offset, fetchEvents]);
 
   const handlePrev = () => {
     if (offset > 0) {
@@ -77,49 +80,53 @@ export function AuditViewer() {
 
   if (loading && !data) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">Ładowanie...</p>
+      <div className="space-y-4">
+        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="divide-y divide-slate-200">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="p-4">
+                <SkeletonCard />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 shadow-sm">
-        <p className="text-sm font-semibold text-red-800">Błąd</p>
-        <p className="text-sm text-red-600">{error}</p>
-        <button
-          onClick={() => fetchEvents(offset)}
-          className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-        >
-          Spróbuj ponownie
-        </button>
-      </div>
+      <ErrorState
+        title="Błąd podczas ładowania historii audytu"
+        message="Nie udało się pobrać historii zdarzeń. Sprawdź połączenie i spróbuj ponownie."
+        error={error}
+        onRetry={() => fetchEvents(offset)}
+      />
     );
   }
 
   if (!data || data.events.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
-        <svg
-          className="mx-auto h-12 w-12 text-slate-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1}
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak zdarzeń w historii</h3>
-        <p className="mt-1 text-sm text-slate-500">
-          Historia audytu będzie wyświetlana tutaj, gdy wystąpią zdarzenia w systemie.
-        </p>
-      </div>
+      <EmptyState
+        title="Brak zdarzeń w historii"
+        description="Historia audytu będzie wyświetlana tutaj, gdy wystąpią zdarzenia w systemie."
+        icon={
+          <svg
+            className="mx-auto h-12 w-12 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        }
+      />
     );
   }
 

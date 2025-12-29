@@ -1,10 +1,10 @@
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/authorization";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { Role, Prisma } from "@prisma/client";
 import { hash } from "bcryptjs";
-import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 // GET /api/admin/users/[id] - Get specific user
 export async function GET(
@@ -12,16 +12,29 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: `/api/admin/users/${resolvedParams.id}`,
+    method: "GET",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok || auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rate = checkRateLimit(request, "admin:users:get", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   try {
     const user = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
       select: {
         id: true,
@@ -64,7 +77,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error("Error fetching user:", error);
+    logger.error("user.get.error", { error, userId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -75,10 +88,23 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: `/api/admin/users/${resolvedParams.id}`,
+    method: "PATCH",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok || auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rate = checkRateLimit(request, "admin:users:update", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   try {
     const body = await request.json();
@@ -97,7 +123,7 @@ export async function PATCH(
     const existingUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
     });
 
@@ -141,8 +167,8 @@ export async function PATCH(
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        actorId: session.user.id,
-        organizationId: session.user.organizationId ?? "",
+        actorId: auth.user.id,
+        organizationId: auth.user.organizationId ?? "",
         resource: "USER",
         resourceId: user.id,
         action: "UPDATE",
@@ -159,7 +185,7 @@ export async function PATCH(
       }
     });
   } catch (error) {
-    console.error("Error updating user:", error);
+    logger.error("user.update.error", { error, userId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -170,17 +196,30 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: `/api/admin/users/${resolvedParams.id}`,
+    method: "DELETE",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok || auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rate = checkRateLimit(request, "admin:users:delete", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   try {
     // Check if user exists and belongs to admin's organization
     const existingUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
       include: {
         _count: {
@@ -209,7 +248,7 @@ export async function DELETE(
     }
 
     // Prevent admin from deleting themselves
-    if (existingUser.id === session.user.id) {
+    if (existingUser.id === auth.user.id) {
       return NextResponse.json({
         error: "Cannot delete your own account"
       }, { status: 400 });
@@ -223,8 +262,8 @@ export async function DELETE(
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        actorId: session.user.id,
-        organizationId: session.user.organizationId ?? "",
+        actorId: auth.user.id,
+        organizationId: auth.user.organizationId ?? "",
         resource: "USER",
         resourceId: resolvedParams.id,
         action: "DELETE",
@@ -234,7 +273,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    logger.error("user.delete.error", { error, userId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

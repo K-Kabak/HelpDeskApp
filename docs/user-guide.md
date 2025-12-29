@@ -13,8 +13,10 @@ Ten przewodnik zawiera instrukcje korzystania z systemu SerwisDesk dla wszystkic
 7. [Akcje masowe](#akcje-masowe)
 8. [Zapisane widoki](#zapisane-widoki)
 9. [Centrum powiadomień](#centrum-powiadomień)
-10. [Ankiety CSAT](#ankiety-csat)
-11. [Najczęściej zadawane pytania (FAQ)](#najczęściej-zadawane-pytania-faq)
+10. [Załączniki](#załączniki)
+11. [Raporty i analityka](#raporty-i-analityka)
+12. [Ankiety CSAT](#ankiety-csat)
+13. [Najczęściej zadawane pytania (FAQ)](#najczęściej-zadawane-pytania-faq)
 
 ---
 
@@ -315,6 +317,98 @@ Jeśli administrator włączył powiadomienia email, będziesz otrzymywać powia
 
 ---
 
+## Załączniki
+
+### Dodawanie załączników
+
+1. Otwórz szczegóły zgłoszenia
+2. W sekcji załączników kliknij przycisk **"Dodaj załącznik"** (jeśli dostępne)
+3. Wybierz plik z dysku
+4. System automatycznie sprawdzi:
+   - Typ pliku (dozwolone typy: obrazy PNG/JPEG, dokumenty PDF, pliki tekstowe)
+   - Rozmiar pliku (maksymalnie 25 MB)
+5. Po pomyślnym przesłaniu załącznik zostanie wyświetlony na liście
+
+### Typy dozwolonych plików
+
+System akceptuje następujące typy plików:
+- **Obrazy:** PNG, JPEG
+- **Dokumenty:** PDF
+- **Pliki tekstowe:** TXT
+
+### Ograniczenia
+
+- Maksymalny rozmiar pliku: 25 MB
+- Niektóre typy plików mogą być zablokowane ze względów bezpieczeństwa
+- Załączniki są skanowane pod kątem bezpieczeństwa przed udostępnieniem
+
+### Pobieranie załączników
+
+1. Kliknij na nazwę załącznika na liście
+2. System wygeneruje bezpieczny link do pobrania
+3. Link jest ważny przez ograniczony czas
+
+### Uprawnienia
+
+- **Użytkownicy (Requester):** Mogą dodawać załączniki tylko do swoich zgłoszeń
+- **Agenci i Administratorzy:** Mogą dodawać załączniki do wszystkich zgłoszeń w organizacji
+- Wszyscy użytkownicy mogą przeglądać i pobierać załączniki zgodnie z uprawnieniami do zgłoszenia
+
+---
+
+## Raporty i analityka
+
+### Dostęp do raportów
+
+Raporty i analityka są dostępne tylko dla **administratorów**.
+
+### Strona raportów
+
+Aby otworzyć stronę raportów:
+1. Zaloguj się jako administrator
+2. Przejdź do `/app/reports` lub użyj linku w menu nawigacyjnym (jeśli dostępny)
+
+### Dostępne metryki
+
+Na stronie raportów zobaczysz:
+
+#### KPI (Key Performance Indicators)
+- **MTTR (Mean Time to Resolve):** Średni czas rozwiązania zgłoszeń
+- **MTTA (Mean Time to Acknowledge):** Średni czas pierwszej odpowiedzi
+- **Wskaźnik ponownych otwarć:** Procent zgłoszeń, które zostały ponownie otwarte
+- **Zgodność SLA:** Procent zgłoszeń rozwiązanych w terminie
+
+#### Analityka zgłoszeń
+- **Trendy tworzenia:** Liczba zgłoszeń utworzonych w czasie
+- **Trendy rozwiązań:** Liczba zgłoszeń rozwiązanych w czasie
+- **Rozkład priorytetów:** Rozkład zgłoszeń według priorytetów
+- **Statystyki dzienne:** Szczegółowe statystyki dla każdego dnia
+
+#### Analityka CSAT
+- **Średnia ocena:** Średnia ocena satysfakcji klientów
+- **Wskaźnik odpowiedzi:** Procent wypełnionych ankiet
+- **Rozkład ocen:** Rozkład ocen od 1 do 5
+
+### Filtrowanie danych
+
+Możesz filtrować dane według:
+- **Zakres dat:** Wybierz okres (domyślnie ostatnie 30 dni)
+- **Zakres:** Od 7 do 365 dni
+
+### Eksport danych
+
+Możesz eksportować dane do plików CSV:
+1. **Eksport zgłoszeń:** Kliknij przycisk "Eksportuj zgłoszenia"
+2. **Eksport komentarzy:** Kliknij przycisk "Eksportuj komentarze"
+
+Eksportowane pliki zawierają wszystkie dane zgodnie z aktualnymi filtrami.
+
+### Odświeżanie danych
+
+Kliknij przycisk **"Odśwież"** aby zaktualizować wszystkie metryki i wykresy.
+
+---
+
 ## Ankiety CSAT
 
 ### Co to jest CSAT?
@@ -440,7 +534,27 @@ A: Spróbuj odświeżyć stronę (F5). Jeśli problem nadal występuje, skontakt
 A: Sprawdź, czy komentarz ma minimum 1 znak. Jeśli problem nadal występuje, skontaktuj się z administratorem.
 
 **P: Załączniki nie działają. Co robić?**  
-A: Skontaktuj się z administratorem, aby sprawdzić konfigurację przechowywania plików.
+A: Sprawdź, czy plik ma dozwolony typ (PNG, JPEG, PDF, TXT) i czy nie przekracza 25 MB. Jeśli problem nadal występuje, skontaktuj się z administratorem.
+
+**P: Jakie typy plików mogę załączyć?**  
+A: Możesz załączać obrazy (PNG, JPEG), dokumenty PDF i pliki tekstowe (TXT). Maksymalny rozmiar to 25 MB.
+
+**P: Czy mogę usunąć załącznik po dodaniu?**  
+A: Obecnie nie ma możliwości usuwania załączników po dodaniu. Skontaktuj się z administratorem, jeśli potrzebujesz usunąć załącznik.
+
+**P: Kto może zobaczyć moje załączniki?**  
+A: Załączniki są widoczne dla wszystkich użytkowników, którzy mają dostęp do zgłoszenia (zgodnie z uprawnieniami roli).
+
+### Raporty
+
+**P: Dlaczego nie widzę strony raportów?**  
+A: Raporty są dostępne tylko dla administratorów. Jeśli jesteś administratorem i nadal nie widzisz strony, skontaktuj się z administratorem systemu.
+
+**P: Jak często aktualizują się dane w raportach?**  
+A: Dane są pobierane na żądanie. Użyj przycisku "Odśwież", aby zaktualizować wszystkie metryki.
+
+**P: Czy mogę eksportować raporty?**  
+A: Tak, możesz eksportować zgłoszenia i komentarze do plików CSV. Eksportowane dane są zgodne z aktualnymi filtrami.
 
 ---
 
@@ -455,5 +569,6 @@ Jeśli potrzebujesz dodatkowej pomocy:
 ---
 
 *Ostatnia aktualizacja: 2025*
+
 
 

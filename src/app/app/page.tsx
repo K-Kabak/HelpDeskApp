@@ -13,6 +13,8 @@ import { RefreshButton } from "./refresh-button";
 import { TicketList } from "./ticket-list";
 import { SavedViews } from "./saved-views";
 import { Suspense } from "react";
+import { EmptyTicketsList } from "@/components/ui/empty-state";
+import { getPriorityColors } from "@/lib/priority-colors";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -551,77 +553,90 @@ export default async function DashboardPage({
      </form>
 
       {tickets.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
-          <svg
-            className="mx-auto h-12 w-12 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1}
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">Brak zgłoszeń</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            {searchQuery || statusFilter || priorityFilter || categoryFilter || tagFilters.length > 0 || slaStatusFilter
-              ? "Nie znaleziono zgłoszeń pasujących do wybranych filtrów. Spróbuj zmienić kryteria wyszukiwania."
-              : "Nie masz jeszcze żadnych zgłoszeń. Utwórz pierwsze zgłoszenie, aby rozpocząć."}
-          </p>
-          <Link
-            href="/app/tickets/new"
-            className="mt-4 inline-flex rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] items-center justify-center"
-            aria-label="Utwórz nowe zgłoszenie"
-          >
-            Utwórz zgłoszenie
-          </Link>
-        </div>
+        <EmptyTicketsList
+          hasFilters={
+            Boolean(
+              searchQuery ||
+                statusFilter ||
+                priorityFilter ||
+                categoryFilter ||
+                tagFilters.length > 0 ||
+                slaStatusFilter
+            )
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {tickets.map((ticket) => (
-            <Link
-              key={ticket.id}
-              href={`/app/tickets/${ticket.id}`}
-              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md sm:p-4"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">#{ticket.number}</span>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
-                    {priorityLabels[ticket.priority]}
-                  </span>
-                  {(() => {
-                    const sla = getSlaStatus(ticket);
-                    return (
+          {tickets.map((ticket) => {
+            const sla = getSlaStatus(ticket);
+            return (
+              <Link
+                key={ticket.id}
+                href={`/app/tickets/${ticket.id}`}
+                className="group relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-sky-300 hover:shadow-lg hover:-translate-y-0.5 sm:p-5"
+              >
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <span className="text-xs font-semibold text-slate-500">#{ticket.number}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${getPriorityColors(ticket.priority)}`}>
+                      {priorityLabels[ticket.priority]}
+                    </span>
+                    {ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE" && (
                       <span
-                        className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                           sla.state === "breached"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-emerald-100 text-emerald-700"
+                            ? "bg-red-100 text-red-700 ring-1 ring-red-200"
+                            : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
                         }`}
+                        title={sla.label}
                       >
-                        {sla.label}
+                        {sla.state === "breached" ? "⚠️" : "✓"}
                       </span>
-                    );
-                  })()}
+                    )}
+                  </div>
                 </div>
-              </div>
-              <h3 className="line-clamp-2 font-semibold text-slate-900">{ticket.title}</h3>
-              <p className="mt-1 text-xs text-slate-600">{statusLabels[ticket.status]}</p>
-              <p className="mt-2 text-xs text-slate-500">Zglaszajacy: {ticket.requester?.name ?? "N/A"}</p>
-              {ticket.assigneeUser && (
-                <p className="text-xs text-slate-500">Przypisany: {ticket.assigneeUser.name}</p>
-              )}
-              {ticket.assigneeTeam && (
-                <p className="text-xs text-slate-500">Zespol: {ticket.assigneeTeam.name}</p>
-              )}
-              <p className="mt-2 text-[11px] text-slate-400">Utworzono: {ticket.createdAt.toLocaleString()}</p>
-            </Link>
-          ))}
+                <h3 className="line-clamp-2 font-semibold text-slate-900 group-hover:text-sky-700 transition-colors mb-2">
+                  {ticket.title}
+                </h3>
+                <div className="mb-3 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                      {statusLabels[ticket.status]}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    <span className="font-medium">Zgłaszający:</span> {ticket.requester?.name ?? "N/A"}
+                  </p>
+                  {ticket.assigneeUser && (
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Przypisany:</span> {ticket.assigneeUser.name}
+                    </p>
+                  )}
+                  {ticket.assigneeTeam && (
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Zespół:</span> {ticket.assigneeTeam.name}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <p className="text-[11px] text-slate-400">
+                    {ticket.createdAt.toLocaleString("pl-PL", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  {sla.state === "breached" && ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE" && (
+                    <span className="text-[10px] font-medium text-red-600 animate-pulse">
+                      SLA naruszone
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
 
@@ -630,6 +645,16 @@ export default async function DashboardPage({
         userRole={session.user.role ?? "REQUESTER"}
         agents={agents}
         teams={teams}
+        hasFilters={
+          Boolean(
+            searchQuery ||
+              statusFilter ||
+              priorityFilter ||
+              categoryFilter ||
+              tagFilters.length > 0 ||
+              slaStatusFilter
+          )
+        }
       />
 
       <div className="flex items-center justify-between gap-3">

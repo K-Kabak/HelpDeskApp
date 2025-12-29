@@ -1,19 +1,32 @@
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
+import { requireAuth } from "@/lib/authorization";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
-import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 // GET /api/admin/teams - List teams for admin
-export async function GET() {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user || session.user.role !== "ADMIN") {
+export async function GET(req: Request) {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/admin/teams",
+    method: "GET",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok || auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rate = checkRateLimit(req, "admin:teams:list", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
+
   try {
     const teams = await prisma.team.findMany({
-      where: { organizationId: session.user.organizationId ?? undefined },
+      where: { organizationId: auth.user.organizationId ?? undefined },
       include: {
         _count: {
           select: {
@@ -42,17 +55,30 @@ export async function GET() {
 
     return NextResponse.json({ teams: mappedTeams });
   } catch (error) {
-    console.error("Error fetching teams:", error);
+    logger.error("teams.list.error", { error });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 // POST /api/admin/teams - Create new team
 export async function POST(request: NextRequest) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/admin/teams",
+    method: "POST",
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok || auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rate = checkRateLimit(request, "admin:teams:create", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   try {
     const body = await request.json();
@@ -73,7 +99,7 @@ export async function POST(request: NextRequest) {
     const existingTeam = await prisma.team.findFirst({
       where: {
         name: trimmedName,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
     });
 
@@ -85,15 +111,15 @@ export async function POST(request: NextRequest) {
     const team = await prisma.team.create({
       data: {
         name: trimmedName,
-        organizationId: session.user.organizationId!,
+        organizationId: auth.user.organizationId!,
       },
     });
 
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        actorId: session.user.id,
-        organizationId: session.user.organizationId ?? "",
+        actorId: auth.user.id,
+        organizationId: auth.user.organizationId ?? "",
         resource: "TEAM",
         resourceId: team.id,
         action: "CREATE",
@@ -112,7 +138,7 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 });
   } catch (error) {
-    console.error("Error creating team:", error);
+    logger.error("team.create.error", { error });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

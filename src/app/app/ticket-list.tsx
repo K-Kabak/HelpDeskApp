@@ -6,6 +6,9 @@ import Link from "next/link";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getSlaStatus } from "@/lib/sla-status";
 import { BulkActionsToolbar } from "./bulk-actions-toolbar";
+import { SkeletonTicketCard } from "@/components/ui/skeleton";
+import { EmptyTicketsList } from "@/components/ui/empty-state";
+import { getPriorityColors } from "@/lib/priority-colors";
 
 type Ticket = {
   id: string;
@@ -30,6 +33,8 @@ type TicketListProps = {
   agents: Array<{ id: string; name: string }>;
   teams: Array<{ id: string; name: string }>;
   onRefresh?: () => void;
+  loading?: boolean;
+  hasFilters?: boolean;
 };
 
 const statusLabels: Record<TicketStatus, string> = {
@@ -55,6 +60,8 @@ export function TicketList({
   agents,
   teams,
   onRefresh,
+  loading = false,
+  hasFilters = false,
 }: TicketListProps) {
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
   const router = useRouter();
@@ -121,33 +128,39 @@ export function TicketList({
       )}
 
       {/* Tickets Grid */}
-      {initialTickets.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
-          Brak zgłoszeń spełniających kryteria
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <SkeletonTicketCard key={i} />
+          ))}
         </div>
+      ) : initialTickets.length === 0 ? (
+        <EmptyTicketsList hasFilters={hasFilters} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {initialTickets.map((ticket) => {
             const isSelected = selectedTickets.includes(ticket.id);
 
+            const sla = getSlaStatus(ticket);
             return (
               <div
                 key={ticket.id}
-                className={`relative rounded-xl border bg-white p-4 shadow-sm transition ${
+                className={`group relative rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 ${
                   isSelected
                     ? "border-sky-500 ring-2 ring-sky-100"
-                    : "border-slate-200 hover:shadow-md"
+                    : "border-slate-200 hover:border-sky-300 hover:shadow-lg hover:-translate-y-0.5"
                 }`}
               >
                 {/* Checkbox for selection */}
                 {isAgentOrAdmin && (
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 z-10">
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={(e) => handleTicketSelect(ticket.id, e.target.checked)}
                       className="h-4 w-4 text-sky-600 focus:ring-sky-500"
                       aria-label={`Zaznacz zgłoszenie #${ticket.number}`}
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 )}
@@ -162,52 +175,67 @@ export function TicketList({
                     }
                   }}
                 >
-                  <div className="mb-2 flex items-center justify-between pr-8">
+                  <div className="mb-3 flex items-start justify-between gap-2 pr-8">
                     <span className="text-xs font-semibold text-slate-500">
                       #{ticket.number}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${getPriorityColors(ticket.priority)}`}>
                         {priorityLabels[ticket.priority]}
                       </span>
-                      {(() => {
-                        const sla = getSlaStatus(ticket);
-                        return (
-                          <span
-                            className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                              sla.state === "breached"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
-                          >
-                            {sla.label}
-                          </span>
-                        );
-                      })()}
+                      {ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE" && (
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                            sla.state === "breached"
+                              ? "bg-red-100 text-red-700 ring-1 ring-red-200"
+                              : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
+                          }`}
+                          title={sla.label}
+                        >
+                          {sla.state === "breached" ? "⚠️" : "✓"}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <h3 className="line-clamp-2 font-semibold text-slate-900">
+                  <h3 className="line-clamp-2 font-semibold text-slate-900 group-hover:text-sky-700 transition-colors mb-2">
                     {ticket.title}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-600">
-                    {statusLabels[ticket.status]}
-                  </p>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Zgłaszający: {ticket.requester?.name ?? "N/A"}
-                  </p>
-                  {ticket.assigneeUser && (
-                    <p className="text-xs text-slate-500">
-                      Przypisany: {ticket.assigneeUser.name}
+                  <div className="mb-3 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                        {statusLabels[ticket.status]}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Zgłaszający:</span> {ticket.requester?.name ?? "N/A"}
                     </p>
-                  )}
-                  {ticket.assigneeTeam && (
-                    <p className="text-xs text-slate-500">
-                      Zespół: {ticket.assigneeTeam.name}
+                    {ticket.assigneeUser && (
+                      <p className="text-xs text-slate-600">
+                        <span className="font-medium">Przypisany:</span> {ticket.assigneeUser.name}
+                      </p>
+                    )}
+                    {ticket.assigneeTeam && (
+                      <p className="text-xs text-slate-600">
+                        <span className="font-medium">Zespół:</span> {ticket.assigneeTeam.name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <p className="text-[11px] text-slate-400">
+                      {ticket.createdAt.toLocaleString("pl-PL", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
-                  )}
-                  <p className="mt-2 text-[11px] text-slate-400">
-                    Utworzono: {ticket.createdAt.toLocaleString()}
-                  </p>
+                    {sla.state === "breached" && ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE" && (
+                      <span className="text-[10px] font-medium text-red-600 animate-pulse">
+                        SLA naruszone
+                      </span>
+                    )}
+                  </div>
                 </Link>
               </div>
             );

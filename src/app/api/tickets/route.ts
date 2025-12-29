@@ -12,8 +12,8 @@ import { z } from "zod";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 
 const createSchema = z.object({
-  title: z.string().min(3),
-  descriptionMd: z.string().min(3),
+  title: z.string().min(3).max(255),
+  descriptionMd: z.string().min(3).max(50000),
   priority: z.nativeEnum(TicketPriority),
   category: z.string().optional(),
 });
@@ -24,7 +24,7 @@ const querySchema = z.object({
   direction: z.enum(["next", "prev"]).optional(),
   status: z.nativeEnum(TicketStatus).optional(),
   priority: z.nativeEnum(TicketPriority).optional(),
-  q: z.string().optional(),
+  q: z.string().max(500).optional(),
   category: z.string().optional(),
   tags: z.string().optional(), // Comma-separated tag IDs
   // Date range filters
@@ -71,6 +71,13 @@ export async function GET(req?: Request) {
     logger.warn("auth.required");
     return auth.response;
   }
+
+  // Rate limiting for GET requests
+  const rate = checkRateLimit(req || new Request("http://localhost"), "tickets:list", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   const url = req ? new URL(req.url) : null;
   const parsedQuery = url

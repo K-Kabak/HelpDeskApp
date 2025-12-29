@@ -127,7 +127,10 @@ export default function TicketActions({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <h2 className="text-lg font-semibold mb-4">Akcje</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-slate-900">Akcje</h2>
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent ml-4" aria-hidden />
+      </div>
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
         {(canManageStatus || requesterCanUpdate) && (
         <form className="space-y-3" onSubmit={handleStatusSubmit} aria-label="Formularz zmiany statusu zgłoszenia">

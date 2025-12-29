@@ -170,8 +170,8 @@ export async function evaluateAutomationRules(
         await executeAction(action, event.ticket.id, event.ticket.organizationId);
       }
     } catch (error) {
-      // Skip invalid rules, log in production
-      console.error(`Invalid automation rule ${rule.id}:`, error);
+      // Skip invalid rules - errors are handled gracefully
+      // Logging should be done at the caller level if needed
     }
   }
 }

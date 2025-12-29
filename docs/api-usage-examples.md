@@ -65,7 +65,7 @@ Cookie: next-auth.session-token=...
 **Response:**
 ```json
 {
-  "tickets": [
+  "items": [
     {
       "id": "123e4567-e89b-12d3-a456-426655440000",
       "number": 42,
@@ -101,7 +101,9 @@ Cookie: next-auth.session-token=...
       },
       "assigneeTeam": null
     }
-  ]
+  ],
+  "nextCursor": "eyJpZCI6IjIyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjY1NTQ0MDAwMSIsImNyZWF0ZWRBdCI6IjIwMjQtMDEtMTVUMTE6MDA6MDBaIn0=",
+  "prevCursor": null
 }
 ```
 
@@ -256,17 +258,14 @@ Cookie: next-auth.session-token=...
   "attachment": {
     "id": "423e4567-e89b-12d3-a456-426655440003",
     "ticketId": "123e4567-e89b-12d3-a456-426655440000",
-    "filename": "screenshot.png",
-    "originalName": "screenshot.png",
+    "fileName": "screenshot.png",
+    "filePath": "path/to/file",
     "mimeType": "image/png",
     "sizeBytes": 245760,
-    "uploadedById": "user-123",
-    "visibility": "PUBLIC",
-    "scanStatus": "PENDING",
-    "createdAt": "2024-01-15T12:30:00Z"
+    "uploaderId": "user-123",
+    "visibility": "PUBLIC"
   },
-  "uploadUrl": "https://storage.example.com/upload?token=...",
-  "expiresAt": "2024-01-15T13:00:00Z"
+  "uploadUrl": "https://storage.example.com/upload?token=..."
 }
 ```
 
@@ -283,20 +282,11 @@ Cookie: next-auth.session-token=...
 {
   "attachment": {
     "id": "423e4567-e89b-12d3-a456-426655440003",
-    "ticketId": "123e4567-e89b-12d3-a456-426655440000",
-    "filename": "screenshot.png",
-    "originalName": "screenshot.png",
+    "fileName": "screenshot.png",
     "mimeType": "image/png",
     "sizeBytes": 245760,
-    "uploadedById": "user-123",
-    "uploadedBy": {
-      "id": "user-123",
-      "email": "user@example.com",
-      "name": "John Doe"
-    },
     "visibility": "PUBLIC",
-    "scanStatus": "CLEAN",
-    "createdAt": "2024-01-15T12:30:00Z"
+    "status": "CLEAN"
   },
   "downloadUrl": "https://storage.example.com/download?token=..."
 }
@@ -856,20 +846,26 @@ Cookie: next-auth.session-token=...
 {
   "period": {
     "startDate": "2023-12-16T00:00:00Z",
-    "endDate": "2024-01-15T23:59:59Z"
+    "endDate": "2024-01-15T23:59:59Z",
+    "days": 30
   },
-  "ticketsByStatus": {
-    "NOWE": 10,
-    "W_TOKU": 25,
-    "ROZWIAZANE": 50,
-    "ZAMKNIETE": 65
+  "summary": {
+    "totalCreated": 150,
+    "totalResolved": 100,
+    "avgCreatedPerDay": 5.0,
+    "avgResolvedPerDay": 3.3
   },
-  "ticketsByPriority": {
-    "NISKI": 20,
-    "SREDNI": 60,
-    "WYSOKI": 50,
-    "KRYTYCZNY": 20
-  }
+  "trends": [
+    {
+      "date": "2024-01-01",
+      "created": 5,
+      "resolved": 3,
+      "byPriority": {
+        "WYSOKI": 2,
+        "SREDNI": 3
+      }
+    }
+  ]
 }
 ```
 
@@ -1157,7 +1153,7 @@ GET /api/tickets?limit=20&cursor=eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjY
 **Response:**
 ```json
 {
-  "tickets": [ ... ],
+  "items": [ ... ],
   "nextCursor": "eyJpZCI6IjIyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjY1NTQ0MDAwMSIsImNyZWF0ZWRBdCI6IjIwMjQtMDEtMTVUMTE6MDA6MDBaIn0=",
   "prevCursor": null
 }
@@ -1286,7 +1282,7 @@ Cookie: next-auth.session-token=...
         "email": "agent@example.com",
         "name": "Jane Agent"
       },
-      "details": {
+      "data": {
         "oldStatus": "NOWE",
         "newStatus": "W_TOKU"
       },
@@ -1297,7 +1293,7 @@ Cookie: next-auth.session-token=...
       "action": "COMMENT_ADDED",
       "actorId": "agent-456",
       "actor": { ... },
-      "details": {
+      "data": {
         "commentId": "323e4567-e89b-12d3-a456-426655440002"
       },
       "createdAt": "2024-01-15T12:00:00Z"
@@ -1317,4 +1313,5 @@ Cookie: next-auth.session-token=...
 - Admin endpoints require ADMIN role
 - Some endpoints (like bulk operations) require AGENT or ADMIN role
 - REQUESTER role can only access their own tickets and close/reopen them
+
 

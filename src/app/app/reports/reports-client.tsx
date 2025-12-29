@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { KpiMetrics } from "@/lib/kpi-metrics";
+import { ErrorState } from "@/components/ui/error-state";
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 interface AnalyticsData {
   period: {
@@ -90,11 +92,11 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-slate-200 rounded w-1/4"></div>
+        <div className="space-y-4">
+          <div className="h-8 bg-slate-200 rounded w-1/4 animate-pulse"></div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-slate-200 rounded"></div>
+              <SkeletonCard key={i} />
             ))}
           </div>
         </div>
@@ -105,17 +107,12 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
-          <p className="text-red-800 font-semibold">Błąd podczas ładowania raportów</p>
-          <p className="text-red-700 mt-1">{error}</p>
-          <button
-            onClick={fetchData}
-            className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px]"
-            aria-label="Spróbuj ponownie załadować raporty"
-          >
-            Spróbuj ponownie
-          </button>
-        </div>
+        <ErrorState
+          title="Błąd podczas ładowania raportów"
+          message="Nie udało się pobrać danych raportów. Sprawdź połączenie i spróbuj ponownie."
+          error={error}
+          onRetry={fetchData}
+        />
       </div>
     );
   }

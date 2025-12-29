@@ -87,7 +87,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ users: mappedUsers });
   } catch (error) {
-    console.error("Error fetching users:", error);
+    logger.error("users.list.error", { error });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

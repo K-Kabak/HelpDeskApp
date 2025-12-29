@@ -3,6 +3,7 @@
 import { Role } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type TeamRow = {
   id: string;
@@ -56,6 +57,7 @@ export function TeamsManager({ initialTeams, users }: Props) {
   const [formError, setFormError] = useState<string | null>(null);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,12 +124,20 @@ export function TeamsManager({ initialTeams, users }: Props) {
     toast.success("Zespół zaktualizowany.");
   };
 
-  const handleDeleteTeam = async (teamId: string) => {
-    if (!confirm("Czy na pewno chcesz usunąć ten zespół? Tej akcji nie można cofnąć.")) {
+  const handleDeleteClick = (teamId: string, name: string) => {
+    const team = teams.find((t) => t.id === teamId);
+    if (team?.activeTicketCount > 0) {
+      toast.error("Nie można usunąć zespołu z aktywnymi zgłoszeniami.");
       return;
     }
+    setDeleteConfirm({ id: teamId, name });
+  };
 
-    const res = await fetch(`/api/admin/teams/${teamId}`, {
+  const handleDeleteTeam = async () => {
+    if (!deleteConfirm) return;
+    const { id } = deleteConfirm;
+
+    const res = await fetch(`/api/admin/teams/${id}`, {
       method: "DELETE",
     });
 
@@ -135,13 +145,15 @@ export function TeamsManager({ initialTeams, users }: Props) {
       const body = await res.json().catch(() => ({}));
       const message = typeof body?.error === "string" ? body.error : "Nie udało się usunąć zespołu.";
       toast.error(message);
+      setDeleteConfirm(null);
       return;
     }
 
-    setTeams((prev) => prev.filter((t) => t.id !== teamId));
-    if (selectedTeam?.id === teamId) {
+    setTeams((prev) => prev.filter((t) => t.id !== id));
+    if (selectedTeam?.id === id) {
       setSelectedTeam(null);
     }
+    setDeleteConfirm(null);
     toast.success("Zespół usunięty.");
   };
 
@@ -253,26 +265,38 @@ export function TeamsManager({ initialTeams, users }: Props) {
           </div>
 
           {showCreateForm && (
-            <form onSubmit={handleCreateTeam} className="mt-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-700">Nazwa zespołu</label>
+            <form onSubmit={handleCreateTeam} className="mt-4" aria-label="Formularz dodawania zespołu">
+              <FormField
+                label="Nazwa zespołu"
+                htmlFor="team-name"
+                required
+                error={formError || undefined}
+              >
                 <input
+                  id="team-name"
                   type="text"
                   value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  onChange={(e) => {
+                    setNewTeamName(e.target.value);
+                    if (formError) setFormError(null);
+                  }}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                    formError
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-slate-300"
+                  }`}
                   placeholder="np. Zespół wsparcia technicznego"
                   required
+                  autoComplete="off"
                 />
-              </div>
-              {formError && (
-                <p className="mt-2 text-sm text-red-600">{formError}</p>
-              )}
+              </FormField>
               <div className="mt-4 flex gap-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+                  className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px]"
+                  aria-label={loading ? "Dodawanie zespołu..." : "Dodaj zespół"}
+                  aria-busy={loading}
                 >
                   {loading ? "Dodawanie..." : "Dodaj zespół"}
                 </button>
@@ -283,7 +307,8 @@ export function TeamsManager({ initialTeams, users }: Props) {
                     setShowCreateForm(false);
                     setFormError(null);
                   }}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 min-h-[44px]"
+                  aria-label="Anuluj dodawanie zespołu"
                 >
                   Anuluj
                 </button>
@@ -301,32 +326,31 @@ export function TeamsManager({ initialTeams, users }: Props) {
           </div>
           <div className="divide-y divide-slate-200">
             {sortedTeams.length === 0 ? (
-              <div className="p-12 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1}
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak zespołów</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Utwórz pierwszy zespół, aby organizować pracę i przypisywać zgłoszenia.
-                </p>
-                <button
-                  onClick={() => setShowCreateForm(true)}
-                  className="mt-4 inline-flex rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] items-center justify-center"
-                  aria-label="Utwórz pierwszy zespół"
-                >
-                  Utwórz zespół
-                </button>
+              <div className="p-12">
+                <EmptyState
+                  title="Brak zespołów"
+                  description="Utwórz pierwszy zespół, aby organizować pracę i przypisywać zgłoszenia."
+                  icon={
+                    <svg
+                      className="mx-auto h-12 w-12 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1}
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                  }
+                  action={{
+                    label: "Utwórz zespół",
+                    onClick: () => setShowCreateForm(true),
+                  }}
+                />
               </div>
             ) : (
               sortedTeams.map((team) => (
@@ -399,9 +423,14 @@ export function TeamsManager({ initialTeams, users }: Props) {
                         Edytuj
                       </button>
                       <button
-                        onClick={() => handleDeleteTeam(team.id)}
+                        onClick={() => handleDeleteClick(team.id, team.name)}
                         disabled={team.activeTicketCount > 0}
-                        className="rounded-lg border border-red-200 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="rounded-lg border border-red-200 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px]"
+                        aria-label={
+                          team.activeTicketCount > 0
+                            ? `Nie można usunąć zespołu ${team.name} z aktywnymi zgłoszeniami`
+                            : `Usuń zespół ${team.name}`
+                        }
                         title={
                           team.activeTicketCount > 0
                             ? "Nie można usunąć zespołu z aktywnymi zgłoszeniami"
@@ -511,6 +540,17 @@ export function TeamsManager({ initialTeams, users }: Props) {
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDeleteTeam}
+        title="Usuń zespół"
+        message={`Czy na pewno chcesz usunąć zespół "${deleteConfirm?.name}"? Tej akcji nie można cofnąć.`}
+        confirmLabel="Usuń"
+        cancelLabel="Anuluj"
+        variant="danger"
+      />
     </div>
   );
 }

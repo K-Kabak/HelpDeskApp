@@ -9,6 +9,7 @@ import { needsReopenReason, validateReopenReason } from "@/lib/reopen-reason";
 import { generateCsatToken } from "@/lib/csat-token";
 import { requireAuth, isAgentOrAdmin } from "@/lib/authorization";
 import { createRequestLogger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const updateSchema = z
   .object({
@@ -16,7 +17,7 @@ const updateSchema = z
     priority: z.nativeEnum(TicketPriority).optional(),
     assigneeUserId: z.string().uuid().nullable().optional(),
     assigneeTeamId: z.string().uuid().nullable().optional(),
-    reopenReason: z.string().optional(),
+    reopenReason: z.string().max(1000).optional(),
   })
   .refine(
     (data) =>
@@ -64,6 +65,13 @@ async function updateTicket(
     logger.warn("auth.required");
     return auth.response;
   }
+
+  // Rate limiting for PATCH/PUT requests
+  const rate = checkRateLimit(req, "tickets:update", {
+    logger,
+    identifier: auth.user.id,
+  });
+  if (!rate.allowed) return rate.response;
 
   const ticket = await prisma.ticket.findUnique({
     where: { id },

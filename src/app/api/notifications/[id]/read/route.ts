@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import type { SessionWithUser } from "@/lib/session-types";
+import { createRequestLogger } from "@/lib/logger";
 
 export async function PATCH(
   req: Request,
@@ -37,7 +38,12 @@ export async function PATCH(
 
     return NextResponse.json({ notification: updatedNotification });
   } catch (error) {
-    console.error("Error marking notification as read:", error);
+    const logger = createRequestLogger({
+      route: `/api/notifications/${resolvedParams.id}/read`,
+      method: "PATCH",
+      userId: session?.user?.id,
+    });
+    logger.error("notification.read.error", { error, notificationId: resolvedParams.id });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

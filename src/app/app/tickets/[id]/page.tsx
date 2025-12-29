@@ -12,6 +12,9 @@ import { AttachmentPicker } from "./attachment-picker";
 import { AttachmentVisibility } from "@prisma/client";
 import { suggestAssigneeByLoad } from "@/lib/assignment-suggest";
 import { AuditTimeline } from "./audit-timeline";
+import { EmptyComments } from "@/components/ui/empty-state";
+import { getSlaStatus } from "@/lib/sla-status";
+import { getPriorityColors } from "@/lib/priority-colors";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -135,34 +138,80 @@ export default async function TicketPage({
   const attachmentsEnabled =
     process.env.NEXT_PUBLIC_ATTACHMENTS_ENABLED !== "false";
 
+  const sla = getSlaStatus(ticket);
+  const showSla = ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE";
+
   return (
     <div className="max-w-5xl space-y-4 px-4 sm:space-y-6 sm:px-0">
       <Link 
         href="/app" 
-        className="inline-block text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center"
+        className="inline-block text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center hover:text-sky-800 transition-colors"
         aria-label="Powrót do listy zgłoszeń"
       >
         ← Powrót do listy
       </Link>
       <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs text-slate-500">#{ticket.number}</p>
-            <h1 className="text-2xl font-semibold">{ticket.title}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>{ticket.createdAt.toLocaleString()}</span>
-              <span className="text-slate-300">•</span>
-              <span>Zespół: {ticket.assigneeTeam?.name ?? "Brak"}</span>
-              <span className="text-slate-300">•</span>
-              <span>Agent: {ticket.assigneeUser?.name ?? "Brak"}</span>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <p className="text-xs font-semibold text-slate-500">#{ticket.number}</p>
+              {showSla && (
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                      sla.state === "breached"
+                        ? "bg-red-100 text-red-700 ring-2 ring-red-200 animate-pulse"
+                        : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
+                    }`}
+                  >
+                    {sla.state === "breached" ? (
+                      <>
+                        <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        SLA naruszone
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        {sla.label}
+                      </>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-slate-500">Zgłaszający: {ticket.requester.name}</p>
+            <h1 className="text-2xl font-semibold text-slate-900 mb-3">{ticket.title}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              <span className="font-medium">Zgłaszający:</span>
+              <span>{ticket.requester.name}</span>
+              <span className="text-slate-300">•</span>
+              <span className="font-medium">Utworzono:</span>
+              <span>{ticket.createdAt.toLocaleString("pl-PL")}</span>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              {ticket.assigneeTeam && (
+                <>
+                  <span className="font-medium">Zespół:</span>
+                  <span>{ticket.assigneeTeam.name}</span>
+                </>
+              )}
+              {ticket.assigneeUser && (
+                <>
+                  {ticket.assigneeTeam && <span className="text-slate-300">•</span>}
+                  <span className="font-medium">Agent:</span>
+                  <span>{ticket.assigneeUser.name}</span>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2">
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+          <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getPriorityColors(ticket.priority)}`}>
               {priorityLabels[ticket.priority]}
             </span>
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-white" aria-label={`Status: ${statusLabels[ticket.status]}`}>
+            <span className="rounded-full bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white" aria-label={`Status: ${statusLabels[ticket.status]}`}>
               {statusLabels[ticket.status]}
             </span>
           </div>
@@ -220,38 +269,51 @@ export default async function TicketPage({
           </p>
         </div>
         <div className="relative">
-          <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-200" aria-hidden />
+          <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" aria-hidden />
           <div className="space-y-6">
             {visibleComments.map((comment) => (
-              <div key={comment.id} className="relative flex gap-3 pl-12">
-                <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-sm font-semibold text-slate-700 shadow-sm ring-2 ring-slate-200">
+              <div key={comment.id} className="relative flex gap-4 pl-12">
+                <div className={`absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-sm font-semibold shadow-md ${
+                  comment.isInternal
+                    ? "bg-amber-100 text-amber-800 ring-2 ring-amber-300"
+                    : "bg-slate-100 text-slate-700 ring-2 ring-slate-200"
+                }`}>
                   {comment.author.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div
-                  className={`w-full rounded-lg border ${
+                  className={`w-full rounded-lg border-2 p-4 shadow-sm transition-shadow ${
                     comment.isInternal
-                      ? "border-amber-200 bg-amber-50"
-                      : "border-slate-200 bg-slate-50"
-                  } p-4 shadow-sm`}
+                      ? "border-amber-300 bg-amber-50/50 hover:shadow-md"
+                      : "border-slate-200 bg-white hover:shadow-md"
+                  }`}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-slate-900">
                         {comment.author.name}
                       </span>
                       <span
-                        className={`rounded-full px-2 py-1 text-[10px] font-semibold ${roleColors[comment.author.role]}`}
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${roleColors[comment.author.role]}`}
                       >
                         {roleLabels[comment.author.role]}
                       </span>
                       {comment.isInternal && (
-                        <span className="rounded-full bg-amber-500 px-2 py-1 text-[10px] font-semibold uppercase text-white">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-white ring-1 ring-amber-600">
+                          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
                           Wewnętrzny
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-slate-500">
-                      {comment.createdAt.toLocaleString()}
+                    <span className="text-xs text-slate-500 font-medium">
+                      {comment.createdAt.toLocaleString("pl-PL", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                   <div className="prose prose-sm mt-3 max-w-none">
@@ -261,27 +323,8 @@ export default async function TicketPage({
               </div>
             ))}
             {visibleComments.length === 0 && (
-              <div className="pl-12 py-8 text-center">
-                <svg
-                  className="mx-auto h-10 w-10 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1}
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <p className="mt-2 text-sm font-medium text-slate-900">Brak komentarzy</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {canSeeInternal
-                    ? "Dodaj pierwszy komentarz, aby rozpocząć dyskusję."
-                    : "Dodaj komentarz, aby rozpocząć dyskusję."}
-                </p>
+              <div className="pl-12 py-8">
+                <EmptyComments canSeeInternal={canSeeInternal} />
               </div>
             )}
           </div>

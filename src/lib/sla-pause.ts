@@ -16,7 +16,7 @@ export type SlaPauseTransitionUpdates = {
 
 /**
  * Start an SLA pause (e.g., when waiting on requester). Does not persist; callers should write returned fields back to the Ticket.
- * TODO: wire to status transitions once pause rules are finalized.
+ * This is called automatically via deriveSlaPauseUpdates when a ticket transitions to OCZEKUJE_NA_UZYTKOWNIKA status.
  */
 export function startSlaPause(state: SlaPauseState, now = new Date()): SlaPauseState {
   if (state.slaPausedAt) {
@@ -31,7 +31,7 @@ export function startSlaPause(state: SlaPauseState, now = new Date()): SlaPauseS
 
 /**
  * Resume an SLA pause and accumulate paused seconds. Safe if pause was never started.
- * TODO: call from ticket status/assignment changes when SLA resume triggers are defined.
+ * This is called automatically via deriveSlaPauseUpdates when a ticket transitions out of OCZEKUJE_NA_UZYTKOWNIKA status.
  */
 export function resumeSlaPause(state: SlaPauseState, now = new Date()): SlaPauseState {
   if (!state.slaPausedAt) {
