@@ -450,6 +450,7 @@ components:
           format: date-time
     AttachmentUploadRequest:
       type: object
+      description: Deprecated - use multipart/form-data instead
       required: [filename, sizeBytes, mimeType]
       properties:
         filename:
@@ -461,17 +462,6 @@ components:
         mimeType:
           type: string
           minLength: 1
-    AttachmentUploadResponse:
-      type: object
-      properties:
-        attachment:
-          $ref: '#/components/schemas/Attachment'
-        uploadUrl:
-          type: string
-          description: Presigned URL for file upload
-        expiresAt:
-          type: string
-          format: date-time
     AuditEvent:
       type: object
       properties:
@@ -1646,7 +1636,7 @@ paths:
                 $ref: '#/components/schemas/ErrorAsIs'
     post:
       summary: Upload attachment
-      description: Initiates attachment upload for a ticket. Returns presigned URL for upload.
+      description: Uploads a file attachment to a ticket. Accepts multipart/form-data with file and optional visibility field.
       security:
         - cookieAuth: []
       parameters:
@@ -1659,16 +1649,36 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/AttachmentUploadRequest'
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+                visibility:
+                  type: string
+                  enum: [public, internal]
+                  default: public
+                  description: Visibility of the attachment (internal attachments are hidden from requesters)
       responses:
-        '200':
-          description: Upload initiated
+        '201':
+          description: Attachment uploaded successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AttachmentUploadResponse'
+                type: object
+                properties:
+                  attachment:
+                    $ref: '#/components/schemas/Attachment'
+        '400':
+          description: Validation error (file too large, invalid type, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
         '400':
           description: Validation error
           content:
@@ -1714,7 +1724,7 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Attachment details
+          description: Attachment details with signed download URL
           content:
             application/json:
               schema:
@@ -1724,7 +1734,11 @@ paths:
                     $ref: '#/components/schemas/Attachment'
                   downloadUrl:
                     type: string
-                    description: Presigned URL for download
+                    description: Signed download URL (expires in 1 hour)
+                  expiresAt:
+                    type: string
+                    format: date-time
+                    description: Expiration time of the download URL
         '401':
           description: Unauthorized
           content:

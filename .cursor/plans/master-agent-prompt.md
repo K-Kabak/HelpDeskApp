@@ -190,7 +190,9 @@ docs/                     # Documentation
 - Prompty 8-11: Mobile, UX polish, Accessibility, Code comments
 - Prompty 12-15: Bulk Actions, Saved Views
 - Prompty 16-18: TypeScript fixes, Bulk optimization, E2E tests
-- Agent FIX ALL: Naprawa duplikacji
+- Agent FIX ALL: Naprawa duplikacji - ✅ ZAKOŃCZONE
+- Agent FIX TypeScript: Naprawa błędów TypeScript - ✅ ZAKOŃCZONE
+- Agent GitHub PR: Przygotowanie PR do GitHub - ✅ ZAKOŃCZONE
 
 ### 🔄 Remaining Tasks
 - ✅ **Task 6:** Ticket detail enhancements - COMPLETED (all features implemented)
@@ -272,31 +274,30 @@ docs/                     # Documentation
 - ✅ Błędy parsowania i ESLint - NAPRAWIONE
 - ✅ Błędy TypeScript w głównym kodzie - NAPRAWIONE
 - ✅ Build - SUKCES
+- ✅ PR utworzony i zmergowany do GitHub
 
-**🎯 KROK 2: Wybór Kolejnego Etapu**
+**🎯 KROK 2: Następne Funkcje - Prompty dla Agentów 1-6**
 
-**Opcja 1: Gotowość do Produkcji** ⭐ (REKOMENDOWANE)
-- Final code review
-- Finalizacja dokumentacji
-- Przygotowanie do deploymentu
-- Naprawa błędów TypeScript w testach (opcjonalne)
+**Prompty gotowe:** Zobacz `.cursor/plans/PROMPTS-AGENTS-1-6.md`
 
-**Opcja 2: Nowe Funkcje (P2 z Backlogu)**
-- [093] Signed attachment download URLs
-- [096] SLA calibration tool
-- Inne funkcje z backlogu
+**Przypisanie:**
+- **Agent 1:** Attachment Upload/Download API (Backend)
+- **Agent 2:** Attachment UI Components (Frontend)
+- **Agent 3:** Tests & Documentation for Attachments (QA/Docs)
+- **Agent 4:** Audit Viewer Backend API (Backend)
+- **Agent 5:** Reopen Throttling & Security (Security/API)
+- **Agent 6:** Search Filters & Audit Viewer UI (Full-Stack)
 
-**Opcja 3: Dokumentacja i Szkolenia**
-- Aktualizacja README
-- Dokumentacja API
-- User guide
+**Rekomendowana kolejność:**
+1. **Faza 1:** Agents 1, 2, 3 (Attachments) - można równolegle
+2. **Faza 2:** Agents 4, 5, 6 (Audit & Security) - można równolegle
 
-**Opcja 4: Stabilizacja i Optymalizacja**
-- Naprawa błędów TypeScript w testach
-- Optymalizacja wydajności
-- Dodatkowe testy E2E
+**Alternatywne opcje:**
+- **Opcja A: Gotowość do Produkcji** - Final code review, dokumentacja, deployment
+- **Opcja B: Funkcje P2 z Backlogu** - [093] Signed URLs, [096] SLA calibration tool
+- **Opcja C: Stabilizacja** - Naprawa błędów TypeScript w testach, optymalizacja
 
-**Szczegóły statusu:** Zobacz `.cursor/plans/STATUS-FINAL-VERIFICATION.md`
+**Szczegóły:** Zobacz `.cursor/plans/PROMPTS-AGENTS-1-6.md` dla pełnych promptów
 
 ---
 

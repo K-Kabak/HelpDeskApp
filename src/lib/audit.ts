@@ -3,7 +3,7 @@ import { AttachmentVisibility } from "@prisma/client";
 
 type AuditClient = Pick<typeof prisma, "auditEvent">;
 
-type AttachmentAuditAction = "ATTACHMENT_UPLOADED" | "ATTACHMENT_DELETED";
+type AttachmentAuditAction = "ATTACHMENT_UPLOADED" | "ATTACHMENT_DELETED" | "ATTACHMENT_DOWNLOADED";
 
 type AttachmentAuditInput = {
   ticketId: string;

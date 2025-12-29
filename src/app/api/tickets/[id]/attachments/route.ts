@@ -1,11 +1,10 @@
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { runAttachmentScan } from "@/lib/av-scanner";
-import { createPresignedUpload } from "@/lib/storage";
+import { generateStoragePath, storeFile, deleteFile } from "@/lib/storage";
 import {
   isMimeAllowed,
   isSizeAllowed,
-  uploadRequestSchema,
 } from "@/lib/attachment-validation";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
@@ -38,25 +37,42 @@ export async function POST(
   });
   if (!rate.allowed) return rate.response;
 
-  const body = await req.json();
-  const parsed = uploadRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  // Parse multipart/form-data
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch (error) {
+    logger.warn("failed to parse form data", { error });
+    return NextResponse.json({ error: "Invalid request format" }, { status: 400 });
   }
 
-  const payload = parsed.data;
+  const file = formData.get("file") as File | null;
+  const visibilityValue = (formData.get("visibility") as string | null) ?? "public";
 
-  if (!isSizeAllowed(payload.sizeBytes)) {
+  if (!file) {
+    return NextResponse.json({ error: "File is required" }, { status: 400 });
+  }
+
+  // Validate file size
+  if (!isSizeAllowed(file.size)) {
     return NextResponse.json(
       { error: `File too large (max ${process.env.ATTACH_MAX_BYTES ?? "26214400"} bytes)` },
       { status: 400 }
     );
   }
 
-  if (!isMimeAllowed(payload.mimeType)) {
+  // Validate MIME type
+  const mimeType = file.type || "application/octet-stream";
+  if (!isMimeAllowed(mimeType)) {
     return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
   }
 
+  // Validate visibility
+  if (visibilityValue !== "public" && visibilityValue !== "internal") {
+    return NextResponse.json({ error: "Visibility must be 'public' or 'internal'" }, { status: 400 });
+  }
+
+  // Check ticket exists and user has access
   const ticket = await prisma.ticket.findUnique({
     where: { id },
     select: { id: true, requesterId: true, organizationId: true },
@@ -67,33 +83,42 @@ export async function POST(
   }
 
   const isRequester = session.user.role === "REQUESTER";
+  const isAgent = session.user.role === "AGENT" || session.user.role === "ADMIN";
 
+  // Requesters can only upload to their own tickets
   if (isRequester && ticket.requesterId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { uploadUrl, storagePath } = createPresignedUpload(
-    payload.fileName,
-    payload.visibility
-  );
+  // Only agents/admins can upload internal attachments
+  if (visibilityValue === "internal" && !isAgent) {
+    return NextResponse.json({ error: "Only agents and admins can upload internal attachments" }, { status: 403 });
+  }
 
-  const visibility =
-    payload.visibility === "public"
-      ? AttachmentVisibility.PUBLIC
-      : AttachmentVisibility.INTERNAL;
+  // Generate storage path and store file
+  const fileName = file.name;
+  const visibility = visibilityValue === "public" ? AttachmentVisibility.PUBLIC : AttachmentVisibility.INTERNAL;
+  const storagePath = generateStoragePath(fileName, visibilityValue as "public" | "internal");
 
+  // Convert file to buffer and store
+  const arrayBuffer = await file.arrayBuffer();
+  const fileBuffer = Buffer.from(arrayBuffer);
+  await storeFile(storagePath, fileBuffer);
+
+  // Create attachment record
   const attachment: Attachment = await prisma.attachment.create({
     data: {
       ticketId: ticket.id,
       uploaderId: session.user.id,
-      fileName: payload.fileName,
+      fileName,
       filePath: storagePath,
-      mimeType: payload.mimeType,
-      sizeBytes: payload.sizeBytes,
+      mimeType,
+      sizeBytes: file.size,
       visibility,
     },
   });
 
+  // Record audit event
   await recordAttachmentAudit({
     ticketId: ticket.id,
     actorId: session.user.id,
@@ -108,12 +133,30 @@ export async function POST(
     },
   });
 
-  await runAttachmentScan(attachment.id, storagePath);
+  // Run antivirus scan (async, non-blocking)
+  runAttachmentScan(attachment.id, storagePath).catch((error) => {
+    logger.warn("attachment scan failed", { attachmentId: attachment.id, error });
+  });
+
+  logger.info("attachment uploaded", {
+    attachmentId: attachment.id,
+    ticketId: ticket.id,
+    fileName,
+    sizeBytes: file.size,
+  });
 
   return NextResponse.json(
     {
-      attachment,
-      uploadUrl,
+      attachment: {
+        id: attachment.id,
+        ticketId: attachment.ticketId,
+        uploaderId: attachment.uploaderId,
+        fileName: attachment.fileName,
+        mimeType: attachment.mimeType,
+        sizeBytes: attachment.sizeBytes,
+        visibility: attachment.visibility,
+        createdAt: attachment.createdAt.toISOString(),
+      },
     },
     { status: 201 }
   );
@@ -160,17 +203,16 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const isAgent =
-    session.user.role === "AGENT" || session.user.role === "ADMIN";
-  const isRequester = session.user.role === "REQUESTER";
-
-  const requesterOwnsTicket =
-    isRequester && attachment.ticket.requesterId === session.user.id;
-  const requesterUploaded = attachment.uploaderId === session.user.id;
-
-  if (!isAgent && !(requesterOwnsTicket && requesterUploaded)) {
+  // Only agents/admins can delete attachments
+  const isAgent = session.user.role === "AGENT" || session.user.role === "ADMIN";
+  if (!isAgent) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  // Delete file from storage
+  await deleteFile(attachment.filePath).catch((error) => {
+    logger.warn("failed to delete file from storage", { filePath: attachment.filePath, error });
+  });
 
   await prisma.$transaction(async (tx) => {
     await tx.attachment.delete({
