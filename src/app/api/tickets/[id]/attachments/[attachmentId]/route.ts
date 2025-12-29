@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { isAgentOrAdmin, requireAuth } from "@/lib/authorization";
 import { createRequestLogger } from "@/lib/logger";
-import { generateSignedDownloadUrl } from "@/lib/storage";
-import { recordAttachmentAudit } from "@/lib/audit";
+import { resolveDownloadUrl } from "@/lib/storage";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -36,7 +35,6 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Organization scoping
   if (attachment.ticket.organizationId !== auth.user.organizationId) {
     logger.warn(
       "attachment download forbidden",
@@ -48,16 +46,6 @@ export async function GET(
   const isRequester =
     auth.user.role === "REQUESTER" && attachment.ticket.requesterId === auth.user.id;
   const isAgent = isAgentOrAdmin(auth.user);
-
-  // Visibility rules: internal attachments are hidden from requesters
-  if (attachment.visibility === "INTERNAL" && !isAgent) {
-    logger.warn(
-      "internal attachment download forbidden for requester",
-      { attachmentId: attachment.id, ticketId: attachment.ticket.id, userId: auth.user.id }
-    );
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
   if (!isAgent && !isRequester) {
     logger.warn(
       "attachment download forbidden",
@@ -66,28 +54,10 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Generate signed download URL with 1 hour expiry (3600 seconds)
-  const downloadUrl = generateSignedDownloadUrl(attachment.filePath, 3600);
-
-  // Record audit event for download
-  await recordAttachmentAudit({
-    ticketId: attachment.ticketId,
-    actorId: auth.user.id,
-    action: "ATTACHMENT_DOWNLOADED",
-    attachment: {
-      id: attachment.id,
-      fileName: attachment.fileName,
-      mimeType: attachment.mimeType,
-      sizeBytes: attachment.sizeBytes,
-      visibility: attachment.visibility,
-      storagePath: attachment.filePath,
-    },
-  }).catch((error) => {
-    logger.warn("failed to record download audit", { error });
-  });
+  const downloadUrl = resolveDownloadUrl(attachment.filePath);
 
   logger.info(
-    "attachment download url generated",
+    "attachment download",
     {
       event: "attachment_download",
       ticketId: attachment.ticketId,
@@ -105,9 +75,8 @@ export async function GET(
       mimeType: attachment.mimeType,
       sizeBytes: attachment.sizeBytes,
       visibility: attachment.visibility,
-      createdAt: attachment.createdAt.toISOString(),
+      status: "CLEAN",
     },
     downloadUrl,
-    expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
   });
 }
