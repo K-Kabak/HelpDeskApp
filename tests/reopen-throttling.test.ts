@@ -488,11 +488,9 @@ describe("Reopen reason validation", () => {
     };
 
     mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
-    mockPrisma.$transaction.mockImplementation(async (queries) => {
-      if (Array.isArray(queries)) {
-        return [updatedTicket, { id: "audit-1", data: auditDataWithReason }];
-      }
-      return queries(mockPrisma);
+    mockPrisma.auditEvent.create.mockResolvedValue({
+      id: "audit-1",
+      data: auditDataWithReason,
     });
 
     const req = new Request("http://localhost/api/tickets/t1", {
@@ -507,8 +505,15 @@ describe("Reopen reason validation", () => {
     const res = await updateTicket(req, { params: { id: "t1" } });
     expect(res.status).toBe(200);
 
-    // Verify transaction was called (this ensures the code path that stores reopenReason was executed)
-    expect(mockPrisma.$transaction).toHaveBeenCalled();
+    // Verify audit event was created with reopen reason (this ensures the code path that stores reopenReason was executed)
+    expect(mockPrisma.auditEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "TICKET_UPDATED",
+        data: expect.objectContaining({
+          reopenReason,
+        }),
+      }),
+    });
   });
 
   test("does not require reopen reason for non-reopen status changes", async () => {

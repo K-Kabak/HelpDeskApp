@@ -15,13 +15,15 @@ const mockPrisma = vi.hoisted(() => ({
   auditEvent: {
     create: vi.fn(),
   },
+  automationRule: {
+    findMany: vi.fn(),
+  },
   user: {
     findFirst: vi.fn(),
   },
   team: {
     findFirst: vi.fn(),
   },
-  $transaction: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
@@ -37,9 +39,9 @@ vi.mock("@/lib/sla-scheduler", () => ({
   scheduleSlaJobsForTicket: mockScheduleSlaJobs,
 }));
 
-const mockNotificationService: NotificationService = {
+const mockNotificationService = vi.hoisted(() => ({
   send: vi.fn(async () => ({ id: "notif-1", status: "queued", deduped: false })),
-};
+}));
 
 vi.mock("@/lib/notification", () => ({
   notificationService: mockNotificationService,
@@ -88,17 +90,13 @@ describe("CSAT trigger on resolution/closure", () => {
 
     mockGetServerSession.mockResolvedValue(makeSession("AGENT"));
     mockPrisma.ticket.findUnique.mockResolvedValue(mockTicket);
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.auditEvent.create.mockResolvedValue({ id: "audit-1" });
     mockPrisma.csatRequest.findUnique.mockResolvedValue(null);
     mockPrisma.csatRequest.create.mockResolvedValue({
       id: "csat-1",
       ticketId,
       createdAt: new Date(),
-    });
-    mockPrisma.$transaction.mockImplementation(async (queries) => {
-      if (Array.isArray(queries)) {
-        return [updatedTicket, { id: "audit-1" }];
-      }
-      return queries(mockPrisma);
     });
 
     const req = new Request(`http://localhost/api/tickets/${ticketId}`, {
@@ -114,7 +112,11 @@ describe("CSAT trigger on resolution/closure", () => {
       where: { ticketId },
     });
     expect(mockPrisma.csatRequest.create).toHaveBeenCalledWith({
-      data: { ticketId },
+      data: expect.objectContaining({
+        ticketId,
+        token: expect.any(String),
+        expiresAt: expect.any(Date),
+      }),
     });
     expect(mockNotificationService.send).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -153,17 +155,13 @@ describe("CSAT trigger on resolution/closure", () => {
 
     mockGetServerSession.mockResolvedValue(makeSession("AGENT"));
     mockPrisma.ticket.findUnique.mockResolvedValue(mockTicket);
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.auditEvent.create.mockResolvedValue({ id: "audit-1" });
     mockPrisma.csatRequest.findUnique.mockResolvedValue(null);
     mockPrisma.csatRequest.create.mockResolvedValue({
       id: "csat-2",
       ticketId,
       createdAt: new Date(),
-    });
-    mockPrisma.$transaction.mockImplementation(async (queries) => {
-      if (Array.isArray(queries)) {
-        return [updatedTicket, { id: "audit-1" }];
-      }
-      return queries(mockPrisma);
     });
 
     const req = new Request(`http://localhost/api/tickets/${ticketId}`, {
@@ -179,7 +177,11 @@ describe("CSAT trigger on resolution/closure", () => {
       where: { ticketId },
     });
     expect(mockPrisma.csatRequest.create).toHaveBeenCalledWith({
-      data: { ticketId },
+      data: expect.objectContaining({
+        ticketId,
+        token: expect.any(String),
+        expiresAt: expect.any(Date),
+      }),
     });
     expect(mockNotificationService.send).toHaveBeenCalled();
   });
@@ -216,13 +218,9 @@ describe("CSAT trigger on resolution/closure", () => {
 
     mockGetServerSession.mockResolvedValue(makeSession("AGENT"));
     mockPrisma.ticket.findUnique.mockResolvedValue(mockTicket);
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.auditEvent.create.mockResolvedValue({ id: "audit-1" });
     mockPrisma.csatRequest.findUnique.mockResolvedValue(existingCsat);
-    mockPrisma.$transaction.mockImplementation(async (queries) => {
-      if (Array.isArray(queries)) {
-        return [updatedTicket, { id: "audit-1" }];
-      }
-      return queries(mockPrisma);
-    });
 
     const req = new Request(`http://localhost/api/tickets/${ticketId}`, {
       method: "PATCH",
@@ -233,9 +231,9 @@ describe("CSAT trigger on resolution/closure", () => {
     const res = await PATCH(req, { params: { id: ticketId } });
     expect(res.status).toBe(200);
 
-    expect(mockPrisma.csatRequest.findUnique).toHaveBeenCalledWith({
-      where: { ticketId },
-    });
+    // When status doesn't change (already ROZWIAZANE), CSAT logic doesn't run
+    // so findUnique is not called
+    expect(mockPrisma.csatRequest.findUnique).not.toHaveBeenCalled();
     expect(mockPrisma.csatRequest.create).not.toHaveBeenCalled();
     expect(mockNotificationService.send).not.toHaveBeenCalled();
   });
@@ -267,12 +265,8 @@ describe("CSAT trigger on resolution/closure", () => {
 
     mockGetServerSession.mockResolvedValue(makeSession("AGENT"));
     mockPrisma.ticket.findUnique.mockResolvedValue(mockTicket);
-    mockPrisma.$transaction.mockImplementation(async (queries) => {
-      if (Array.isArray(queries)) {
-        return [updatedTicket, { id: "audit-1" }];
-      }
-      return queries(mockPrisma);
-    });
+    mockPrisma.ticket.update.mockResolvedValue(updatedTicket);
+    mockPrisma.auditEvent.create.mockResolvedValue({ id: "audit-1" });
 
     const req = new Request(`http://localhost/api/tickets/${ticketId}`, {
       method: "PATCH",
