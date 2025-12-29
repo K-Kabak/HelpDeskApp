@@ -1,4 +1,3 @@
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { runAttachmentScan } from "@/lib/av-scanner";
 import { createPresignedUpload } from "@/lib/storage";
@@ -10,31 +9,31 @@ import {
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createRequestLogger } from "@/lib/logger";
 import { recordAttachmentAudit } from "@/lib/audit";
+import { requireAuth, isSameOrganization } from "@/lib/authorization";
 import { Attachment, AttachmentVisibility } from "@prisma/client";
-import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import type { SessionWithUser } from "@/lib/session-types";
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const auth = await requireAuth();
   const logger = createRequestLogger({
     route: `/api/tickets/${id}/attachments`,
     method: req.method,
-    userId: session.user.id,
+    userId: auth.ok ? auth.user.id : undefined,
   });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
+  }
 
   const rate = checkRateLimit(req, "attachments:create", {
     logger,
-    identifier: session.user.id,
+    identifier: auth.user.id,
   });
   if (!rate.allowed) return rate.response;
 
@@ -62,13 +61,13 @@ export async function POST(
     select: { id: true, requesterId: true, organizationId: true },
   });
 
-  if (!ticket || ticket.organizationId !== session.user.organizationId) {
+  if (!ticket || !isSameOrganization(auth.user, ticket.organizationId)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const isRequester = session.user.role === "REQUESTER";
+  const isRequester = auth.user.role === "REQUESTER";
 
-  if (isRequester && ticket.requesterId !== session.user.id) {
+  if (isRequester && ticket.requesterId !== auth.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -85,7 +84,7 @@ export async function POST(
   const attachment: Attachment = await prisma.attachment.create({
     data: {
       ticketId: ticket.id,
-      uploaderId: session.user.id,
+      uploaderId: auth.user.id,
       fileName: payload.fileName,
       filePath: storagePath,
       mimeType: payload.mimeType,
@@ -96,7 +95,7 @@ export async function POST(
 
   await recordAttachmentAudit({
     ticketId: ticket.id,
-    actorId: session.user.id,
+    actorId: auth.user.id,
     action: "ATTACHMENT_UPLOADED",
     attachment: {
       id: attachment.id,
@@ -128,16 +127,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const auth = await requireAuth();
   const logger = createRequestLogger({
     route: `/api/tickets/${id}/attachments`,
     method: req.method,
-    userId: session.user.id,
+    userId: auth.ok ? auth.user.id : undefined,
   });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
+  }
 
   const body = await req.json().catch(() => null);
   const parsed = deleteSchema.safeParse(body);
@@ -154,19 +154,19 @@ export async function DELETE(
 
   if (
     !attachment ||
-    attachment.ticket.organizationId !== session.user.organizationId ||
+    !isSameOrganization(auth.user, attachment.ticket.organizationId) ||
     attachment.ticket.id !== id
   ) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const isAgent =
-    session.user.role === "AGENT" || session.user.role === "ADMIN";
-  const isRequester = session.user.role === "REQUESTER";
+    auth.user.role === "AGENT" || auth.user.role === "ADMIN";
+  const isRequester = auth.user.role === "REQUESTER";
 
   const requesterOwnsTicket =
-    isRequester && attachment.ticket.requesterId === session.user.id;
-  const requesterUploaded = attachment.uploaderId === session.user.id;
+    isRequester && attachment.ticket.requesterId === auth.user.id;
+  const requesterUploaded = attachment.uploaderId === auth.user.id;
 
   if (!isAgent && !(requesterOwnsTicket && requesterUploaded)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -180,7 +180,7 @@ export async function DELETE(
     await recordAttachmentAudit(
       {
         ticketId: attachment.ticketId,
-        actorId: session.user.id,
+        actorId: auth.user.id,
         action: "ATTACHMENT_DELETED",
         attachment: {
           id: attachment.id,
