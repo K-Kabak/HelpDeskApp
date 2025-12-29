@@ -450,17 +450,25 @@ components:
           format: date-time
     AttachmentUploadRequest:
       type: object
-      required: [filename, sizeBytes, mimeType]
+      required: [fileName, sizeBytes, mimeType]
       properties:
-        filename:
+        fileName:
           type: string
           minLength: 1
+          description: Original filename
         sizeBytes:
           type: integer
           minimum: 1
+          description: File size in bytes
         mimeType:
           type: string
           minLength: 1
+          description: MIME type of the file
+        visibility:
+          type: string
+          enum: [public, internal]
+          default: public
+          description: Visibility of the attachment (public or internal)
     AttachmentUploadResponse:
       type: object
       properties:
@@ -852,16 +860,62 @@ paths:
               schema:
                 type: object
                 properties:
-                  tickets:
+                  items:
                     type: array
                     items:
                       $ref: '#/components/schemas/TicketExpanded'
+                  nextCursor:
+                    type: string
+                    nullable: true
+                    description: Base64-encoded cursor for next page
+                  prevCursor:
+                    type: string
+                    nullable: true
+                    description: Base64-encoded cursor for previous page
+              example:
+                items:
+                  - id: "123e4567-e89b-12d3-a456-426655440000"
+                    number: 1
+                    title: "Sample Ticket"
+                    descriptionMd: "Sample description"
+                    status: "NOWE"
+                    priority: "SREDNI"
+                    category: null
+                    requesterId: "223e4567-e89b-12d3-a456-426655440001"
+                    assigneeUserId: null
+                    assigneeTeamId: null
+                    organizationId: "323e4567-e89b-12d3-a456-426655440002"
+                    firstResponseDue: "2025-12-23T10:00:00Z"
+                    resolveDue: "2025-12-24T10:00:00Z"
+                    firstResponseAt: null
+                    resolvedAt: null
+                    closedAt: null
+                    createdAt: "2025-12-22T10:00:00Z"
+                    updatedAt: "2025-12-22T10:00:00Z"
+                    requester:
+                      id: "223e4567-e89b-12d3-a456-426655440001"
+                      email: "user@example.com"
+                      name: "John Doe"
+                      role: "REQUESTER"
+                      organizationId: "323e4567-e89b-12d3-a456-426655440002"
+                nextCursor: "eyJpZCI6IjEyM2U0NTY3LWU4OWItMTJkMy1hNDU2LTQyNjY1NTQ0MDAwMCIsImNyZWF0ZWRBdCI6IjIwMjUtMTItMjJUMTA6MDA6MDBaIn0"
+                prevCursor: null
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Invalid query parameter"
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
     post:
       summary: Create ticket
       description: |
@@ -893,18 +947,50 @@ paths:
                 properties:
                   ticket:
                     $ref: '#/components/schemas/Ticket'
+              example:
+                ticket:
+                  id: "123e4567-e89b-12d3-a456-426655440000"
+                  number: 1
+                  title: "Unable to access email"
+                  descriptionMd: "I cannot access my email account. Please help."
+                  status: "NOWE"
+                  priority: "WYSOKI"
+                  category: "Email"
+                  requesterId: "223e4567-e89b-12d3-a456-426655440001"
+                  assigneeUserId: null
+                  assigneeTeamId: null
+                  organizationId: "323e4567-e89b-12d3-a456-426655440002"
+                  firstResponseDue: "2025-12-22T12:00:00Z"
+                  resolveDue: "2025-12-23T12:00:00Z"
+                  firstResponseAt: null
+                  resolvedAt: null
+                  closedAt: null
+                  createdAt: "2025-12-22T10:00:00Z"
+                  updatedAt: "2025-12-22T10:00:00Z"
         '400':
           description: Validation error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Title must be at least 3 characters"
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Internal server error"
   /api/tickets/{id}:
     patch:
       summary: Update ticket
@@ -933,6 +1019,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TicketUpdate'
+            example:
+              status: "W_TOKU"
+              assigneeUserId: "423e4567-e89b-12d3-a456-426655440003"
       responses:
         '200':
           description: Ticket updated
@@ -949,24 +1038,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "No updates provided"
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
         '403':
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Forbidden"
         '404':
           description: Not found or other organization
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Internal server error"
     put:
       summary: Replace ticket (same semantics as PATCH)
       description: Mirrors PATCH behavior and validations.
@@ -1046,30 +1151,54 @@ paths:
                 properties:
                   comment:
                     $ref: '#/components/schemas/Comment'
+              example:
+                comment:
+                  id: "c23e4567-e89b-12d3-a456-426655440010"
+                  ticketId: "123e4567-e89b-12d3-a456-426655440000"
+                  authorId: "223e4567-e89b-12d3-a456-426655440001"
+                  isInternal: false
+                  bodyMd: "I'll investigate this issue and get back to you."
+                  createdAt: "2025-12-22T10:30:00Z"
         '400':
           description: Validation error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Body cannot be empty"
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
         '403':
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Forbidden"
         '404':
           description: Not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Ticket not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Internal server error"
   /api/admin/audit-events:
     get:
       summary: List admin audit events
@@ -1770,37 +1899,148 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AttachmentUploadRequest'
+            example:
+              fileName: "document.pdf"
+              sizeBytes: 102400
+              mimeType: "application/pdf"
+              visibility: "public"
       responses:
-        '200':
+        '201':
           description: Upload initiated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AttachmentUploadResponse'
+              example:
+                attachment:
+                  id: "a23e4567-e89b-12d3-a456-426655440010"
+                  ticketId: "123e4567-e89b-12d3-a456-426655440000"
+                  filename: "document.pdf"
+                  originalName: "document.pdf"
+                  mimeType: "application/pdf"
+                  sizeBytes: 102400
+                  uploadedById: "223e4567-e89b-12d3-a456-426655440001"
+                  visibility: "PUBLIC"
+                  scanStatus: "PENDING"
+                  createdAt: "2025-12-22T10:00:00Z"
+                uploadUrl: "https://storage.example.com/upload?token=..."
+                expiresAt: "2025-12-22T10:15:00Z"
         '400':
           description: Validation error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "File type not allowed"
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
         '403':
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Forbidden"
         '404':
           description: Ticket not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Internal server error"
+    delete:
+      summary: Delete attachment
+      description: Deletes an attachment from a ticket. Requires attachmentId in request body.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attachmentId]
+              properties:
+                attachmentId:
+                  type: string
+                  format: uuid
+            example:
+              attachmentId: "a23e4567-e89b-12d3-a456-426655440010"
+      responses:
+        '200':
+          description: Attachment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Invalid attachmentId"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Forbidden"
+        '404':
+          description: Ticket or attachment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Internal server error"
   /api/tickets/{id}/attachments/{attachmentId}:
     get:
       summary: Get attachment
@@ -1829,75 +2069,67 @@ paths:
                 type: object
                 properties:
                   attachment:
-                    $ref: '#/components/schemas/Attachment'
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      fileName:
+                        type: string
+                      mimeType:
+                        type: string
+                      sizeBytes:
+                        type: integer
+                      visibility:
+                        type: string
+                        enum: [INTERNAL, PUBLIC]
+                      status:
+                        type: string
+                        enum: [PENDING, CLEAN, INFECTED, ERROR]
                   downloadUrl:
                     type: string
                     description: Presigned URL for download
+              example:
+                attachment:
+                  id: "a23e4567-e89b-12d3-a456-426655440010"
+                  fileName: "document.pdf"
+                  mimeType: "application/pdf"
+                  sizeBytes: 102400
+                  visibility: "PUBLIC"
+                  status: "CLEAN"
+                downloadUrl: "https://storage.example.com/download?token=..."
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Unauthorized"
         '403':
           description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Forbidden"
         '404':
           description: Ticket or attachment not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
-    delete:
-      summary: Delete attachment
-      description: Deletes an attachment from a ticket.
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: attachmentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Attachment deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '401':
-          description: Unauthorized
+              example:
+                error: "Not found"
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorAsIs'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorAsIs'
-        '404':
-          description: Ticket or attachment not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorAsIs'
+              example:
+                error: "Internal server error"
   /api/tickets/{id}/audit:
     get:
       summary: Get ticket audit timeline
