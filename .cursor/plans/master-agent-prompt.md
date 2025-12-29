@@ -243,56 +243,60 @@ docs/                     # Documentation
 - ✅ Prompt 17: Bulk Actions optimization (bulk endpoint) - PR #239
 - ✅ Prompt 18: E2E tests (bulk actions + saved views) - PR #240
 
-**🎯 Status: CZĘŚCIOWO GOTOWE - WYMAGA NAPRAWY BŁĘDÓW TYPESCRIPT**
+**🎯 Status: ✅ GOTOWE DO KOLEJNEGO ETAPU**
 
-### ✅ POSTĘP W NAPRAWIE
+### ✅ WSZYSTKIE WYMAGANE BŁĘDY NAPRAWIONE
 
 **Naprawione:**
 - ✅ Błędy parsowania (duplikacje kodu) - NAPRAWIONE
 - ✅ Błędy ESLint (`any` types) - NAPRAWIONE
 - ✅ React Hook warnings - NAPRAWIONE
 - ✅ Nieużywane zmienne - NAPRAWIONE
+- ✅ Błędy TypeScript w głównym kodzie (7 błędów) - NAPRAWIONE
 - ✅ `pnpm lint`: ✅ 0 błędów, 0 warnings
+- ✅ `pnpm exec tsc --noEmit`: ✅ 0 błędów w głównym kodzie
+- ✅ `pnpm build`: ✅ SUKCES
 
-**Pozostałe problemy:**
-- ⚠️ Błędy TypeScript w głównym kodzie aplikacji (7 błędów):
-  - `src/lib/auth.ts`: Problem z importem `NextAuthOptions`
-  - `src/app/api/admin/users/route.ts`: Problem z typem `organizationId`
-  - `src/app/app/admin/automation-rules/page.tsx`: Problem z typem `triggerConfig`
-  - `src/app/app/notifications/page.tsx`: Problem z typem `data` (JsonValue vs Record)
-  - `src/app/app/reports/page.tsx`: Problem z typem `KpiMetrics` (null vs undefined)
-  - `src/app/app/ticket-list.tsx`: Brakujące właściwości w typie Ticket
-  - `src/app/app/tickets/[id]/audit-timeline.tsx`: Problem z typem ReactNode
+**Pozostałe (opcjonalne, nie blokujące):**
 - ⚠️ Błędy TypeScript w testach (wiele błędów, ale nie blokują działania aplikacji)
+- ⚠️ Można naprawić później, nie wymagane do kolejnego etapu
 
-**Status lint/TypeScript:**
+**Status lint/TypeScript/Build:**
 - `pnpm lint`: ✅ 0 błędów, 0 warnings
-- `pnpm exec tsc --noEmit`: ⚠️ Błędy w głównym kodzie (7) + błędy w testach (wiele)
+- `pnpm exec tsc --noEmit`: ✅ 0 błędów w głównym kodzie
+- `pnpm build`: ✅ SUKCES
 
 ### 📋 NASTĘPNE KROKI
 
-**KROK 1: Naprawa Błędów TypeScript** ⭐ (WYMAGANE PRZED DALSZYM ROZWOJEM)
+**✅ KROK 1: Naprawa Błędów - ZAKOŃCZONE**
 - ✅ Błędy parsowania i ESLint - NAPRAWIONE
-- ⚠️ Błędy TypeScript w głównym kodzie - WYMAGAJĄ NAPRAWY
-- Użyj promptu: `.cursor/plans/AGENT-FIX-TYPESCRIPT-PROMPT.md`
-- Napraw wszystkie 7 błędów TypeScript w głównym kodzie
-- Zweryfikuj: `pnpm lint`, `pnpm exec tsc --noEmit`, `pnpm build`
+- ✅ Błędy TypeScript w głównym kodzie - NAPRAWIONE
+- ✅ Build - SUKCES
 
-**Po naprawie - Opcja 1: Gotowość do Produkcji**
+**🎯 KROK 2: Wybór Kolejnego Etapu**
+
+**Opcja 1: Gotowość do Produkcji** ⭐ (REKOMENDOWANE)
 - Final code review
 - Finalizacja dokumentacji
 - Przygotowanie do deploymentu
+- Naprawa błędów TypeScript w testach (opcjonalne)
 
-**Po naprawie - Opcja 2: Nowe Funkcje (P2 z Backlogu)**
+**Opcja 2: Nowe Funkcje (P2 z Backlogu)**
 - [093] Signed attachment download URLs
 - [096] SLA calibration tool
+- Inne funkcje z backlogu
 
-**Po naprawie - Opcja 3: Dokumentacja i Szkolenia**
+**Opcja 3: Dokumentacja i Szkolenia**
 - Aktualizacja README
 - Dokumentacja API
 - User guide
 
-**Szczegóły naprawy:** Zobacz `.cursor/plans/agent-fix-all-prompt.md`
+**Opcja 4: Stabilizacja i Optymalizacja**
+- Naprawa błędów TypeScript w testach
+- Optymalizacja wydajności
+- Dodatkowe testy E2E
+
+**Szczegóły statusu:** Zobacz `.cursor/plans/STATUS-FINAL-VERIFICATION.md`
 
 ---
 
@@ -483,4 +487,378 @@ Ten dokument powinien być aktualizowany gdy:
 ---
 
 **Koniec dokumentu referencyjnego.**
+
+
+- `pnpm exec tsc --noEmit`: ⚠️ Błędy w głównym kodzie (7) + błędy w testach (wiele)
+
+### 📋 NASTĘPNE KROKI
+
+**KROK 1: Naprawa Błędów TypeScript** ⭐ (WYMAGANE PRZED DALSZYM ROZWOJEM)
+- ✅ Błędy parsowania i ESLint - NAPRAWIONE
+- ⚠️ Błędy TypeScript w głównym kodzie - WYMAGAJĄ NAPRAWY
+- Użyj promptu: `.cursor/plans/AGENT-FIX-TYPESCRIPT-PROMPT.md`
+- Napraw wszystkie 7 błędów TypeScript w głównym kodzie
+- Zweryfikuj: `pnpm lint`, `pnpm exec tsc --noEmit`, `pnpm build`
+
+**Po naprawie - Opcja 1: Gotowość do Produkcji**
+- Final code review
+
+- Finalizacja dokumentacji
+
+- Przygotowanie do deploymentu
+
+
+
+**Po naprawie - Opcja 2: Nowe Funkcje (P2 z Backlogu)**
+- [093] Signed attachment download URLs
+
+- [096] SLA calibration tool
+
+
+
+**Po naprawie - Opcja 3: Dokumentacja i Szkolenia**
+- Aktualizacja README
+
+- Dokumentacja API
+
+- User guide
+
+
+
+**Szczegóły naprawy:** Zobacz `.cursor/plans/agent-fix-all-prompt.md`
+
+
+---
+
+
+
+## DEVELOPMENT GUIDELINES
+
+
+
+### Authorization Patterns
+
+```typescript
+
+// Always use requireAuth for protected routes
+
+import { requireAuth, ticketScope } from '@/lib/authorization';
+
+
+
+// For API routes
+
+const session = await requireAuth(request, { role: 'ADMIN' });
+
+const tickets = await ticketScope(session).tickets.findMany();
+
+
+
+// For server components
+
+import { getServerSession } from 'next-auth';
+
+import { authOptions } from '@/lib/auth';
+
+const session = await getServerSession(authOptions);
+
+```
+
+
+
+### Database Queries
+
+- **Always use Prisma client** from `@/lib/prisma`
+
+- **Organization scoping** - Always filter by `organizationId`
+
+- **Use indexes** - Check `prisma/schema.prisma` for available indexes
+
+- **Cursor pagination** - For large lists (see `src/lib/ticket-list.ts`)
+
+
+
+### Error Handling
+
+- **API errors:** Return proper HTTP status codes (400, 401, 403, 404, 500)
+
+- **Validation errors:** Use Zod schemas with clear error messages
+
+- **Database errors:** Handle Prisma errors gracefully
+
+
+
+### Testing
+
+- **Unit tests:** `tests/[feature].test.ts` - Test individual functions
+
+- **Integration tests:** `tests/[feature]-integration.test.ts` - Test API endpoints
+
+- **E2E tests:** `e2e/[feature].spec.ts` - Test full user flows
+
+- **Contract tests:** `tests/contract/api-contract.test.ts` - Verify API consistency
+
+
+
+---
+
+
+
+## COMMIT & PR WORKFLOW
+
+
+
+### When to Commit
+
+- After completing a larger feature
+
+- After completing a logical unit of work
+
+- Before switching to completely different area
+
+- When explicitly asked by user
+
+
+
+### Commit Message Format
+
+- `feat: [description]` - New features
+
+- `fix: [description]` - Bug fixes
+
+- `docs: [description]` - Documentation updates
+
+- `test: [description]` - Test additions/changes
+
+- `refactor: [description]` - Code refactoring
+
+- `perf: [description]` - Performance improvements
+
+
+
+### Before Committing
+
+1. Run: `pnpm lint && pnpm exec tsc --noEmit`
+
+2. Fix critical errors only
+
+3. Full test suite can run later in CI
+
+
+
+### PR Creation
+
+- **Only for larger features** - Not every task needs a PR
+
+- Focus on code, not process
+
+- CI will run automatically on PR creation
+
+
+
+---
+
+
+
+## COMMON TASKS
+
+
+
+### Adding a New API Endpoint
+
+1. Create route file: `src/app/api/[resource]/route.ts` or `[resource]/[id]/route.ts`
+
+2. Add authorization checks (`requireAuth`)
+
+3. Add input validation (Zod schemas)
+
+4. Implement business logic
+
+5. Add audit logging (if modifying data)
+
+6. Update `docs/openapi.yaml`
+
+7. Add contract tests in `tests/contract/api-contract.test.ts`
+
+
+
+### Adding a New UI Page
+
+1. Create page: `src/app/app/[page]/page.tsx`
+
+2. Add authorization checks (server component or client-side)
+
+3. Fetch data (server component or API call)
+
+4. Implement UI with Tailwind CSS
+
+5. Add loading/error states
+
+6. Test in browser
+
+
+
+### Adding Database Changes
+
+1. Edit `prisma/schema.prisma`
+
+2. Create migration: `pnpm prisma migrate dev --name [description]`
+
+3. Update seed data if needed: `prisma/seed.js`
+
+4. Test migration locally
+
+
+
+### Adding Tests
+
+1. Choose test type (unit/integration/E2E)
+
+2. Create test file in appropriate directory
+
+3. Use test utilities from `tests/test-utils/`
+
+4. Mock Prisma if needed (see `tests/test-utils/prisma-mocks.ts`)
+
+5. Run: `pnpm test` or `pnpm test:e2e`
+
+
+
+---
+
+
+
+## IMPORTANT REMINDERS
+
+
+
+1. **Always read files before editing** - Understand context first
+
+2. **Preserve code style** - Match existing patterns
+
+3. **Organization scoping** - Always enforce `organizationId` filtering
+
+4. **Role-based access** - Check roles before allowing actions
+
+5. **Audit logging** - Log all data modifications
+
+6. **Type safety** - No `any` types, use proper TypeScript types
+
+7. **Security** - Validate input, sanitize output, enforce authorization
+
+8. **Documentation** - Update OpenAPI spec and docs when adding features
+
+9. **Tests** - Write tests at the end of features, not during development
+
+10. **Batch changes** - Group related work, commit after larger features
+
+
+
+---
+
+
+
+## QUICK REFERENCE
+
+
+
+### Scripts
+
+- `pnpm dev` - Start development server
+
+- `pnpm build` - Build for production
+
+- `pnpm test` - Run unit/integration tests
+
+- `pnpm test:e2e` - Run E2E tests
+
+- `pnpm lint` - Run ESLint
+
+- `pnpm exec tsc --noEmit` - Type check
+
+- `pnpm prisma:migrate` - Run migrations
+
+- `pnpm prisma:seed` - Seed database
+
+
+
+### Key Imports
+
+```typescript
+
+import { requireAuth, ticketScope } from '@/lib/authorization';
+
+import { prisma } from '@/lib/prisma';
+
+import { authOptions } from '@/lib/auth';
+
+import { getServerSession } from 'next-auth';
+
+```
+
+
+
+### Demo Credentials
+
+- Admin: `admin@serwisdesk.local` / `Admin123!`
+
+- Agent: `agent@serwisdesk.local` / `Agent123!`
+
+- Requester: `requester@serwisdesk.local` / `Requester123!`
+
+
+
+---
+
+
+
+## 📋 INFORMACJE DLA AGENTA (REFERENCJA)
+
+**Gdy użytkownik poprosi o pracę nad projektem:**
+
+1. **Zapytaj o konkretne zadanie** - nie zakładaj, że masz wykonać wszystko z tego dokumentu
+2. **Użyj tego dokumentu jako referencji** - sprawdź wzorce, strukturę, status
+3. **Przeczytaj odpowiednie pliki** - zanim zaczniesz edytować
+4. **Postępuj zgodnie z workflow** - batch changes, code first, tests later
+5. **Zatrzymaj się i zapytaj** - jeśli nie jesteś pewien, co użytkownik chce zrobić
+
+**Przykłady użycia:**
+- ✅ "Użyj master-agent-prompt.md jako referencji przy implementacji funkcji X"
+- ✅ "Sprawdź w master-agent-prompt.md jakie są wzorce autoryzacji"
+- ✅ "Zaimplementuj funkcję Y zgodnie z wzorcami z master-agent-prompt.md"
+- ❌ "Wykonaj wszystkie zadania z master-agent-prompt.md" (chyba że użytkownik wyraźnie o to poprosi)
+
+**Główne cele pracy nad projektem (gdy użytkownik o to poprosi):**
+1. Implementacja funkcji z backlogu lub planu
+2. Naprawa błędów i poprawa istniejącego kodu
+3. Utrzymanie jakości kodu (typy, bezpieczeństwo, wzorce)
+4. Aktualizacja dokumentacji przy dodawaniu funkcji
+5. Pisanie testów na końcu funkcji
+6. Zgodność z uproszczonym workflow - batch changes, code first, tests later
+
+**Workflow (gdy użytkownik da konkretne zadanie):**
+1. Przeczytaj odpowiednie pliki planu i dokumentacji
+2. Przejrzyj istniejący kod, aby zrozumieć wzorce
+3. Zaimplementuj funkcję zgodnie z istniejącymi wzorcami
+4. Przetestuj lokalnie: `pnpm lint && pnpm exec tsc --noEmit`
+5. Commit po zakończeniu większych funkcji
+6. Kontynuuj pracę tylko jeśli użytkownik wyraźnie o to poprosi
+
+---
+
+## 🔄 AKTUALIZACJA TEGO DOKUMENTU
+
+Ten dokument powinien być aktualizowany gdy:
+- Zmienia się struktura projektu
+- Dodawane są nowe wzorce
+- Zmienia się status wykonanych zadań
+- Aktualizowane są workflow principles
+
+**Nie aktualizuj tego dokumentu automatycznie** - tylko gdy użytkownik o to poprosi lub gdy jest to częścią większego zadania.
+
+---
+
+**Koniec dokumentu referencyjnego.**
+
+
 
