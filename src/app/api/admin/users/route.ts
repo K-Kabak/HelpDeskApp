@@ -34,6 +34,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const organizationId = auth.user.organizationId;
+  if (!organizationId) {
+    logger.warn("organization.required");
+    return NextResponse.json({ error: "Organization required" }, { status: 400 });
+  }
+
   const rate = checkRateLimit(req, "admin:users:list", {
     logger,
     identifier: auth.user.id,
@@ -42,7 +48,7 @@ export async function GET(req: Request) {
 
   try {
     const users = await prisma.user.findMany({
-      where: { organizationId: auth.user.organizationId ?? undefined },
+      where: { organizationId },
       select: {
         id: true,
         email: true,
@@ -105,6 +111,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const organizationId = auth.user.organizationId;
+  if (!organizationId) {
+    logger.warn("organization.required");
+    return NextResponse.json({ error: "Organization required" }, { status: 400 });
+  }
+
   try {
     const body = await request.json();
     const parsed = createUserSchema.safeParse(body);
@@ -134,7 +146,7 @@ export async function POST(request: NextRequest) {
         name,
         role: role as Role,
         passwordHash,
-        ...(auth.user.organizationId ? { organizationId: auth.user.organizationId } : {}),
+        organizationId,
         emailVerified: new Date(), // Auto-verify for admin-created users
       },
       select: {
@@ -152,7 +164,7 @@ export async function POST(request: NextRequest) {
     await prisma.adminAudit.create({
       data: {
         actorId: auth.user.id,
-        organizationId: auth.user.organizationId ?? "",
+        organizationId,
         resource: "USER",
         resourceId: user.id,
         action: "CREATE",

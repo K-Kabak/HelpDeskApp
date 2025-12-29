@@ -152,39 +152,49 @@ export function AuditTimeline({ ticketId }: { ticketId: string }) {
       <div className="relative">
         <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-200" aria-hidden />
         <div className="space-y-6">
-          {auditEvents.map((event) => (
-            <div key={event.id} className="relative flex gap-3 pl-12">
-              <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-sm font-semibold text-slate-700 shadow-sm">
-                {event.actor.name?.slice(0, 2).toUpperCase() || "??"}
-              </div>
-              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-800">
-                      {event.actor.name || event.actor.email}
-                    </span>
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${roleColors[event.actor.role]}`}>
-                      {roleLabels[event.actor.role]}
+          {auditEvents.map((event) => {
+            const reopenReason =
+              event.action === "TICKET_UPDATED" &&
+              event.data &&
+              typeof event.data === "object" &&
+              "reopenReason" in event.data
+                ? (event.data as { reopenReason?: unknown }).reopenReason
+                : undefined;
+
+            return (
+              <div key={event.id} className="relative flex gap-3 pl-12">
+                <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-sm font-semibold text-slate-700 shadow-sm">
+                  {event.actor.name?.slice(0, 2).toUpperCase() || "??"}
+                </div>
+                <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-800">
+                        {event.actor.name || event.actor.email}
+                      </span>
+                      <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${roleColors[event.actor.role]}`}>
+                        {roleLabels[event.actor.role]}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      {new Date(event.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-500">
-                    {new Date(event.createdAt).toLocaleString()}
-                  </span>
-                </div>
-                <div className="mt-3">
-                  <p className="text-sm text-slate-700">
-                    {formatAuditChange(event.action, event.data)}
-                  </p>
-                  {event.action === "TICKET_UPDATED" && event.data && typeof event.data === "object" && "reopenReason" in event.data && event.data.reopenReason && (
-                    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                      <p className="text-xs font-semibold text-amber-800 mb-1">Powód ponownego otwarcia:</p>
-                      <p className="text-sm text-amber-900">{String((event.data as { reopenReason: unknown }).reopenReason)}</p>
-                    </div>
-                  )}
+                  <div className="mt-3">
+                    <p className="text-sm text-slate-700">
+                      {formatAuditChange(event.action, event.data)}
+                    </p>
+                    {Boolean(reopenReason) && (
+                      <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                        <p className="text-xs font-semibold text-amber-800 mb-1">Powod ponownego otwarcia:</p>
+                        <p className="text-sm text-amber-900">{String(reopenReason)}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

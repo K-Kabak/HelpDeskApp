@@ -2,6 +2,7 @@ import { getAppServerSession } from "@/lib/server-session";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { AutomationRulesManager } from "./automation-rules-manager";
+import { validateActionConfig, validateTriggerConfig } from "@/lib/automation-rules";
 
 export default async function AutomationRulesPage() {
   const session = await getAppServerSession();
@@ -29,15 +30,24 @@ export default async function AutomationRulesPage() {
     }),
   ]);
 
-  const mappedRules = rules.map((rule) => ({
-    id: rule.id,
-    name: rule.name,
-    enabled: rule.enabled,
-    triggerConfig: rule.triggerConfig as Record<string, unknown>, // Will be validated on use
-    actionConfig: rule.actionConfig as Record<string, unknown>, // Will be validated on use
-    createdAt: rule.createdAt,
-    updatedAt: rule.updatedAt,
-  }));
+  const mappedRules = rules.flatMap((rule) => {
+    try {
+      return [
+        {
+          id: rule.id,
+          name: rule.name,
+          enabled: rule.enabled,
+          triggerConfig: validateTriggerConfig(rule.triggerConfig),
+          actionConfig: validateActionConfig(rule.actionConfig),
+          createdAt: rule.createdAt,
+          updatedAt: rule.updatedAt,
+        },
+      ];
+    } catch (error) {
+      console.error("Invalid automation rule config:", rule.id, error);
+      return [];
+    }
+  });
 
   const mappedUsers = users.map((user) => ({
     id: user.id,
