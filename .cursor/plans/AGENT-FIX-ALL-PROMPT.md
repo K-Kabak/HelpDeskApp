@@ -263,3 +263,4 @@ Po zakończeniu przygotuj krótki raport:
 
 
 
+
