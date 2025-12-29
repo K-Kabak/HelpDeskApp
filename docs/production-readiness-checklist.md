@@ -236,6 +236,7 @@ This comprehensive checklist ensures the HelpDeskApp application is ready for pr
   - [x] MinIO connectivity (if used) (Implemented in script and health endpoint)
   - [x] Worker health (if used) (Worker health check script exists)
   - [x] API health endpoint (Health endpoint at `/api/health` verified)
+- [x] Deployment script testing guide exists (`docs/deployment-scripts-testing.md` created with comprehensive testing procedures)
 
 ---
 
@@ -403,10 +404,10 @@ This comprehensive checklist ensures the HelpDeskApp application is ready for pr
 
 ### Log Aggregation
 
-- [ ] Log aggregation is configured (if applicable)
-- [ ] Logs are sent to centralized logging service
-- [ ] Log retention policy is defined
-- [ ] Log access is restricted (security)
+- [ ] Log aggregation is configured (if applicable) (Requires deployment configuration)
+- [ ] Logs are sent to centralized logging service (Requires deployment configuration)
+- [ ] Log retention policy is defined (Requires deployment configuration)
+- [ ] Log access is restricted (security) (Requires deployment configuration)
 
 ### Logging Best Practices
 
@@ -417,10 +418,10 @@ This comprehensive checklist ensures the HelpDeskApp application is ready for pr
 
 ### Logging Documentation
 
-- [ ] Logging configuration is documented
-- [ ] Log format is documented
-- [ ] How to access logs is documented
-- [ ] Log analysis procedures are documented
+- [x] Logging configuration is documented (`docs/logging-monitoring-verification.md` and `docs/monitoring-setup.md`)
+- [x] Log format is documented (`docs/logging-monitoring-verification.md` - JSON structured format with request IDs)
+- [ ] How to access logs is documented (Requires deployment-specific documentation)
+- [ ] Log analysis procedures are documented (Requires deployment-specific documentation)
 
 ---
 
@@ -439,42 +440,42 @@ This comprehensive checklist ensures the HelpDeskApp application is ready for pr
 
 ### Application Monitoring
 
-- [ ] Application metrics are collected
-- [ ] Key metrics are defined:
-  - [ ] Request rate
-  - [ ] Response times
-  - [ ] Error rate
-  - [ ] Database query performance
-  - [ ] Worker queue depth
-- [ ] Metrics are exposed (Prometheus, StatsD, etc.) or sent to monitoring service
-- [ ] Dashboards are configured (if applicable)
+- [x] Application metrics are collected (Database query timing, KPI metrics, worker queue metrics via health check)
+- [x] Key metrics are defined:
+  - [x] Request rate (via structured logging with request IDs - can be extracted from logs)
+  - [x] Response times (via structured logging - can be extracted from logs)
+  - [x] Error rate (via structured logging - can be extracted from logs)
+  - [x] Database query performance (Query timing implemented in `src/lib/prisma.ts`)
+  - [x] Worker queue depth (Available via worker health check `pnpm worker:health`)
+- [ ] Metrics are exposed (Prometheus, StatsD, etc.) or sent to monitoring service (Prometheus endpoint planned - backlog #106)
+- [ ] Dashboards are configured (if applicable) (Requires deployment configuration)
 
 ### Alerting
 
-- [ ] Alerts are configured for critical issues:
-  - [ ] Application down
-  - [ ] High error rate
-  - [ ] Database connectivity issues
-  - [ ] Worker queue backlog
-  - [ ] High response times
-- [ ] Alert thresholds are defined
-- [ ] Alert recipients are configured
-- [ ] Alert escalation procedures exist
+- [ ] Alerts are configured for critical issues (Documented in `docs/monitoring-setup.md` - requires deployment configuration):
+  - [ ] Application down (Documentation provided)
+  - [ ] High error rate (Documentation provided)
+  - [ ] Database connectivity issues (Documentation provided)
+  - [ ] Worker queue backlog (Documentation provided)
+  - [ ] High response times (Documentation provided)
+- [x] Alert thresholds are defined (Documented in `docs/monitoring-setup.md`)
+- [ ] Alert recipients are configured (Requires deployment configuration)
+- [x] Alert escalation procedures exist (Documented in `docs/monitoring-setup.md`)
 
 ### Worker Monitoring
 
-- [ ] Worker health is monitored
-- [ ] Worker queue depth is monitored
-- [ ] Failed job count is monitored
-- [ ] Worker processing time is monitored
-- [ ] Worker alerts are configured
+- [x] Worker health is monitored (Worker health check script exists: `pnpm worker:health`)
+- [x] Worker queue depth is monitored (Available via worker health check - reports waiting, active, failed, completed, paused jobs)
+- [x] Failed job count is monitored (Available via worker health check - reports failed job count and samples failed IDs)
+- [ ] Worker processing time is monitored (Not yet implemented - requires metrics endpoint)
+- [ ] Worker alerts are configured (Documentation provided in `docs/monitoring-setup.md` - requires deployment configuration)
 
 ### Monitoring Documentation
 
-- [ ] Monitoring setup is documented
-- [ ] How to access dashboards is documented
-- [ ] Alert procedures are documented
-- [ ] Incident response procedures are documented
+- [x] Monitoring setup is documented (`docs/monitoring-setup.md` created with comprehensive monitoring guide)
+- [ ] How to access dashboards is documented (Requires deployment-specific dashboard setup)
+- [x] Alert procedures are documented (`docs/monitoring-setup.md` includes alert configuration and examples)
+- [x] Incident response procedures are documented (`docs/runbooks.md` includes incident response checklist)
 
 ---
 
@@ -570,6 +571,8 @@ This comprehensive checklist ensures the HelpDeskApp application is ready for pr
 - [Testing Guide](./testing.md) - Testing documentation
 - [Security Audit Report](./security-audit-report.md) - Security review
 - [Runbooks](./runbooks.md) - Operational procedures
+- [Monitoring Setup](./monitoring-setup.md) - Monitoring configuration and alerting guide
+- [Deployment Scripts Testing](./deployment-scripts-testing.md) - Testing procedures for deployment scripts
 
 ---
 
