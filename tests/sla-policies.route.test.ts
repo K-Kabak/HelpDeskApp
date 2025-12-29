@@ -133,11 +133,12 @@ describe("SLA policy admin API", () => {
 
   it("lists policies scoped to org", async () => {
     mocks.findMany.mockResolvedValue([{ id: "policy-1" }]);
-  const res = await GET();
-  expect(res.status).toBe(200);
-  expect(res.body.policies).toHaveLength(1);
-  expect(mocks.adminAuditCreate).not.toHaveBeenCalled();
-});
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.policies).toHaveLength(1);
+    expect(mocks.adminAuditCreate).not.toHaveBeenCalled();
+  });
 
   it("prevents updating policy from another org", async () => {
     mocks.findUnique.mockResolvedValue({
@@ -184,7 +185,8 @@ describe("SLA policy admin API", () => {
 
     const res = await PATCH(req, { params: { id: "policy-4" } });
     expect(res.status).toBe(200);
-    expect(res.body.policy).toEqual(updated);
+    const body = await res.json();
+    expect(body.policy).toEqual(updated);
     expect(mocks.adminAuditCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -214,10 +216,11 @@ describe("SLA policy admin API", () => {
     });
     mocks.deleteMock.mockResolvedValue({});
 
-  const res = await DELETE(new Request("http://localhost"), { params: { id: "policy-3" } });
-  expect(res.status).toBe(200);
-  expect(res.body).toEqual({ ok: true });
-  expect(mocks.adminAuditCreate).toHaveBeenCalledWith(
+    const res = await DELETE(new Request("http://localhost"), { params: { id: "policy-3" } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ ok: true });
+    expect(mocks.adminAuditCreate).toHaveBeenCalledWith(
     expect.objectContaining({
       data: expect.objectContaining({
         resource: "SLA",
@@ -231,6 +234,6 @@ describe("SLA policy admin API", () => {
         }),
       }),
     }),
-  );
-});
+    );
+  });
 });

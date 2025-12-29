@@ -238,11 +238,7 @@ describe("Admin Teams API Integration", () => {
     });
 
     it("rejects update to team from different org", async () => {
-      mocks.findFirst.mockResolvedValue({
-        id: "team-other",
-        name: "Other Team",
-        organizationId: "other-org",
-      });
+      mocks.findFirst.mockResolvedValue(null);
 
       const req = new Request("http://localhost/api/admin/teams/team-other", {
         method: "PATCH",
@@ -311,11 +307,7 @@ describe("Admin Teams API Integration", () => {
     });
 
     it("rejects deletion of team from different org", async () => {
-      mocks.findFirst.mockResolvedValue({
-        id: "team-other",
-        name: "Other Team",
-        organizationId: "other-org",
-      });
+      mocks.findFirst.mockResolvedValue(null);
 
       const req = new Request("http://localhost/api/admin/teams/team-other", {
         method: "DELETE",

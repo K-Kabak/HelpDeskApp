@@ -81,10 +81,11 @@ export function checkRateLimit(req: Request | NextRequest, routeId: string, opti
     return { allowed: true };
   }
 
-  // Get route-specific config or use defaults
+  const cfg = getConfig();
+  // Get route-specific config or use defaults, but allow env/config overrides to win
   const routeConfig = routeConfigs[routeId];
-  const windowMs = options?.windowMs ?? routeConfig?.windowMs ?? getConfig().windowMs;
-  const maxRequests = options?.maxRequests ?? routeConfig?.maxRequests ?? getConfig().maxRequests;
+  const windowMs = options?.windowMs ?? cfg.windowMs ?? routeConfig?.windowMs ?? 60000;
+  const maxRequests = options?.maxRequests ?? cfg.maxRequests ?? routeConfig?.maxRequests ?? 20;
 
   const identifier = options?.identifier ?? getIdentifier(req);
   const key = `${routeId}:${identifier}`;

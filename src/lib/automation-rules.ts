@@ -45,6 +45,30 @@ export const actionConfigSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+// Looser schema used when reading configs from the database to tolerate older data
+const lenientActionConfigSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("assignUser"),
+    userId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("assignTeam"),
+    teamId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("setPriority"),
+    priority: z.nativeEnum(TicketPriority),
+  }),
+  z.object({
+    type: z.literal("setStatus"),
+    status: z.nativeEnum(TicketStatus),
+  }),
+  z.object({
+    type: z.literal("addTag"),
+    tagId: z.string().min(1),
+  }),
+]);
+
 export type TriggerConfig = z.infer<typeof triggerConfigSchema>;
 export type ActionConfig = z.infer<typeof actionConfigSchema>;
 
@@ -164,14 +188,20 @@ export async function evaluateAutomationRules(
   for (const rule of rules) {
     try {
       const trigger = validateTriggerConfig(rule.triggerConfig);
-      const action = validateActionConfig(rule.actionConfig);
+      const strictAction = actionConfigSchema.safeParse(rule.actionConfig);
+      const action = strictAction.success
+        ? strictAction.data
+        : lenientActionConfigSchema.parse(rule.actionConfig);
 
       if (matchesTrigger(trigger, event)) {
         await executeAction(action, event.ticket.id, event.ticket.organizationId);
       }
     } catch (error) {
-      // Skip invalid rules - errors are handled gracefully
-      // Logging should be done at the caller level if needed
+      // Skip invalid rules but emit a console error for visibility in tests/diagnostics
+      console.error?.("automation_rule.invalid", {
+        ruleId: rule?.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 }

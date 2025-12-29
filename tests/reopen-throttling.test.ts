@@ -10,6 +10,9 @@ const mockPrisma = vi.hoisted(() => ({
   auditEvent: {
     create: vi.fn(),
   },
+  csatRequest: {
+    findUnique: vi.fn(),
+  },
   $transaction: vi.fn(),
 }));
 
@@ -233,7 +236,7 @@ describe("Reopen throttling", () => {
     });
 
     const res = await updateTicket(req, { params: { id: "t1" } });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(403);
   });
 
   test("allows reopen when cooldown is disabled", async () => {

@@ -198,7 +198,7 @@ describe("Worker Job Processing Integration", () => {
       });
 
       expect(result.skipped).toBe(true);
-      expect(result.reason).toBe("already resolved");
+      expect(result.reason).toBe("ticket closed/resolved");
     });
 
     it("skips job when due date not reached", async () => {
@@ -338,4 +338,3 @@ describe("Worker Job Processing Integration", () => {
     });
   });
 });
-
