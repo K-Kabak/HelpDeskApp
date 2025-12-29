@@ -29,10 +29,10 @@ This document distills the current repository state and defines an execution-rea
 
 - **Partial / Fragile**
   - **SLA tracking:** Due dates computed on creation but no background breach detection or pause rules.【F:src/app/api/tickets/route.ts†L86-L109】
-  - **Authorization depth:** UI hides internal comments for requesters, but API responses for comments list are not filtered server-side on ticket fetch, relying on UI filtering.【F:src/app/app/tickets/[id]/page.tsx†L72-L90】
+  - **Authorization depth:** Comment API now enforces organization scoping via `isSameOrganization` check. UI also filters internal comments for requesters.【F:src/app/api/tickets/[id]/comments/route.ts†L46-L59】【F:src/app/app/tickets/[id]/page.tsx†L72-L90】
   - **Attachments:** Prisma model exists but no upload/download APIs or UI flows present.【F:prisma/schema.prisma†L95-L118】
   - **Audit visibility:** Audit events written but not surfaced in UI or API responses.【F:src/app/api/tickets/route.ts†L100-L107】【F:src/app/api/tickets/[id]/route.ts†L188-L193】
-  - **Testing:** Scripts exist but no test files observed; lint/test automation not wired in docs beyond mention.【F:package.json†L5-L31】
+  - **Testing:** Test files exist in `tests/` directory with unit, integration, and E2E tests. CI/CD pipeline includes test execution.【F:tests/】【F:.github/workflows/ci.yml】
 
 - **Not Found (searched via `find src prisma -type f` and inspected API/UI)**
   - File storage configuration or services.

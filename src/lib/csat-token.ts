@@ -1,6 +1,12 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-const CSAT_SECRET = process.env.CSAT_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-change-in-production";
+/**
+ * Get CSAT secret dynamically from environment variables.
+ * This allows the secret to be changed at runtime (useful for testing).
+ */
+function getCsatSecret(): string {
+  return process.env.CSAT_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-change-in-production";
+}
 
 /**
  * Generate a signed token for CSAT request.
@@ -11,7 +17,7 @@ export function generateCsatToken(ticketId: string, expiresInDays: number = 30):
   const expiresAt = Date.now() + expiresInDays * 24 * 60 * 60 * 1000;
   const payload = `${ticketId}:${expiresAt}`;
   
-  const signature = createHmac("sha256", CSAT_SECRET)
+  const signature = createHmac("sha256", getCsatSecret())
     .update(payload)
     .digest("base64url");
   
@@ -44,7 +50,7 @@ export function validateCsatToken(token: string): { ticketId: string; expiresAt:
     
     // Verify signature
     const payload = `${ticketId}:${expiresAt}`;
-    const expectedSignature = createHmac("sha256", CSAT_SECRET)
+    const expectedSignature = createHmac("sha256", getCsatSecret())
       .update(payload)
       .digest("base64url");
     

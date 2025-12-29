@@ -511,6 +511,9 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
+          nullable: true
         organizationId:
           type: string
           format: uuid
@@ -524,8 +527,6 @@ components:
           type: string
           format: uuid
         name:
-          type: string
-        color:
           type: string
         organizationId:
           type: string
@@ -554,6 +555,151 @@ components:
           type: string
           format: date-time
           nullable: true
+    SavedView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: object
+          additionalProperties: true
+        isDefault:
+          type: boolean
+        isShared:
+          type: boolean
+        isTeam:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SlaPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        category:
+          $ref: '#/components/schemas/Category'
+          nullable: true
+        firstResponseHours:
+          type: integer
+        resolveHours:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SlaPolicyCreate:
+      type: object
+      required: [priority, firstResponseHours, resolveHours]
+      properties:
+        priority:
+          type: string
+          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        firstResponseHours:
+          type: integer
+          minimum: 1
+        resolveHours:
+          type: integer
+          minimum: 1
+    SlaPolicyUpdate:
+      type: object
+      properties:
+        priority:
+          type: string
+          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        firstResponseHours:
+          type: integer
+          minimum: 1
+        resolveHours:
+          type: integer
+          minimum: 1
+    AutomationRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        enabled:
+          type: boolean
+        triggerConfig:
+          type: object
+          additionalProperties: true
+        actionConfig:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AutomationRuleCreate:
+      type: object
+      required: [name, triggerConfig, actionConfig]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        triggerConfig:
+          type: object
+          additionalProperties: true
+        actionConfig:
+          type: object
+          additionalProperties: true
+    AutomationRuleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        enabled:
+          type: boolean
+        triggerConfig:
+          type: object
+          additionalProperties: true
+        actionConfig:
+          type: object
+          additionalProperties: true
   parameters:
     Limit:
       name: limit
@@ -1962,6 +2108,1023 @@ paths:
                 $ref: '#/components/schemas/ErrorAsIs'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/health:
+    get:
+      summary: Health check
+      description: |
+        Health check endpoint that verifies connectivity to:
+        - Database (PostgreSQL via Prisma) - required
+        - Redis (via BullMQ) - optional, checked if REDIS_URL is set
+        - MinIO (via HTTP health endpoint) - optional, checked if MINIO_ENDPOINT is set
+        
+        Returns 200 OK if all checked services are healthy, 503 Service Unavailable if any required service is unhealthy.
+      responses:
+        '200':
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  database:
+                    type: boolean
+                  redis:
+                    type: boolean
+                  minio:
+                    type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  database:
+                    type: boolean
+                  redis:
+                    type: boolean
+                  minio:
+                    type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+  /api/tickets/bulk:
+    patch:
+      summary: Bulk update tickets
+      description: |
+        Performs bulk operations on multiple tickets (assign or status change).
+        
+        Authorization:
+        - AGENT/ADMIN only
+        - All tickets must belong to user's organization
+        
+        Supports:
+        - Bulk assignment (assign action with userId value)
+        - Bulk status change (status action with status value)
+        
+        Returns partial success results if some tickets fail.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketIds, action, value]
+              properties:
+                ticketIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 100
+                action:
+                  type: string
+                  enum: [assign, status]
+                value:
+                  type: string
+                  description: User ID for assign action, status enum value for status action
+      responses:
+        '200':
+          description: Bulk operation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: integer
+                  failed:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ticketId:
+                          type: string
+                          format: uuid
+                        error:
+                          type: string
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/views:
+    get:
+      summary: List saved views
+      description: Returns saved views for the authenticated user, including user's own views and team views in the organization.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Saved views list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  views:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedView'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Create saved view
+      description: Creates a new saved view for the authenticated user. Prevents duplicate names per user.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, filters]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                filters:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
+                    priority:
+                      type: string
+                      enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+                    search:
+                      type: string
+                    category:
+                      type: string
+                    tagIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                isShared:
+                  type: boolean
+                  default: false
+                isTeam:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: View created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  view:
+                    $ref: '#/components/schemas/SavedView'
+        '400':
+          description: Validation error or duplicate name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/views/{id}:
+    patch:
+      summary: Update saved view
+      description: Updates a saved view. User can only update their own views or team views they have access to.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                filters:
+                  type: object
+                  additionalProperties: true
+                isShared:
+                  type: boolean
+                isTeam:
+                  type: boolean
+      responses:
+        '200':
+          description: View updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  view:
+                    $ref: '#/components/schemas/SavedView'
+        '400':
+          description: Validation error or duplicate name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: View not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete saved view
+      description: Deletes a saved view. User can only delete their own views or team views they have access to.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: View deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: View not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/views/{id}/set-default:
+    post:
+      summary: Set view as default
+      description: Sets a saved view as the default view for the user. Unsets all other default views for the user.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: View set as default
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: View not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/automation-rules:
+    get:
+      summary: List automation rules
+      description: Returns all automation rules for the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Automation rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutomationRule'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Create automation rule
+      description: Creates a new automation rule in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRuleCreate'
+      responses:
+        '201':
+          description: Automation rule created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rule:
+                    $ref: '#/components/schemas/AutomationRule'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/automation-rules/{id}:
+    patch:
+      summary: Update automation rule
+      description: Updates an automation rule in the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRuleUpdate'
+      responses:
+        '200':
+          description: Automation rule updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rule:
+                    $ref: '#/components/schemas/AutomationRule'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Automation rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete automation rule
+      description: Deletes an automation rule from the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Automation rule deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Automation rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/sla-policies:
+    get:
+      summary: List SLA policies
+      description: Returns all SLA policies for the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: SLA policies list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SlaPolicy'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    post:
+      summary: Create SLA policy
+      description: Creates a new SLA policy in the admin's organization. Requires ADMIN role. Prevents duplicate policies for the same priority/category combination.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlaPolicyCreate'
+      responses:
+        '201':
+          description: SLA policy created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policy:
+                    $ref: '#/components/schemas/SlaPolicy'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '409':
+          description: Policy already exists for this priority/category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/admin/sla-policies/{id}:
+    patch:
+      summary: Update SLA policy
+      description: Updates an SLA policy in the admin's organization. Requires ADMIN role. Prevents duplicate policies for the same priority/category combination.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlaPolicyUpdate'
+      responses:
+        '200':
+          description: SLA policy updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policy:
+                    $ref: '#/components/schemas/SlaPolicy'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: SLA policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '409':
+          description: Policy already exists for this priority/category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+    delete:
+      summary: Delete SLA policy
+      description: Deletes an SLA policy from the admin's organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SLA policy deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: SLA policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/reports/kpi:
+    get:
+      summary: Get KPI metrics
+      description: Returns KPI metrics for the organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for metrics calculation (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: End date for metrics calculation (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: KPI metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/reports/analytics:
+    get:
+      summary: Get analytics data
+      description: Returns analytics data for the organization. Requires ADMIN role. Supports both days parameter and custom date range.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: days
+          in: query
+          description: Number of days to analyze (7-365, default: 30)
+          schema:
+            type: integer
+            minimum: 7
+            maximum: 365
+            default: 30
+        - name: startDate
+          in: query
+          description: Start date for analytics (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: End date for analytics (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Invalid date format or range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/reports/csat:
+    get:
+      summary: Get CSAT analytics
+      description: Returns CSAT analytics for the organization. Requires ADMIN role.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for CSAT analysis (ISO 8601, default: 30 days ago)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: End date for CSAT analysis (ISO 8601, default: now)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: CSAT analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: object
+                    properties:
+                      startDate:
+                        type: string
+                        format: date-time
+                      endDate:
+                        type: string
+                        format: date-time
+                  summary:
+                    type: object
+                    properties:
+                      totalResponses:
+                        type: integer
+                      averageScore:
+                        type: number
+                      responseRate:
+                        type: number
+                      totalResolvedTickets:
+                        type: integer
+                      distribution:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                      byPriority:
+                        type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                            average:
+                              type: number
+                      byCategory:
+                        type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                            average:
+                              type: number
+                  responses:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        ticketNumber:
+                          type: integer
+                        ticketId:
+                          type: string
+                          format: uuid
+                        score:
+                          type: integer
+                          minimum: 1
+                          maximum: 5
+                        comment:
+                          type: string
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+                        ticketPriority:
+                          type: string
+                          enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+                        ticketCategory:
+                          type: string
+                          nullable: true
+        '400':
+          description: Invalid date format or range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/reports/export/tickets:
+    get:
+      summary: Export tickets to CSV
+      description: Exports tickets to CSV format. Available to AGENT and ADMIN roles only. Supports filtering by status, priority, search, category, tags, and date ranges.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by ticket status
+          schema:
+            type: string
+            enum: [NOWE, W_TOKU, OCZEKUJE_NA_UZYTKOWNIKA, WSTRZYMANE, ROZWIAZANE, ZAMKNIETE, PONOWNIE_OTWARTE]
+        - name: priority
+          in: query
+          description: Filter by ticket priority
+          schema:
+            type: string
+            enum: [NISKI, SREDNI, WYSOKI, KRYTYCZNY]
+        - name: search
+          in: query
+          description: Search in title and description
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Comma-separated tag IDs
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: Filter tickets created on or after this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter tickets created on or before this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: CSV file with tickets
+          content:
+            text/csv:
+              schema:
+                type: string
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden (export not available for requesters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+  /api/reports/export/comments:
+    get:
+      summary: Export comments to CSV
+      description: Exports comments to CSV format. Supports filtering by ticket, date range, and internal comments (agents/admins only).
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: ticketId
+          in: query
+          description: Filter by specific ticket ID
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          description: Filter comments created on or after this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter comments created on or before this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: internal
+          in: query
+          description: Include internal comments (must be "true", agents/admins only)
+          schema:
+            type: string
+            enum: [true]
+      responses:
+        '200':
+          description: CSV file with comments
+          content:
+            text/csv:
+              schema:
+                type: string
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorAsIs'
+        '404':
+          description: Ticket not found or access denied
           content:
             application/json:
               schema:

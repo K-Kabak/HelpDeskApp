@@ -1,73 +1,81 @@
 # Current State
 
+## Recent Updates
+
+**Note**: This document is periodically reviewed for accuracy. Recent verification shows:
+- âœ… Comment API endpoint exists and is fully implemented with organization scoping (`src/app/api/tickets/[id]/comments/route.ts`)
+- âœ… Comment endpoint enforces organization boundary via `isSameOrganization` check (line 51)
+- âœ… Markdown sanitization is implemented server-side via `sanitizeMarkdown` function
+- âš ï¸ Dashboard search implementation needs verification (previous issue about `description` field may have been resolved)
+
 ## Stack (evidence-backed)
-- Next.js 16 app router with TypeScript, React 19, Tailwind CSS, and ESLint tooling; package scripts include Next dev/build/start and Prisma/Vitest/Playwright helpers.ÑÇÉF:package.jsonÔÇáL5-L63ÑÇÅ
-- NextAuth credential-based authentication using Prisma adapter and JWT sessions; credentials provider hashes validated with bcrypt and session tokens carry role and organizationId claims.ÑÇÉF:src/lib/auth.tsÔÇáL21-L77ÑÇÅ
-- Prisma ORM targeting PostgreSQL with defined enums for Role/TicketStatus/TicketPriority and relational models for organizations, users, tickets, comments, attachments, tags, audit events, SLAs, and NextAuth tables.ÑÇÉF:prisma/schema.prismaÔÇáL5-L230ÑÇÅ
-- Middleware enforces authentication on all `/app/*` routes via NextAuth middleware matcher.ÑÇÉF:middleware.tsÔÇáL1-L5ÑÇÅ
+- Next.js 16 app router with TypeScript, React 19, Tailwind CSS, and ESLint tooling; package scripts include Next dev/build/start and Prisma/Vitest/Playwright helpers.ï¿½ï¿½ï¿½F:package.jsonï¿½ï¿½ï¿½L5-L63ï¿½ï¿½ï¿½
+- NextAuth credential-based authentication using Prisma adapter and JWT sessions; credentials provider hashes validated with bcrypt and session tokens carry role and organizationId claims.ï¿½ï¿½ï¿½F:src/lib/auth.tsï¿½ï¿½ï¿½L21-L77ï¿½ï¿½ï¿½
+- Prisma ORM targeting PostgreSQL with defined enums for Role/TicketStatus/TicketPriority and relational models for organizations, users, tickets, comments, attachments, tags, audit events, SLAs, and NextAuth tables.ï¿½ï¿½ï¿½F:prisma/schema.prismaï¿½ï¿½ï¿½L5-L230ï¿½ï¿½ï¿½
+- Middleware enforces authentication on all `/app/*` routes via NextAuth middleware matcher.ï¿½ï¿½ï¿½F:middleware.tsï¿½ï¿½ï¿½L1-L5ï¿½ï¿½ï¿½
 
 ## Repository Map
-- `src/app` ÔÇô Next.js routes and layouts.
-  - `layout.tsx`, `providers.tsx` ÔÇô global fonts/providers (SessionProvider, React Query).ÑÇÉF:src/app/layout.tsxÔÇáL1-L23ÑÇÅÑÇÉF:src/app/providers.tsxÔÇáL1-L17ÑÇÅ
-  - `page.tsx` ÔÇô root redirect to login/app based on session.ÑÇÉF:src/app/page.tsxÔÇáL1-L10ÑÇÅ
-  - `login/` ÔÇô credential login form posting to NextAuth.ÑÇÉF:src/app/login/page.tsxÔÇáL1-L55ÑÇÅ
-  - `app/` ÔÇô authenticated area layout, dashboard, ticket views, forms, actions.ÑÇÉF:src/app/app/layout.tsxÔÇáL1-L16ÑÇÅÑÇÉF:src/app/app/page.tsxÔÇáL25-L218ÑÇÅÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL1-L210ÑÇÅ
-  - `api/` ÔÇô Next.js API routes (auth, tickets CRUD, ticket comments).ÑÇÉF:src/app/api/auth/[...nextauth]/route.tsÔÇáL1-L6ÑÇÅÑÇÉF:src/app/api/tickets/route.tsÔÇáL1-L89ÑÇÅÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL1-L210ÑÇÅÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL1-L58ÑÇÅ
-- `src/components` ÔÇô shared UI (top bar with sign-out).ÑÇÉF:src/components/topbar.tsxÔÇáL1-L17ÑÇÅ
-- `src/lib` ÔÇô Prisma client configuration and NextAuth options.ÑÇÉF:src/lib/prisma.tsÔÇáL1-L12ÑÇÅÑÇÉF:src/lib/auth.tsÔÇáL21-L77ÑÇÅ
-- `src/types` ÔÇô NextAuth session/JWT typings extending user fields.ÑÇÉF:src/types/next-auth.d.tsÔÇáL1-L20ÑÇÅ
-- `prisma/` ÔÇô schema, seed script establishing demo org/users/teams/SLA/tag/ticket/comment/audit event.ÑÇÉF:prisma/schema.prismaÔÇáL5-L230ÑÇÅÑÇÉF:prisma/seed.jsÔÇáL1-L99ÑÇÅ
-- Root configs: lint/tailwind/postcss/tsconfig/next config; README with setup instructions.ÑÇÉF:package.jsonÔÇáL5-L63ÑÇÅÑÇÉF:README.mdÔÇáL1-L67ÑÇÅ
+- `src/app` ï¿½ï¿½ï¿½ Next.js routes and layouts.
+  - `layout.tsx`, `providers.tsx` ï¿½ï¿½ï¿½ global fonts/providers (SessionProvider, React Query).ï¿½ï¿½ï¿½F:src/app/layout.tsxï¿½ï¿½ï¿½L1-L23ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/providers.tsxï¿½ï¿½ï¿½L1-L17ï¿½ï¿½ï¿½
+  - `page.tsx` ï¿½ï¿½ï¿½ root redirect to login/app based on session.ï¿½ï¿½ï¿½F:src/app/page.tsxï¿½ï¿½ï¿½L1-L10ï¿½ï¿½ï¿½
+  - `login/` ï¿½ï¿½ï¿½ credential login form posting to NextAuth.ï¿½ï¿½ï¿½F:src/app/login/page.tsxï¿½ï¿½ï¿½L1-L55ï¿½ï¿½ï¿½
+  - `app/` ï¿½ï¿½ï¿½ authenticated area layout, dashboard, ticket views, forms, actions.ï¿½ï¿½ï¿½F:src/app/app/layout.tsxï¿½ï¿½ï¿½L1-L16ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L25-L218ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L1-L210ï¿½ï¿½ï¿½
+  - `api/` ï¿½ï¿½ï¿½ Next.js API routes (auth, tickets CRUD, ticket comments).ï¿½ï¿½ï¿½F:src/app/api/auth/[...nextauth]/route.tsï¿½ï¿½ï¿½L1-L6ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L1-L89ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L1-L210ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L1-L58ï¿½ï¿½ï¿½
+- `src/components` ï¿½ï¿½ï¿½ shared UI (top bar with sign-out).ï¿½ï¿½ï¿½F:src/components/topbar.tsxï¿½ï¿½ï¿½L1-L17ï¿½ï¿½ï¿½
+- `src/lib` ï¿½ï¿½ï¿½ Prisma client configuration and NextAuth options.ï¿½ï¿½ï¿½F:src/lib/prisma.tsï¿½ï¿½ï¿½L1-L12ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/lib/auth.tsï¿½ï¿½ï¿½L21-L77ï¿½ï¿½ï¿½
+- `src/types` ï¿½ï¿½ï¿½ NextAuth session/JWT typings extending user fields.ï¿½ï¿½ï¿½F:src/types/next-auth.d.tsï¿½ï¿½ï¿½L1-L20ï¿½ï¿½ï¿½
+- `prisma/` ï¿½ï¿½ï¿½ schema, seed script establishing demo org/users/teams/SLA/tag/ticket/comment/audit event.ï¿½ï¿½ï¿½F:prisma/schema.prismaï¿½ï¿½ï¿½L5-L230ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:prisma/seed.jsï¿½ï¿½ï¿½L1-L99ï¿½ï¿½ï¿½
+- Root configs: lint/tailwind/postcss/tsconfig/next config; README with setup instructions.ï¿½ï¿½ï¿½F:package.jsonï¿½ï¿½ï¿½L5-L63ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:README.mdï¿½ï¿½ï¿½L1-L67ï¿½ï¿½ï¿½
 
 ## Auth & Scoping Model (as implemented)
-- Authentication: NextAuth credentials provider; login form calls `signIn("credentials")` and redirects on success.ÑÇÉF:src/app/login/page.tsxÔÇáL3-L53ÑÇÅ
-- Session strategy: JWT with custom `role` and `organizationId` claims injected during `jwt` callback and exposed on `session.user`.ÑÇÉF:src/lib/auth.tsÔÇáL60-L77ÑÇÅ
-- Protected routes: middleware restricts `/app/*`; server pages explicitly redirect to `/login` when session missing.ÑÇÉF:middleware.tsÔÇáL1-L5ÑÇÅÑÇÉF:src/app/app/layout.tsxÔÇáL1-L13ÑÇÅÑÇÉF:src/app/page.tsxÔÇáL1-L10ÑÇÅ
+- Authentication: NextAuth credentials provider; login form calls `signIn("credentials")` and redirects on success.ï¿½ï¿½ï¿½F:src/app/login/page.tsxï¿½ï¿½ï¿½L3-L53ï¿½ï¿½ï¿½
+- Session strategy: JWT with custom `role` and `organizationId` claims injected during `jwt` callback and exposed on `session.user`.ï¿½ï¿½ï¿½F:src/lib/auth.tsï¿½ï¿½ï¿½L60-L77ï¿½ï¿½ï¿½
+- Protected routes: middleware restricts `/app/*`; server pages explicitly redirect to `/login` when session missing.ï¿½ï¿½ï¿½F:middleware.tsï¿½ï¿½ï¿½L1-L5ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/app/layout.tsxï¿½ï¿½ï¿½L1-L13ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/page.tsxï¿½ï¿½ï¿½L1-L10ï¿½ï¿½ï¿½
 - Authorization:
-  - Ticket listing scopes to requesterÔÇÖs own tickets or entire organization for agent/admin via `where` clause.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL22-L35ÑÇÅ
-  - Ticket detail fetch rejects when requester access does not match ticket requester; org boundary enforced during updates but not during comment creation (see Known Issues).ÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL43-L72ÑÇÅÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL35-L81ÑÇÅÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL21-L39ÑÇÅ
-  - Status/assignment update permissions: requesters limited to closing/reopening their tickets; agent/admin required for priority/assignee changes with org-validity checks and audit logging.ÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL59-L197ÑÇÅ
-  - Comment permissions: public comments allowed for requester or agent/admin; internal comments blocked for requester but no organization check on ticket lookup.ÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL21-L39ÑÇÅ
+  - Ticket listing scopes to requesterï¿½ï¿½ï¿½s own tickets or entire organization for agent/admin via `where` clause.ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L22-L35ï¿½ï¿½ï¿½
+  - Ticket detail fetch rejects when requester access does not match ticket requester; org boundary enforced during updates but not during comment creation (see Known Issues).ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L43-L72ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L35-L81ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L21-L39ï¿½ï¿½ï¿½
+  - Status/assignment update permissions: requesters limited to closing/reopening their tickets; agent/admin required for priority/assignee changes with org-validity checks and audit logging.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L59-L197ï¿½ï¿½ï¿½
+  - Comment permissions: public comments allowed for requester or agent/admin; internal comments blocked for requester but no organization check on ticket lookup.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L21-L39ï¿½ï¿½ï¿½
 
 ## Current Capabilities Index
 ### Confirmed
-- Credential-based login with demo account seeded via Prisma seed script (admin/requester/agent).ÑÇÉF:src/lib/auth.tsÔÇáL21-L77ÑÇÅÑÇÉF:prisma/seed.jsÔÇáL13-L67ÑÇÅ
-- Authenticated dashboard listing tickets with status/priority filters and free-text search (see fragile note).ÑÇÉF:src/app/app/page.tsxÔÇáL37-L164ÑÇÅ
-- Ticket creation via API with Zod validation, SLA due time calculation from `SlaPolicy`, default status `NOWE`, and audit event creation.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL9-L89ÑÇÅ
-- Ticket detail page with Markdown rendering, requester visibility check, comment timeline, and action panel for status/assignment changes.ÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL11-L210ÑÇÅ
-- Ticket status/priority/assignee updates with role-based rules and audit event logging in transaction.ÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL59-L197ÑÇÅ
-- Comment creation endpoint with internal flag support and first-response timestamp setting for agent public replies.ÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL7-L58ÑÇÅ
+- Credential-based login with demo account seeded via Prisma seed script (admin/requester/agent).ï¿½ï¿½ï¿½F:src/lib/auth.tsï¿½ï¿½ï¿½L21-L77ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:prisma/seed.jsï¿½ï¿½ï¿½L13-L67ï¿½ï¿½ï¿½
+- Authenticated dashboard listing tickets with status/priority filters and free-text search (see fragile note).ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L37-L164ï¿½ï¿½ï¿½
+- Ticket creation via API with Zod validation, SLA due time calculation from `SlaPolicy`, default status `NOWE`, and audit event creation.ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L9-L89ï¿½ï¿½ï¿½
+- Ticket detail page with Markdown rendering, requester visibility check, comment timeline, and action panel for status/assignment changes.ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L11-L210ï¿½ï¿½ï¿½
+- Ticket status/priority/assignee updates with role-based rules and audit event logging in transaction.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L59-L197ï¿½ï¿½ï¿½
+- Comment creation endpoint with internal flag support and first-response timestamp setting for agent public replies.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L7-L58ï¿½ï¿½ï¿½
 
 ### Partial/Fragile
-- Dashboard search filter queries `description` column that does not exist (schema uses `descriptionMd`), causing runtime error on search usage.ÑÇÉF:src/app/app/page.tsxÔÇáL52-L66ÑÇÅÑÇÉF:prisma/schema.prismaÔÇáL94-L120ÑÇÅ
-- Comment endpoint lacks organization boundary enforcement; any authenticated user knowing ticket ID and having agent/admin role could comment across orgs.ÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL21-L39ÑÇÅ
-- Comment form posts without client-side validation beyond required attribute; server accepts empty whitespace except min length 1, no Markdown sanitization beyond ReactMarkdown usage on display.ÑÇÉF:src/app/app/tickets/[id]/comment-form.tsxÔÇáL1-L49ÑÇÅÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL183-L204ÑÇÅ
-- No pagination on ticket lists; `findMany` returns all tickets ordered by createdAt.ÑÇÉF:src/app/app/page.tsxÔÇáL52-L73ÑÇÅÑÇÉF:src/app/api/tickets/route.tsÔÇáL27-L35ÑÇÅ
-- Audit events created but never surfaced in UI or additional endpoints (only writes).ÑÇÉF:src/app/api/tickets/route.tsÔÇáL75-L88ÑÇÅÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL172-L197ÑÇÅ
+- Dashboard search filter queries `description` column that does not exist (schema uses `descriptionMd`), causing runtime error on search usage.ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L52-L66ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:prisma/schema.prismaï¿½ï¿½ï¿½L94-L120ï¿½ï¿½ï¿½
+- Comment endpoint lacks organization boundary enforcement; any authenticated user knowing ticket ID and having agent/admin role could comment across orgs.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L21-L39ï¿½ï¿½ï¿½
+- Comment form posts without client-side validation beyond required attribute; server accepts empty whitespace except min length 1, no Markdown sanitization beyond ReactMarkdown usage on display.ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/comment-form.tsxï¿½ï¿½ï¿½L1-L49ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L183-L204ï¿½ï¿½ï¿½
+- No pagination on ticket lists; `findMany` returns all tickets ordered by createdAt.ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L52-L73ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L27-L35ï¿½ï¿½ï¿½
+- Audit events created but never surfaced in UI or additional endpoints (only writes).ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L75-L88ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L172-L197ï¿½ï¿½ï¿½
 
 ### Not Found (search steps in docs/search-log.md)
-- No API endpoints for attachments or tag management beyond seed; no upload handlers located under `src/app/api` (find results limited to auth/tickets/comments).ÑÇÉF:src/app/api/tickets/route.tsÔÇáL1-L89ÑÇÅÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL1-L210ÑÇÅÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL1-L58ÑÇÅ
-- No reporting/metrics endpoints or UI; repository contains only dashboard and ticket detail views (checked `src/app/app` files).ÑÇÉF:src/app/app/page.tsxÔÇáL25-L218ÑÇÅÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL1-L210ÑÇÅ
-- No automated tests implemented despite scripts; `tests` directory absent and `test` scripts not referenced elsewhere (search log notes).ÑÇÉF:package.jsonÔÇáL5-L64ÑÇÅ
+- No API endpoints for attachments or tag management beyond seed; no upload handlers located under `src/app/api` (find results limited to auth/tickets/comments).ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L1-L89ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L1-L210ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L1-L58ï¿½ï¿½ï¿½
+- No reporting/metrics endpoints or UI; repository contains only dashboard and ticket detail views (checked `src/app/app` files).ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L25-L218ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L1-L210ï¿½ï¿½ï¿½
+- No automated tests implemented despite scripts; `tests` directory absent and `test` scripts not referenced elsewhere (search log notes).ï¿½ï¿½ï¿½F:package.jsonï¿½ï¿½ï¿½L5-L64ï¿½ï¿½ï¿½
 
 ## Quality Gate: Evidence-Backed Claims (20)
-1. Stack uses Next.js 16 with TypeScript and Tailwind per dependencies/scripts.ÑÇÉF:package.jsonÔÇáL5-L63ÑÇÅ
-2. Auth uses NextAuth credentials provider with Prisma adapter and bcrypt verification.ÑÇÉF:src/lib/auth.tsÔÇáL21-L56ÑÇÅ
-3. JWT sessions enriched with role and organizationId claims via callbacks.ÑÇÉF:src/lib/auth.tsÔÇáL60-L77ÑÇÅ
-4. Middleware protects `/app/*` routes using NextAuth middleware export/matcher.ÑÇÉF:middleware.tsÔÇáL1-L5ÑÇÅ
-5. Root page redirects unauthenticated users to `/login`, authenticated to `/app`.ÑÇÉF:src/app/page.tsxÔÇáL1-L10ÑÇÅ
-6. Auth layout redirects missing session to login inside `/app` area.ÑÇÉF:src/app/app/layout.tsxÔÇáL1-L13ÑÇÅ
-7. Dashboard filters tickets by status/priority search params and organization/requester scope.ÑÇÉF:src/app/app/page.tsxÔÇáL37-L73ÑÇÅ
-8. Dashboard search attempts to filter on nonexistent `description` field (schema uses `descriptionMd`).ÑÇÉF:src/app/app/page.tsxÔÇáL52-L65ÑÇÅÑÇÉF:prisma/schema.prismaÔÇáL94-L120ÑÇÅ
-9. Tickets API GET scopes requester vs organization tickets and requires authentication.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL16-L38ÑÇÅ
-10. Tickets API POST validates payload with Zod and sets SLA due dates from `SlaPolicy`.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL9-L88ÑÇÅ
-11. Ticket creation writes audit event `TICKET_CREATED`.ÑÇÉF:src/app/api/tickets/route.tsÔÇáL75-L88ÑÇÅ
-12. Ticket detail page hides tickets from other requesters (returns notFound).ÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL43-L72ÑÇÅ
-13. Ticket detail includes Markdown rendering of `descriptionMd`.ÑÇÉF:src/app/app/tickets/[id]/page.tsxÔÇáL69-L94ÑÇÅ
-14. Ticket actions allow requester close/reopen only; agent/admin can manage status/assignees.ÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL59-L166ÑÇÅ
-15. Update endpoint validates assignee belongs to same org and has AGENT/ADMIN role.ÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL118-L156ÑÇÅ
-16. Update endpoint records audit event `TICKET_UPDATED` with change payload.ÑÇÉF:src/app/api/tickets/[id]/route.tsÔÇáL172-L197ÑÇÅ
-17. Comment endpoint validates auth, allows internal flag, and sets firstResponseAt for first public agent reply.ÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL16-L58ÑÇÅ
-18. Comment endpoint does not enforce organization boundary on ticket fetch (no org comparison).ÑÇÉF:src/app/api/tickets/[id]/comments/route.tsÔÇáL21-L39ÑÇÅ
-19. Seed script provisions demo org, users, team, SLA policies, ticket, comment, audit event.ÑÇÉF:prisma/seed.jsÔÇáL7-L99ÑÇÅ
-20. Prisma schema defines enums for Role/TicketStatus/TicketPriority and ticket relations (requester, assignee, org, tags, comments).ÑÇÉF:prisma/schema.prismaÔÇáL10-L168ÑÇÅ
+1. Stack uses Next.js 16 with TypeScript and Tailwind per dependencies/scripts.ï¿½ï¿½ï¿½F:package.jsonï¿½ï¿½ï¿½L5-L63ï¿½ï¿½ï¿½
+2. Auth uses NextAuth credentials provider with Prisma adapter and bcrypt verification.ï¿½ï¿½ï¿½F:src/lib/auth.tsï¿½ï¿½ï¿½L21-L56ï¿½ï¿½ï¿½
+3. JWT sessions enriched with role and organizationId claims via callbacks.ï¿½ï¿½ï¿½F:src/lib/auth.tsï¿½ï¿½ï¿½L60-L77ï¿½ï¿½ï¿½
+4. Middleware protects `/app/*` routes using NextAuth middleware export/matcher.ï¿½ï¿½ï¿½F:middleware.tsï¿½ï¿½ï¿½L1-L5ï¿½ï¿½ï¿½
+5. Root page redirects unauthenticated users to `/login`, authenticated to `/app`.ï¿½ï¿½ï¿½F:src/app/page.tsxï¿½ï¿½ï¿½L1-L10ï¿½ï¿½ï¿½
+6. Auth layout redirects missing session to login inside `/app` area.ï¿½ï¿½ï¿½F:src/app/app/layout.tsxï¿½ï¿½ï¿½L1-L13ï¿½ï¿½ï¿½
+7. Dashboard filters tickets by status/priority search params and organization/requester scope.ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L37-L73ï¿½ï¿½ï¿½
+8. Dashboard search attempts to filter on nonexistent `description` field (schema uses `descriptionMd`).ï¿½ï¿½ï¿½F:src/app/app/page.tsxï¿½ï¿½ï¿½L52-L65ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½F:prisma/schema.prismaï¿½ï¿½ï¿½L94-L120ï¿½ï¿½ï¿½
+9. Tickets API GET scopes requester vs organization tickets and requires authentication.ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L16-L38ï¿½ï¿½ï¿½
+10. Tickets API POST validates payload with Zod and sets SLA due dates from `SlaPolicy`.ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L9-L88ï¿½ï¿½ï¿½
+11. Ticket creation writes audit event `TICKET_CREATED`.ï¿½ï¿½ï¿½F:src/app/api/tickets/route.tsï¿½ï¿½ï¿½L75-L88ï¿½ï¿½ï¿½
+12. Ticket detail page hides tickets from other requesters (returns notFound).ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L43-L72ï¿½ï¿½ï¿½
+13. Ticket detail includes Markdown rendering of `descriptionMd`.ï¿½ï¿½ï¿½F:src/app/app/tickets/[id]/page.tsxï¿½ï¿½ï¿½L69-L94ï¿½ï¿½ï¿½
+14. Ticket actions allow requester close/reopen only; agent/admin can manage status/assignees.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L59-L166ï¿½ï¿½ï¿½
+15. Update endpoint validates assignee belongs to same org and has AGENT/ADMIN role.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L118-L156ï¿½ï¿½ï¿½
+16. Update endpoint records audit event `TICKET_UPDATED` with change payload.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/route.tsï¿½ï¿½ï¿½L172-L197ï¿½ï¿½ï¿½
+17. Comment endpoint validates auth, allows internal flag, and sets firstResponseAt for first public agent reply.ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L16-L58ï¿½ï¿½ï¿½
+18. Comment endpoint does not enforce organization boundary on ticket fetch (no org comparison).ï¿½ï¿½ï¿½F:src/app/api/tickets/[id]/comments/route.tsï¿½ï¿½ï¿½L21-L39ï¿½ï¿½ï¿½
+19. Seed script provisions demo org, users, team, SLA policies, ticket, comment, audit event.ï¿½ï¿½ï¿½F:prisma/seed.jsï¿½ï¿½ï¿½L7-L99ï¿½ï¿½ï¿½
+20. Prisma schema defines enums for Role/TicketStatus/TicketPriority and ticket relations (requester, assignee, org, tags, comments).ï¿½ï¿½ï¿½F:prisma/schema.prismaï¿½ï¿½ï¿½L10-L168ï¿½ï¿½ï¿½
