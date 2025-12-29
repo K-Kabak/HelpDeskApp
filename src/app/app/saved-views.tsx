@@ -140,8 +140,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
       applyView(newView);
       toast.success("Widok został zapisany");
     } catch {
-      const message = error instanceof Error ? error.message : "Nie udało się zapisać widoku";
-      toast.error(message);
+      toast.error("Nie udało się zapisać widoku");
     } finally {
       setIsLoading(false);
     }

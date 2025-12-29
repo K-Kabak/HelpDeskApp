@@ -295,32 +295,27 @@ async function updateTicket(
 
   const auditDataJson = auditData as Prisma.InputJsonValue;
 
-  const transactionOps = [
-    prisma.ticket.update({
-      where: { id: ticket.id },
-      data: updates,
-      include: {
-        requester: true,
-        assigneeUser: true,
-        assigneeTeam: true,
-      },
-    }),
-  ];
+  const updatedTicket = await prisma.ticket.update({
+    where: { id: ticket.id },
+    data: updates,
+    include: {
+      requester: true,
+      assigneeUser: true,
+      assigneeTeam: true,
+    },
+  });
 
+  // Create audit event after ticket update (separate operation)
   if (prisma.auditEvent?.create) {
-    transactionOps.push(
-      prisma.auditEvent.create({
-        data: {
-          ticketId: ticket.id,
-          actorId: auth.user.id,
-          action: "TICKET_UPDATED",
-          data: auditDataJson,
-        },
-      })
-    );
+    await prisma.auditEvent.create({
+      data: {
+        ticketId: ticket.id,
+        actorId: auth.user.id,
+        action: "TICKET_UPDATED",
+        data: auditDataJson,
+      },
+    });
   }
-
-  const [updatedTicket] = await prisma.$transaction(transactionOps);
 
   await scheduleSlaJobsForTicket({
     id: updatedTicket.id,

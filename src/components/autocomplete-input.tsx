@@ -82,7 +82,7 @@ export function AutocompleteInput({
   const handleSelect = (option: AutocompleteOption) => {
     onChange(option.label);
     onSelect?.(option);
-    setIsOpen(false);
+    setIsListOpen(false);
     setHighlightedIndex(-1);
     inputRef.current?.focus();
   };
