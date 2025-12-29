@@ -17,6 +17,11 @@ type Ticket = {
   assigneeUser?: { name: string } | null;
   assigneeTeam?: { name: string } | null;
   createdAt: Date;
+  firstResponseAt: Date | null;
+  firstResponseDue: Date | null;
+  resolveDue: Date | null;
+  closedAt: Date | null;
+  resolvedAt: Date | null;
 };
 
 type TicketListProps = {
