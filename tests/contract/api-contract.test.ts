@@ -147,7 +147,7 @@ vi.mock("@/lib/automation-rules", () => ({
 
 // Mock getServerSession to avoid Next.js context issues
 const mockGetServerSession = vi.fn();
-vi.mock("next-auth", () => ({
+vi.mock("next-auth/next", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 
