@@ -10,11 +10,16 @@ type SafeMarkdownProps = {
 };
 
 export function SafeMarkdown({ children }: SafeMarkdownProps) {
+  // rehypeSanitize returns a plugin function that is compatible with react-markdown's rehypePlugins
+  // Using type assertion through unknown for better type safety than 'as any'
+  // This is necessary due to type incompatibility between rehype-sanitize and react-markdown types
+  type RehypePlugin = NonNullable<React.ComponentProps<typeof ReactMarkdown>["rehypePlugins"]>[number];
+  const sanitizePlugin = rehypeSanitize(sanitizeSchema) as unknown as RehypePlugin;
+  
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      rehypePlugins={[rehypeSanitize(sanitizeSchema) as any]}
+      rehypePlugins={[sanitizePlugin]}
     >
       {children}
     </ReactMarkdown>

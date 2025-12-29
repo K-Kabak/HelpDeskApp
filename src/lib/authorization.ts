@@ -1,17 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import type { Session } from "next-auth";
-
-type SessionWithUser = Session & {
-  user: {
-    id: string;
-    role: string;
-    organizationId?: string;
-    name?: string | null;
-    email?: string | null;
-  };
-};
+import type { SessionWithUser } from "@/lib/session-types";
 
 export type AuthenticatedUser = {
   id: string;
@@ -27,8 +17,7 @@ type AuthResult =
  * Fetches the current session and returns a normalized user or an auth error response.
  */
 export async function requireAuth(): Promise<AuthResult> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
 
   if (!session?.user) {
     return {

@@ -5,27 +5,16 @@ import { parseMultiParam, appendMultiParam } from "@/lib/search-filters";
 import { prisma } from "@/lib/prisma";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
-import type { Session } from "next-auth";
+import type { SessionWithUser } from "@/lib/session-types";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
 import { KpiCards } from "./kpi-cards";
 import { calculateKpiMetrics } from "@/lib/kpi-metrics";
 import { ExportButton } from "./export-button";
 import { RefreshButton } from "./refresh-button";
-import { BulkActionsToolbar } from "./bulk-actions-toolbar";
 import { TicketList } from "./ticket-list";
 import { SavedViews } from "./saved-views";
-import { Suspense, useState, useCallback } from "react";
-
-type SessionWithUser = Session & {
-  user: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    role?: string;
-    organizationId?: string;
-  };
-};
+import { Suspense } from "react";
 
 const statusLabels: Record<TicketStatus, string> = {
   NOWE: "Nowe",
@@ -61,8 +50,7 @@ export default async function DashboardPage({
 }: {
   searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
 }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) return null;
 
   const params = (await searchParams) ?? {};
@@ -208,55 +196,29 @@ export default async function DashboardPage({
     [agents, teams] = await Promise.all([
       prisma.user.findMany({
         where: {
-          organizationId: session.user.organizationId,
+          organizationId: session.user.organizationId ?? undefined,
           role: { in: ["AGENT", "ADMIN"] },
         },
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),
       prisma.team.findMany({
-        where: { organizationId: session.user.organizationId },
+        where: { organizationId: session.user.organizationId ?? undefined },
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),
     ]);
   }
 
-  // Fetch saved views
-  let savedViews: Array<{
-    id: string;
-    name: string;
-    filters: unknown;
-    isShared: boolean;
-    isDefault: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }> = [];
-  try {
-    savedViews = await prisma.savedView.findMany({
-      where: {
-        userId: session.user.id,
-        organizationId: session.user.organizationId ?? undefined,
-      },
-      orderBy: [
-        { isDefault: "desc" },
-        { createdAt: "desc" },
-      ],
-    });
-  } catch (error) {
-    console.error("Error fetching saved views:", error);
-    // Continue without saved views if there's an error
-  }
-
   const { tickets: allTickets, nextCursor, prevCursor } = await getTicketPage(
     {
       id: session.user.id,
       role: session.user.role ?? "",
-      organizationId: session.user.organizationId,
+      organizationId: session.user.organizationId ?? undefined,
     },
     {
-    status: statusFilter,
-    priority: priorityFilter,
+    status: statusFilter as TicketStatus | undefined,
+    priority: priorityFilter as TicketPriority | undefined,
     search: searchQuery,
     cursor: params.cursor,
     direction: params.direction === "prev" ? "prev" : "next",
@@ -440,8 +402,8 @@ export default async function DashboardPage({
           id: v.id,
           name: v.name,
           filters: v.filters as {
-            status?: TicketStatus;
-            priority?: TicketPriority;
+            status?: string;
+            priority?: string;
             search?: string;
             category?: string;
             tagIds?: string[];
@@ -451,9 +413,16 @@ export default async function DashboardPage({
           createdAt: v.createdAt.toISOString(),
           updatedAt: v.updatedAt.toISOString(),
         }))}
+        currentFilters={{
+          status: statusFilter,
+          priority: priorityFilter,
+          q: searchQuery,
+          category: categoryFilter,
+          tags: tagFilters,
+          slaStatus: slaStatusFilter,
+        }}
       />
 
-      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get">
       <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get" action="/app">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">

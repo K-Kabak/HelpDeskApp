@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export type AdminAuditResource = "USER" | "TEAM" | "TAG" | "SLA" | "AUTOMATION_RULE";
 export type AdminAuditAction = "CREATE" | "UPDATE" | "DELETE";
@@ -29,8 +30,7 @@ export async function recordAdminAudit({
       resource,
       resourceId,
       action,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: data ? (data as any) : undefined,
+      data: data ? (data as Prisma.InputJsonValue) : undefined,
     },
   });
 }

@@ -2,10 +2,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
+import type { SessionWithUser } from "@/lib/session-types";
 import { TeamsManager } from "./teams-manager";
 
 export default async function TeamsPage() {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }
@@ -14,7 +15,7 @@ export default async function TeamsPage() {
   }
 
   const teams = await prisma.team.findMany({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId: session.user.organizationId ?? undefined },
     include: {
       _count: {
         select: {
@@ -43,7 +44,7 @@ export default async function TeamsPage() {
 
   // Get all users for team assignment
   const users = await prisma.user.findMany({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId: session.user.organizationId ?? undefined },
     select: {
       id: true,
       name: true,

@@ -1,25 +1,14 @@
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
-import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import type { Session } from "next-auth";
 import { z } from "zod";
 import { deriveSlaPauseUpdates } from "@/lib/sla-pause";
 import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 import { notificationService } from "@/lib/notification";
 import { needsReopenReason, validateReopenReason } from "@/lib/reopen-reason";
 import { generateCsatToken } from "@/lib/csat-token";
-
-type SessionWithUser = Session & {
-  user: {
-    id: string;
-    role: string;
-    organizationId?: string;
-    name?: string | null;
-    email?: string | null;
-  };
-};
+import { requireAuth, isAgentOrAdmin } from "@/lib/authorization";
+import { createRequestLogger } from "@/lib/logger";
 
 const updateSchema = z
   .object({
@@ -63,24 +52,30 @@ async function updateTicket(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = (await getServerSession(authOptions as any)) as SessionWithUser | null;
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: `/api/tickets/${id}`,
+    method: req.method,
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
   }
 
   const ticket = await prisma.ticket.findUnique({
     where: { id },
   });
 
-  if (!ticket || ticket.organizationId !== session.user.organizationId) {
+  if (!ticket || ticket.organizationId !== auth.user.organizationId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const isAgent =
-    session.user.role === "AGENT" || session.user.role === "ADMIN";
-  const isRequester = session.user.role === "REQUESTER";
+  const isAgent = isAgentOrAdmin(auth.user);
+  const isRequester = auth.user.role === "REQUESTER";
 
-  if (isRequester && ticket.requesterId !== session.user.id) {
+  if (isRequester && ticket.requesterId !== auth.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -204,7 +199,7 @@ async function updateTicket(
       const user = await prisma.user.findFirst({
         where: {
           id: payload.assigneeUserId,
-          organizationId: session.user.organizationId,
+          organizationId: auth.user.organizationId,
           role: { in: ["AGENT", "ADMIN"] },
         },
       });
@@ -234,7 +229,7 @@ async function updateTicket(
       const team = await prisma.team.findFirst({
         where: {
           id: payload.assigneeTeamId,
-          organizationId: session.user.organizationId,
+          organizationId: auth.user.organizationId,
         },
       });
 
@@ -282,7 +277,7 @@ async function updateTicket(
     prisma.auditEvent.create({
       data: {
         ticketId: ticket.id,
-        actorId: session.user.id,
+        actorId: auth.user.id,
         action: "TICKET_UPDATED",
         data: auditDataJson,
       },

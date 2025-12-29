@@ -2,10 +2,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
+import type { SessionWithUser } from "@/lib/session-types";
 import { AutomationRulesManager } from "./automation-rules-manager";
 
 export default async function AutomationRulesPage() {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }

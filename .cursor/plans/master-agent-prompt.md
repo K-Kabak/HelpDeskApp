@@ -1,6 +1,29 @@
 # Master Agent Prompt - HelpDeskApp Development
 
-You are an AI coding assistant working on the **HelpDeskApp** repository. This prompt contains all critical information about the project, workflow, and your responsibilities.
+⚠️ **UWAGA: To jest dokumentacja referencyjna, NIE prompt do natychmiastowego wykonania.**
+
+Ten plik zawiera informacje o projekcie, workflow i wzorcach. Używaj go jako referencji podczas pracy nad projektem, ale **NIE wykonuj automatycznie zadań opisanych w tym dokumencie**, chyba że użytkownik wyraźnie o to poprosi.
+
+---
+
+## 📖 CEL TEGO DOKUMENTU
+
+Ten dokument służy jako:
+- **Referencja** - informacje o projekcie i jego strukturze
+- **Przewodnik** - wzorce i best practices
+- **Kontekst** - historia wykonanych zadań i aktualny status
+
+**NIE jest to:**
+- ❌ Prompt do automatycznego wykonania zadań
+- ❌ Lista zadań do natychmiastowej realizacji
+- ❌ Instrukcja do rozpoczęcia pracy bez pytania użytkownika
+
+**Gdy użytkownik wklei ten plik:**
+- ✅ Użyj go jako referencji do zrozumienia projektu
+- ✅ Sprawdź wzorce i strukturę przed rozpoczęciem pracy
+- ❌ NIE zaczynaj automatycznie edytować plików
+- ❌ NIE uruchamiaj komend bez pytania użytkownika
+- ✅ Zapytaj użytkownika, co konkretnie ma być zrobione
 
 ---
 
@@ -220,25 +243,46 @@ docs/                     # Documentation
 - ✅ Prompt 17: Bulk Actions optimization (bulk endpoint) - PR #239
 - ✅ Prompt 18: E2E tests (bulk actions + saved views) - PR #240
 
-**🎯 Status: GOTOWE DO PRODUKCJI LUB KOLEJNEGO ETAPU**
+**🎯 Status: WYMAGA NAPRAWY I UPORZĄDKOWANIA**
 
-### 📋 Next Steps Options
+### ⚠️ AKTUALNY STAN - BŁĘDY DO NAPRAWY
 
-**Opcja 1: Gotowość do Produkcji** ⭐ (REKOMENDOWANE)
+**Znalezione problemy:**
+- ❌ Błędy parsowania w 3 plikach (duplikacje kodu)
+- ❌ Błędy TypeScript (użycie `any` w 2 miejscach)
+- ❌ React Hook warnings (1 plik)
+- ❌ Nieużywane zmienne (2 miejsca)
+- ⚠️ Potencjalne problemy z organization scoping w Comments API
+- ⚠️ Możliwe problemy z search field (wymaga weryfikacji)
+
+**Status lint/TypeScript:**
+- `pnpm lint`: ❌ 6 błędów, 2 warnings
+- `pnpm exec tsc --noEmit`: ❌ 3 błędy
+
+### 📋 NASTĘPNE KROKI
+
+**KROK 1: Naprawa i Uporządkowanie** ⭐ (WYMAGANE PRZED DALSZYM ROZWOJEM)
+- Użyj promptu: `.cursor/plans/agent-fix-all-prompt.md`
+- Napraw wszystkie błędy parsowania i TypeScript
+- Zweryfikuj i napraw znane problemy
+- Uporządkuj kod
+- Zweryfikuj kompletność funkcji
+
+**Po naprawie - Opcja 1: Gotowość do Produkcji**
 - Final code review
 - Finalizacja dokumentacji
 - Przygotowanie do deploymentu
 
-**Opcja 2: Nowe Funkcje (P2 z Backlogu)**
+**Po naprawie - Opcja 2: Nowe Funkcje (P2 z Backlogu)**
 - [093] Signed attachment download URLs
 - [096] SLA calibration tool
 
-**Opcja 3: Dokumentacja i Szkolenia**
+**Po naprawie - Opcja 3: Dokumentacja i Szkolenia**
 - Aktualizacja README
 - Dokumentacja API
 - User guide
 
-**Szczegóły:** Zobacz `.cursor/plans/FINAL-STATUS-AND-NEXT-STEPS.md`
+**Szczegóły naprawy:** Zobacz `.cursor/plans/agent-fix-all-prompt.md`
 
 ---
 
@@ -382,34 +426,51 @@ import { getServerSession } from 'next-auth';
 
 ---
 
-## YOUR MISSION
+## 📋 INFORMACJE DLA AGENTA (REFERENCJA)
 
-You are a coding assistant working on HelpDeskApp. Your primary goals:
+**Gdy użytkownik poprosi o pracę nad projektem:**
 
-1. **Implement features** from the backlog or plan
-2. **Fix bugs** and improve existing code
-3. **Maintain code quality** (types, security, patterns)
-4. **Update documentation** when adding features
-5. **Write tests** at the end of features
-6. **Follow the simplified workflow** - batch changes, code first, tests later
+1. **Zapytaj o konkretne zadanie** - nie zakładaj, że masz wykonać wszystko z tego dokumentu
+2. **Użyj tego dokumentu jako referencji** - sprawdź wzorce, strukturę, status
+3. **Przeczytaj odpowiednie pliki** - zanim zaczniesz edytować
+4. **Postępuj zgodnie z workflow** - batch changes, code first, tests later
+5. **Zatrzymaj się i zapytaj** - jeśli nie jesteś pewien, co użytkownik chce zrobić
 
-**Remember:** Focus on development velocity. Work on multiple related tasks together. Commit after larger features. Tests at the end. Continue working without stopping unless explicitly asked.
+**Przykłady użycia:**
+- ✅ "Użyj master-agent-prompt.md jako referencji przy implementacji funkcji X"
+- ✅ "Sprawdź w master-agent-prompt.md jakie są wzorce autoryzacji"
+- ✅ "Zaimplementuj funkcję Y zgodnie z wzorcami z master-agent-prompt.md"
+- ❌ "Wykonaj wszystkie zadania z master-agent-prompt.md" (chyba że użytkownik wyraźnie o to poprosi)
+
+**Główne cele pracy nad projektem (gdy użytkownik o to poprosi):**
+1. Implementacja funkcji z backlogu lub planu
+2. Naprawa błędów i poprawa istniejącego kodu
+3. Utrzymanie jakości kodu (typy, bezpieczeństwo, wzorce)
+4. Aktualizacja dokumentacji przy dodawaniu funkcji
+5. Pisanie testów na końcu funkcji
+6. Zgodność z uproszczonym workflow - batch changes, code first, tests later
+
+**Workflow (gdy użytkownik da konkretne zadanie):**
+1. Przeczytaj odpowiednie pliki planu i dokumentacji
+2. Przejrzyj istniejący kod, aby zrozumieć wzorce
+3. Zaimplementuj funkcję zgodnie z istniejącymi wzorcami
+4. Przetestuj lokalnie: `pnpm lint && pnpm exec tsc --noEmit`
+5. Commit po zakończeniu większych funkcji
+6. Kontynuuj pracę tylko jeśli użytkownik wyraźnie o to poprosi
 
 ---
 
-## HOW TO START
+## 🔄 AKTUALIZACJA TEGO DOKUMENTU
 
-When given a task:
+Ten dokument powinien być aktualizowany gdy:
+- Zmienia się struktura projektu
+- Dodawane są nowe wzorce
+- Zmienia się status wykonanych zadań
+- Aktualizowane są workflow principles
 
-1. **Read the plan file:** `.cursor/plans/helpdeskapp_next_phase_plan_44a3d95a.plan.md`
-2. **Review relevant documentation:** Check `docs/` for context
-3. **Examine existing code:** Read related files to understand patterns
-4. **Implement the feature:** Follow existing patterns and architecture
-5. **Test locally:** Run `pnpm lint && pnpm exec tsc --noEmit`
-6. **Commit when ready:** After completing larger features
-7. **Continue working:** Don't stop unless explicitly asked
+**Nie aktualizuj tego dokumentu automatycznie** - tylko gdy użytkownik o to poprosi lub gdy jest to częścią większego zadania.
 
 ---
 
-**You are now ready to work on HelpDeskApp. Follow this prompt as your guide.**
+**Koniec dokumentu referencyjnego.**
 

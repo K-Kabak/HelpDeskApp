@@ -33,9 +33,6 @@ export async function GET(req: Request) {
     logger.warn("admin.required");
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-    logger.warn("admin.required");
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   const rate = checkRateLimit(req, "admin:users:list", {
     logger,
@@ -91,27 +88,32 @@ export async function GET(req: Request) {
 
 // POST /api/admin/users - Create new user
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAuth();
+  const logger = createRequestLogger({
+    route: "/api/admin/users",
+    method: request.method,
+    userId: auth.ok ? auth.user.id : undefined,
+  });
+
+  if (!auth.ok) {
+    logger.warn("auth.required");
+    return auth.response;
+  }
+
+  if (auth.user.role !== "ADMIN") {
+    logger.warn("admin.required");
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const body = await request.json();
-    const { email, name, role, password } = body;
-
-    // Validation
-    if (!email || !name || !role || !password) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const parsed = createUserSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    if (!["REQUESTER", "AGENT", "ADMIN"].includes(role)) {
-      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
-    }
-
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-    }
+    const { email, name, role, password } = parsed.data;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -132,7 +134,7 @@ export async function POST(request: NextRequest) {
         name,
         role: role as Role,
         passwordHash,
-        organizationId: session.user.organizationId!,
+        organizationId: auth.user.organizationId,
         emailVerified: new Date(), // Auto-verify for admin-created users
       },
       select: {
@@ -149,13 +151,15 @@ export async function POST(request: NextRequest) {
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: session.user.id,
+        adminId: auth.user.id,
         action: "CREATE_USER",
         entityType: "USER",
         entityId: user.id,
         details: { email: user.email, name: user.name, role: user.role },
       },
     });
+
+    logger.info("user.create.success", { userId: user.id });
 
     return NextResponse.json({
       user: {
@@ -166,7 +170,7 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 });
   } catch (error) {
-    console.error("Error creating user:", error);
+    logger.error("user.create.error", { error });
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
 }

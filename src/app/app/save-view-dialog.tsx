@@ -18,12 +18,19 @@ export function SaveViewDialog({
   const [name, setName] = useState("");
   const [setAsDefault, setSetAsDefault] = useState(false);
 
+  // Reset state when dialog opens
   useEffect(() => {
     if (isOpen) {
       setName("");
       setSetAsDefault(false);
     }
   }, [isOpen]);
+
+  const handleClose = () => {
+    setName("");
+    setSetAsDefault(false);
+    onClose();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +39,9 @@ export function SaveViewDialog({
       return;
     }
     await onSave(name.trim(), setAsDefault);
+    // Reset state after successful save
+    setName("");
+    setSetAsDefault(false);
   };
 
   if (!isOpen) return null;
@@ -84,7 +94,7 @@ export function SaveViewDialog({
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isLoading}
               className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
