@@ -37,5 +37,11 @@ export default defineConfig({
     command: "pnpm dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
+    env: {
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/helpdesk",
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "test-secret-for-e2e-tests-change-in-production",
+      NEXTAUTH_URL: "http://localhost:3000",
+      REDIS_URL: "redis://localhost:6379",
+    },
   },
 });

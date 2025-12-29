@@ -42,6 +42,54 @@ pnpm test tests/ticket-search.test.ts
 
 ### End-to-End Tests (Playwright)
 
+#### Prerequisites
+
+Before running E2E tests, ensure the following:
+
+1. **Docker Compose services are running**: The E2E tests require a PostgreSQL database running via Docker Compose.
+
+   ```powershell
+   docker compose up -d db
+   ```
+
+   The database service uses the following default configuration:
+   - User: `postgres`
+   - Password: `postgres`
+   - Database: `helpdesk`
+   - Port: `5432`
+
+2. **Database is set up**: Run migrations and seed the database with test data.
+
+   You can use the helper script:
+   ```powershell
+   .\scripts\setup-e2e-db.ps1
+   ```
+
+   Or manually:
+   ```powershell
+   $env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/helpdesk"
+   pnpm prisma:migrate
+   pnpm prisma:seed
+   ```
+
+#### Environment Variables
+
+The E2E tests automatically configure the required environment variables via `playwright.config.ts`. The webServer configuration includes:
+
+- `DATABASE_URL`: `postgresql://postgres:postgres@localhost:5432/helpdesk` - Database connection string using `postgres` user (not `root`)
+- `NEXTAUTH_SECRET`: Test secret key for NextAuth session encryption (defaults to `test-secret-for-e2e-tests-change-in-production` if not set)
+- `NEXTAUTH_URL`: `http://localhost:3000` - Base URL for NextAuth callbacks
+- `REDIS_URL`: `redis://localhost:6379` - Redis connection for worker job queue (optional, but recommended)
+
+**Note**: The Playwright webServer automatically sets `DATABASE_URL` to use the `postgres` user (not `root`), which matches the Docker Compose configuration. This prevents the "role root does not exist" error.
+
+**Optional variables** (with defaults):
+- `EMAIL_ENABLED`: Set to `false` for E2E tests to avoid sending real emails (defaults to stub adapter)
+- `RATE_LIMIT_ENABLED`: Can be set to `false` for faster test execution (defaults to `true`)
+- `SPAM_GUARD_ENABLED`: Can be set to `false` for faster test execution (defaults to `true`)
+
+#### Running E2E Tests
+
 Run all E2E tests:
 
 ```bash
@@ -65,6 +113,28 @@ Run E2E tests in debug mode:
 ```bash
 pnpm test:e2e --debug
 ```
+
+#### Troubleshooting E2E Tests
+
+**Database Connection Errors**
+
+If you see errors like "role root does not exist":
+1. Verify that `docker-compose.yml` uses `POSTGRES_USER: postgres` (not `root`)
+2. Ensure Docker Compose services are running: `docker compose ps`
+3. Check that `playwright.config.ts` has the correct `DATABASE_URL` in `webServer.env`
+
+**Database Not Ready**
+
+If tests fail because the database isn't ready:
+1. Run the setup script: `.\scripts\setup-e2e-db.ps1`
+2. Verify database connectivity: `docker compose exec db psql -U postgres -d helpdesk -c "SELECT 1;"`
+
+**Test Timeouts**
+
+If tests timeout:
+1. Ensure the dev server starts successfully (check `playwright.config.ts` webServer logs)
+2. Verify the database has been seeded with test data
+3. Check that demo credentials are available (see [Test Data Management](#test-data-management))
 
 ### Contract Tests
 
@@ -542,10 +612,16 @@ On CI failure, upload test artifacts:
 
 ### E2E Tests Failing
 
-1. **Check Dev Server**: Ensure `pnpm dev` is running on port 3000
-2. **Check Browser**: Ensure Playwright browsers are installed: `pnpm exec playwright install`
-3. **Check Timeouts**: Increase timeout if tests are slow
-4. **Check Selectors**: Verify UI selectors haven't changed
+1. **Check Database**: 
+   - Ensure Docker Compose database service is running: `docker compose ps`
+   - Verify database is accessible: `docker compose exec db psql -U postgres -d helpdesk -c "SELECT 1;"`
+   - Run database setup script: `.\scripts\setup-e2e-db.ps1`
+   - Check for "role root does not exist" errors - this indicates incorrect DATABASE_URL (should use `postgres` user, not `root`)
+2. **Check Dev Server**: Ensure `pnpm dev` is running on port 3000 (Playwright webServer handles this automatically)
+3. **Check Environment Variables**: Verify `playwright.config.ts` has correct `DATABASE_URL` in `webServer.env`
+4. **Check Browser**: Ensure Playwright browsers are installed: `pnpm exec playwright install`
+5. **Check Timeouts**: Increase timeout if tests are slow
+6. **Check Selectors**: Verify UI selectors haven't changed
 
 ### Mock Issues
 
