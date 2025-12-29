@@ -74,7 +74,7 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error fetching team:", error);
-    return NextResponse.json({ error: "Failed to fetch team" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -159,7 +159,7 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("Error updating team:", error);
-    return NextResponse.json({ error: "Failed to update team" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -227,6 +227,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting team:", error);
-    return NextResponse.json({ error: "Failed to delete team" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -131,7 +131,11 @@ export async function GET(req?: Request) {
     role: auth.user.role,
   });
 
-  return NextResponse.json(page);
+  return NextResponse.json({
+    items: page.tickets,
+    nextCursor: page.nextCursor,
+    prevCursor: page.prevCursor,
+  });
 }
 
 /**
