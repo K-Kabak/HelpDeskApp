@@ -144,12 +144,12 @@ model Ticket {
   csatRequest          CsatRequest?
   csatResponse         CsatResponse?  @relation("TicketCsatResponse")
 
-  @@index([organizationId, createdAt(sort: Desc)])
-  @@index([requesterId, createdAt(sort: Desc)])
-  @@index([status, createdAt(sort: Desc)])
-  @@index([priority, createdAt(sort: Desc)])
-  @@index([assigneeUserId, status])
-  @@index([assigneeTeamId, status])
+  @@index([organizationId, createdAt(sort: Desc)], name: "Ticket_organizationId_createdAt_idx")
+  @@index([requesterId, createdAt(sort: Desc)], name: "Ticket_requesterId_createdAt_idx")
+  @@index([status, createdAt(sort: Desc)], name: "Ticket_status_createdAt_idx")
+  @@index([priority, createdAt(sort: Desc)], name: "Ticket_priority_createdAt_idx")
+  @@index([assigneeUserId, status], name: "Ticket_assigneeUserId_status_idx")
+  @@index([assigneeTeamId, status], name: "Ticket_assigneeTeamId_status_idx")
   @@index([organizationId, title, descriptionMd, category], name: "Ticket_search_idx")
   @@index([organizationId], name: "Ticket_organizationId_idx")
   @@index([status], name: "Ticket_status_idx")
@@ -171,6 +171,7 @@ model Comment {
   createdAt  DateTime @default(now())
 
   @@index([ticketId], name: "Comment_ticketId_idx")
+  @@index([ticketId, createdAt], name: "Comment_ticketId_createdAt_idx")
   @@index([authorId], name: "Comment_authorId_idx")
   @@index([createdAt], name: "Comment_createdAt_idx")
 }
@@ -245,7 +246,7 @@ model AuditEvent {
   @@index([ticketId], name: "AuditEvent_ticketId_idx")
   @@index([actorId], name: "AuditEvent_actorId_idx")
   @@index([createdAt], name: "AuditEvent_createdAt_idx")
-  @@index([ticketId, createdAt])
+  @@index([ticketId, createdAt], name: "AuditEvent_ticketId_createdAt_idx")
 }
 
 model AdminAudit {
@@ -261,7 +262,7 @@ model AdminAudit {
   createdAt      DateTime     @default(now())
 
   @@index([organizationId, resource, resourceId])
-  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, createdAt(sort: Desc)], name: "AdminAudit_organizationId_createdAt_idx")
 }
 
 model SlaPolicy {

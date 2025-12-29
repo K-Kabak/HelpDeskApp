@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import { PrismaClient } from "@prisma/client";
 
 type HealthStatus = "ok" | "skip" | "error";
 
@@ -12,6 +13,7 @@ type HealthReport = {
   queueName: string;
   redisUrl: string;
   prefix: string;
+  database?: boolean;
   counts?: Record<string, number>;
   failedIds?: (string | number)[];
   error?: string;
@@ -32,10 +34,31 @@ export async function getQueueHealth(options: HealthOptions = {}): Promise<Healt
       queueName,
       redisUrl,
       prefix,
-      note: "Dry run; skipped Redis connection.",
+      note: "Dry run; skipped Redis and database connections.",
     };
   }
 
+  // Check database connection
+  let databaseHealthy = false;
+  const prisma = new PrismaClient();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    databaseHealthy = true;
+  } catch (dbError) {
+    await prisma.$disconnect();
+    return {
+      status: "error",
+      queueName,
+      redisUrl,
+      prefix,
+      database: false,
+      error: `Database connection failed: ${(dbError as Error).message}`,
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
+
+  // Check Redis/Queue connection
   const connection = { host: new URL(redisUrl).hostname, port: Number.parseInt(new URL(redisUrl).port || "6379", 10) };
   const queue = new Queue(queueName, { connection, prefix });
 
@@ -47,6 +70,7 @@ export async function getQueueHealth(options: HealthOptions = {}): Promise<Healt
       queueName,
       redisUrl,
       prefix,
+      database: databaseHealthy,
       counts,
       failedIds: failedJobs.map((job) => job.id ?? "").filter((id): id is string => id !== undefined),
     };
@@ -56,7 +80,8 @@ export async function getQueueHealth(options: HealthOptions = {}): Promise<Healt
       queueName,
       redisUrl,
       prefix,
-      error: (error as Error).message,
+      database: databaseHealthy,
+      error: `Redis/Queue connection failed: ${(error as Error).message}`,
     };
   } finally {
     await queue.close();

@@ -36,3 +36,4 @@
 - Post-incident reviews update the threat model (`docs/threat-model.md`) and introduce new validation/monitoring requirements as needed.
 - Communication includes notifying stakeholders, filing tickets for remediation, and closing visibility gaps via tests or documentation updates.
 
+

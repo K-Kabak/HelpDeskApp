@@ -216,3 +216,4 @@ Każdy agent przygotowuje raport końcowy. Po zakończeniu wszystkich agentów:
 
 **Wszyscy agenci mogą pracować równolegle! Powodzenia! 🎯**
 
+

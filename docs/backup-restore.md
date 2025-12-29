@@ -47,13 +47,24 @@ The project includes a PowerShell script for automated database backups:
 
 # Compressed backup
 .\scripts\backup-db.ps1 -OutputPath "C:\Backups" -Compress
+
+# Backup with retention policy (keep last 30 days)
+.\scripts\backup-db.ps1 -OutputPath "C:\Backups" -Compress -RetentionDays 30
+
+# Backup with MinIO upload
+.\scripts\backup-db.ps1 -OutputPath "C:\Backups" -Compress -BackupMinIO
+
+# Backup with verification and MinIO
+.\scripts\backup-db.ps1 -OutputPath "C:\Backups" -Compress -BackupMinIO -Verify -RetentionDays 30
 ```
 
 **Script Features:**
 - Validates `DATABASE_URL` environment variable
 - Generates timestamped backup files
 - Supports optional compression (gzip)
-- Verifies backup file integrity
+- MinIO object storage backup (optional, requires MinIO client)
+- Retention policy for automatic cleanup
+- Backup verification (file integrity checks)
 - Error handling and logging
 
 **Backup File Format:**
@@ -133,12 +144,37 @@ Compress-Archive -Path uploads\* -DestinationPath "uploads_backup_$(Get-Date -Fo
 
 #### MinIO Backup
 
+**Using Backup Script (Recommended):**
+
+The `backup-db.ps1` script includes built-in MinIO backup support. Configure the following environment variables:
+
+```powershell
+# Set MinIO configuration
+$env:MINIO_ENDPOINT = "http://localhost:9000"  # or your MinIO endpoint
+$env:MINIO_ACCESS_KEY = "minioadmin"           # your MinIO access key
+$env:MINIO_SECRET_KEY = "minioadmin"           # your MinIO secret key
+$env:MINIO_BUCKET = "helpdesk-backups"         # optional, defaults to "helpdesk-backups"
+
+# Run backup with MinIO upload
+.\scripts\backup-db.ps1 -OutputPath "C:\Backups" -Compress -BackupMinIO
+```
+
+**Requirements:**
+- MinIO client (`mc`) must be installed and in PATH
+- MinIO credentials must be set in environment variables
+- The script will automatically create the bucket if it doesn't exist
+
+**Using MinIO Client Directly:**
+
 ```bash
 # Using MinIO client (mc)
 mc mirror minio/helpdesk-bucket ./backups/minio-backup/
 
 # Or export specific prefix
 mc mirror minio/helpdesk-bucket/uploads ./backups/minio-uploads/
+
+# Configure MinIO alias (one-time setup)
+mc alias set minio http://localhost:9000 minioadmin minioadmin
 ```
 
 #### AWS S3 Backup
@@ -197,20 +233,37 @@ aws s3 sync s3://helpdesk-bucket ./backups/s3-backup/
 **Recommended cron schedule (Linux) or Task Scheduler (Windows):**
 
 ```bash
-# Daily database backup at 2 AM
-0 2 * * * /path/to/scripts/backup-db.ps1 -OutputPath "/backups/daily" -Compress
+# Daily database backup at 2 AM with retention (keep 30 days)
+0 2 * * * /path/to/scripts/backup-db.ps1 -OutputPath "/backups/daily" -Compress -RetentionDays 30
 
-# Weekly full backup on Sunday at 1 AM
-0 1 * * 0 /path/to/scripts/backup-db.ps1 -OutputPath "/backups/weekly" -Compress
+# Weekly full backup on Sunday at 1 AM with MinIO upload
+0 1 * * 0 /path/to/scripts/backup-db.ps1 -OutputPath "/backups/weekly" -Compress -BackupMinIO -RetentionDays 90
 ```
 
 **PowerShell Task Scheduler (Windows):**
 
 ```powershell
-# Create scheduled task for daily backup
-$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File C:\HelpDeskApp\scripts\backup-db.ps1 -OutputPath C:\Backups\Daily -Compress"
+# Create scheduled task for daily backup with retention
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File C:\HelpDeskApp\scripts\backup-db.ps1 -OutputPath C:\Backups\Daily -Compress -RetentionDays 30"
 $trigger = New-ScheduledTaskTrigger -Daily -At 2am
 Register-ScheduledTask -TaskName "HelpDeskApp-DailyBackup" -Action $action -Trigger $trigger
+
+# Create scheduled task for weekly backup with MinIO
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File C:\HelpDeskApp\scripts\backup-db.ps1 -OutputPath C:\Backups\Weekly -Compress -BackupMinIO -RetentionDays 90"
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 1am
+Register-ScheduledTask -TaskName "HelpDeskApp-WeeklyBackup" -Action $action -Trigger $trigger
+```
+
+**Production Example with MinIO and Verification:**
+
+```powershell
+# Production backup script with all features
+.\scripts\backup-db.ps1 `
+  -OutputPath "C:\Backups\Daily" `
+  -Compress `
+  -BackupMinIO `
+  -Verify `
+  -RetentionDays 30
 ```
 
 ---
@@ -229,6 +282,18 @@ Register-ScheduledTask -TaskName "HelpDeskApp-DailyBackup" -Action $action -Trig
 
 ### Implementation
 
+**Using Backup Script (Recommended):**
+
+The `backup-db.ps1` script includes automatic retention policy:
+
+```powershell
+# Backup with automatic cleanup (keeps last 30 days)
+.\scripts\backup-db.ps1 -OutputPath "C:\Backups\Daily" -Compress -RetentionDays 30
+
+# Weekly backups (keep 90 days)
+.\scripts\backup-db.ps1 -OutputPath "C:\Backups\Weekly" -Compress -RetentionDays 90
+```
+
 **Manual Cleanup Script (PowerShell):**
 
 ```powershell
@@ -240,7 +305,7 @@ Get-ChildItem -Path $backupPath -Filter "backup_*.sql*" |
     Remove-Item -Force
 ```
 
-**Automated Cleanup:**
+**Automated Cleanup (Linux):**
 
 ```bash
 # Linux: Keep backups from last 30 days
@@ -262,12 +327,37 @@ find /backups/weekly -name "backup_*.sql*" -mtime +90 -delete
 
 ### Database Restore
 
-#### Using Backup Script (if restore script exists)
+#### Using Restore Script (Recommended)
+
+The project includes a PowerShell script for safe database restoration:
 
 ```powershell
-# Restore from backup
-.\scripts\restore-db.ps1 -BackupFile "C:\Backups\backup_20240101_120000.sql"
+# Basic restore (will prompt for confirmation)
+.\scripts\restore-database.ps1 -BackupFile "C:\Backups\backup_20240101_120000.sql"
+
+# Restore from compressed backup
+.\scripts\restore-database.ps1 -BackupFile "C:\Backups\backup_20240101_120000.sql.gz"
+
+# Restore without creating pre-restore backup (not recommended)
+.\scripts\restore-database.ps1 -BackupFile "C:\Backups\backup_20240101_120000.sql" -SkipPreRestoreBackup
+
+# Force restore without confirmation (dangerous, use with caution)
+.\scripts\restore-database.ps1 -BackupFile "C:\Backups\backup_20240101_120000.sql" -Force
 ```
+
+**Script Features:**
+- Validates backup file exists and is not empty
+- Creates pre-restore backup automatically (backup of current state before restore)
+- Safety confirmation prompts (especially in production)
+- Supports both SQL and compressed (.sql.gz) backups
+- Automatic verification after restore
+- Error handling with rollback instructions
+
+**Important Notes:**
+- The script automatically creates a backup of the current database state before restoring
+- In production, requires typing "RESTORE" (case-sensitive) to confirm
+- Pre-restore backup is saved in `./backups/pre-restore/` by default
+- Always test restore in staging environment first
 
 #### Manual Restore
 
@@ -329,14 +419,31 @@ tar -xzf uploads_backup_20240101_120000.tar.gz
 Expand-Archive -Path uploads_backup_20240101_120000.zip -DestinationPath uploads/
 ```
 
-#### S3-Compatible Storage
+#### S3-Compatible Storage (MinIO/AWS S3)
+
+**MinIO Restore:**
 
 ```bash
-# MinIO restore
+# Restore from MinIO using MinIO client (mc)
 mc mirror ./backups/minio-backup/ minio/helpdesk-bucket/
 
+# Restore specific prefix
+mc mirror ./backups/minio-uploads/ minio/helpdesk-bucket/uploads/
+
+# Download backup from MinIO first, then restore
+mc cp minio/helpdesk-backups/backup_20240101_120000.sql.gz ./backups/
+.\scripts\restore-database.ps1 -BackupFile ".\backups\backup_20240101_120000.sql.gz"
+```
+
+**AWS S3 Restore:**
+
+```bash
 # AWS S3 restore
 aws s3 sync ./backups/s3-backup/ s3://helpdesk-bucket/
+
+# Download backup from S3 first, then restore
+aws s3 cp s3://helpdesk-backups/backup_20240101_120000.sql.gz ./backups/
+.\scripts\restore-database.ps1 -BackupFile ".\backups\backup_20240101_120000.sql.gz"
 ```
 
 ### Restore Best Practices
@@ -367,9 +474,13 @@ aws s3 sync ./backups/s3-backup/ s3://helpdesk-bucket/
    ```
 
 3. **Restore from most recent backup:**
-   ```bash
+   ```powershell
+   # Using restore script (recommended - creates pre-restore backup automatically)
+   .\scripts\restore-database.ps1 -BackupFile "C:\Backups\backup_YYYYMMDD_HHMMSS.sql"
+   
+   # Or manually
    .\scripts\backup-db.ps1 -OutputPath "./backups/pre-restore"
-   psql $DATABASE_URL -f backups/backup_YYYYMMDD_HHMMSS.sql
+   psql $env:DATABASE_URL -f backups/backup_YYYYMMDD_HHMMSS.sql
    ```
 
 4. **Verify restore:**
@@ -604,6 +715,14 @@ npx prisma migrate deploy
 ```
 
 ### Restore from Backup
+
+**Using Restore Script (Recommended):**
+
+```powershell
+.\scripts\restore-database.ps1 -BackupFile "C:\Backups\backup_YYYYMMDD_HHMMSS.sql"
+```
+
+**Manual Restore:**
 
 ```bash
 psql $DATABASE_URL -f backup.sql

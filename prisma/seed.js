@@ -4,7 +4,52 @@ const bcrypt = require("bcrypt");
 
 const prisma = new PrismaClient();
 
+// Check if running in production mode
+const isProduction = process.env.NODE_ENV === "production" || process.argv.includes("--production");
+
 async function main() {
+  // In production, only create essential data (admin user if needed)
+  // In development, create full demo data
+  if (isProduction) {
+    console.log("Running in production mode. Creating essential data only...");
+    
+    // Create default organization if it doesn't exist
+    const org = await prisma.organization.upsert({
+      where: { name: "Default" },
+      update: {},
+      create: { name: "Default" },
+    });
+
+    // Create admin user if it doesn't exist (only if explicitly needed)
+    // In production, admin should typically be created manually or via separate script
+    const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@serwisdesk.local";
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "Admin123!";
+    
+    const admin = await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: {},
+      create: {
+        email: adminEmail,
+        name: "Admin",
+        passwordHash: await bcrypt.hash(adminPassword, 10),
+        role: Role.ADMIN,
+        organizationId: org.id,
+      },
+    });
+
+    await prisma.notificationPreference.upsert({
+      where: { userId: admin.id },
+      update: {},
+      create: { userId: admin.id },
+    });
+
+    console.log("Production seed completed. Admin user:", adminEmail);
+    return;
+  }
+
+  // Development mode: Create full demo data
+  console.log("Running in development mode. Creating demo data...");
+  
   const org = await prisma.organization.upsert({
     where: { name: "Demo" },
     update: {},
@@ -237,6 +282,8 @@ async function main() {
       data: { status: TicketStatus.NOWE, priority: TicketPriority.WYSOKI },
     },
   });
+
+  console.log("Development seed completed. Demo data created.");
 }
 
 main()

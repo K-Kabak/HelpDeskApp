@@ -28,7 +28,7 @@ These variables must be set before the application can run.
 
 - **Type**: Required
 - **Description**: PostgreSQL database connection string
-- **Format**: `postgresql://user:password@host:port/database`
+- **Format**: `postgresql://user:password@host:port/database[?parameters]`
 - **Example**: `postgresql://postgres:password@localhost:5432/helpdesk`
 - **Security Notes**: Contains database credentials. Keep secure and never commit to version control.
 - **Default**: None
@@ -36,6 +36,58 @@ These variables must be set before the application can run.
 - **Notes**: 
   - For production, use SSL connection: `postgresql://user:password@host:5432/database?sslmode=require`
   - For Docker Compose, typically: `postgresql://postgres:postgres@db:5432/helpdesk`
+  
+**Connection Pooling Parameters:**
+
+Prisma uses connection pooling by default. You can configure the connection pool using URL parameters:
+
+```bash
+# Production example with connection pooling
+DATABASE_URL=postgresql://user:password@host:5432/helpdesk?connection_limit=10&pool_timeout=20&sslmode=require
+```
+
+**Pool Parameters:**
+
+- **`connection_limit`** (optional): Maximum number of connections in the pool
+  - **Default**: Number of CPU cores × 2 + 1
+  - **Recommended**: 
+    - Small apps: `5-10` connections
+    - Medium apps: `10-20` connections
+    - Large apps: `20-50` connections (or based on database server limits)
+  - **Example**: `connection_limit=10`
+  - **Note**: Each Prisma Client instance maintains its own connection pool. With multiple instances (e.g., Next.js serverless functions), total connections = `connection_limit × instances`. Ensure your database server `max_connections` is high enough.
+
+- **`pool_timeout`** (optional): Timeout in seconds for getting a connection from the pool
+  - **Default**: `10` seconds
+  - **Recommended**: `10-20` seconds for most applications
+  - **Example**: `pool_timeout=20`
+  - **Note**: If all connections are in use, Prisma will wait up to `pool_timeout` seconds before throwing an error.
+
+**Production Recommendations:**
+
+```bash
+# Recommended production configuration
+DATABASE_URL=postgresql://user:password@host:5432/helpdesk?connection_limit=10&pool_timeout=20&sslmode=require
+```
+
+- Set `connection_limit` based on expected concurrent load and database server capacity
+- Monitor connection pool usage in production to optimize `connection_limit`
+- Use `pool_timeout=20` to prevent premature connection failures during traffic spikes
+- Always use `sslmode=require` in production for encrypted connections
+
+**Connection Pool Sizing Guidelines:**
+
+| Application Size | Concurrent Users | Recommended `connection_limit` | Notes |
+|-----------------|------------------|-------------------------------|-------|
+| Small | < 100 | 5-10 | Single server, low traffic |
+| Medium | 100-1000 | 10-20 | Multiple instances, moderate traffic |
+| Large | 1000+ | 20-50 | Multiple instances, high traffic, consider database read replicas |
+
+**Monitoring:**
+
+- Monitor database connection count: `SELECT count(*) FROM pg_stat_activity;`
+- Monitor pool exhaustion: Watch for "Connection pool timeout" errors in logs
+- Adjust `connection_limit` if you see frequent timeouts or if database connections are underutilized
 
 ### `NEXTAUTH_SECRET`
 
@@ -757,4 +809,5 @@ NODE_ENV=development
 - [Deployment Guide](./deployment.md) - Full deployment instructions
 - [Setup Instructions](./setup-instructions.md) - Local development setup
 - [Worker Deployment Runbook](./worker-deployment-runbook.md) - Worker-specific deployment
+
 
