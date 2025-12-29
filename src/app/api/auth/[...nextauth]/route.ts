@@ -6,7 +6,13 @@ import { createRequestLogger } from "@/lib/logger";
 
 const authHandler = NextAuth(authOptions);
 
-async function rateLimitedHandler(req: NextRequest) {
+type RateLimitedContext = {
+  params?: {
+    nextauth?: string[];
+  };
+};
+
+async function rateLimitedHandler(req: NextRequest, context: RateLimitedContext) {
   const path = req.nextUrl.pathname;
   const isLoginAttempt = req.method === "POST" && (path.includes("/callback/credentials") || path.includes("/signin"));
 
@@ -22,7 +28,13 @@ async function rateLimitedHandler(req: NextRequest) {
     }
   }
 
-  return authHandler(req);
+  return authHandler(req, context);
 }
 
-export { rateLimitedHandler as GET, rateLimitedHandler as POST };
+export async function GET(req: NextRequest, context: RateLimitedContext) {
+  return rateLimitedHandler(req, context);
+}
+
+export async function POST(req: NextRequest, context: RateLimitedContext) {
+  return rateLimitedHandler(req, context);
+}
