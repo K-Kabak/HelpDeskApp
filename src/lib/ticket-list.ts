@@ -205,7 +205,7 @@ export async function getTicketPage(
         assigneeTeam: true,
       },
     });
-  } catch (error) {
+  } catch {
     // Defensive error handling: return empty result on any database error
     // This prevents search failures from breaking the entire page
     return { tickets: [], nextCursor: null, prevCursor: null };

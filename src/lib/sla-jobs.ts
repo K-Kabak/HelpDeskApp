@@ -111,7 +111,7 @@ export async function enqueueSlaJob(
       jobDedupe.set(payload.idempotencyKey, result);
     }
     return result;
-  } catch (error) {
+  } catch {
     // If enqueue fails, return error result
     const result = {
       jobId: payload.jobId,

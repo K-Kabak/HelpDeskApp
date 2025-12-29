@@ -69,7 +69,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         const data = await response.json();
         setViews(data.views || []);
       }
-    } catch (error) {
+    } catch {
       // Silently fail - views will use initial data
     }
   };
@@ -139,7 +139,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
       // Apply the newly saved view
       applyView(newView);
       toast.success("Widok został zapisany");
-    } catch (error) {
+    } catch {
       const message = error instanceof Error ? error.message : "Nie udało się zapisać widoku";
       toast.error(message);
     } finally {
@@ -169,7 +169,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         setActiveViewId(null);
       }
       toast.success("Widok został usunięty");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się usunąć widoku. Spróbuj ponownie.");
     }
   };
@@ -192,7 +192,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         }))
       );
       toast.success("Domyślny widok został ustawiony");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się ustawić domyślnego widoku. Spróbuj ponownie.");
     }
   };
@@ -216,7 +216,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         prev.map((v) => (v.id === viewId ? { ...v, name: newName } : v))
       );
       toast.success("Nazwa widoku została zaktualizowana");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się zaktualizować widoku. Spróbuj ponownie.");
     }
   };

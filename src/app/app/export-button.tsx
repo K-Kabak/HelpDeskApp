@@ -63,7 +63,7 @@ export function ExportButton({ label, endpoint, className }: ExportButtonProps) 
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success("Eksport zakończony pomyślnie");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się wyeksportować danych. Spróbuj ponownie.");
     } finally {
       setExporting(false);

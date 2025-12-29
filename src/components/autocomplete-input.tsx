@@ -37,15 +37,14 @@ export function AutocompleteInput({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
 }: AutocompleteInputProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isListOpen, setIsListOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>(options);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Filter options based on value - use useMemo to avoid setState in effect
-  const filteredOptionsMemo = useMemo(() => {
+  const filteredOptions = useMemo(() => {
     if (value.trim()) {
       return options.filter(
         (opt) =>
@@ -55,19 +54,16 @@ export function AutocompleteInput({
     }
     return options;
   }, [value, options]);
-
-  useEffect(() => {
-    setFilteredOptions(filteredOptionsMemo);
-    setIsOpen(value.trim() ? filteredOptionsMemo.length > 0 : false);
-  }, [filteredOptionsMemo, value]);
+  const canShowList = value.trim().length > 0 && filteredOptions.length > 0;
+  const isOpen = isListOpen && canShowList;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
+      containerRef.current &&
+      !containerRef.current.contains(event.target as Node)
+    ) {
+      setIsListOpen(false);
         setHighlightedIndex(-1);
       }
     };
@@ -77,8 +73,10 @@ export function AutocompleteInput({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
+    const nextValue = e.target.value;
+    onChange(nextValue);
     setHighlightedIndex(-1);
+    setIsListOpen(!!nextValue.trim());
   };
 
   const handleSelect = (option: AutocompleteOption) => {
@@ -118,16 +116,14 @@ export function AutocompleteInput({
         break;
       case "Escape":
         e.preventDefault();
-        setIsOpen(false);
+        setIsListOpen(false);
         setHighlightedIndex(-1);
         break;
     }
   };
 
   const handleFocus = () => {
-    if (filteredOptions.length > 0) {
-      setIsOpen(true);
-    }
+    setIsListOpen(true);
   };
 
   return (
@@ -160,7 +156,7 @@ export function AutocompleteInput({
         }
         role="combobox"
       />
-      {isOpen && filteredOptions.length > 0 && (
+      {isOpen && (
         <ul
           ref={listRef}
           id={`${id}-listbox`}

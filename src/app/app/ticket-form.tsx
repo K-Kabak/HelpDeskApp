@@ -22,7 +22,6 @@ export default function TicketForm() {
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [categoryMode, setCategoryMode] = useState<"select" | "custom">("custom");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [categoriesStatus, setCategoriesStatus] = useState<"loading" | "ready" | "empty" | "error">("loading");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -62,7 +61,6 @@ export default function TicketForm() {
         setCategories(options);
         setCategoriesStatus("ready");
         setCategoryMode("select");
-        setSelectedCategoryId(options[0].id);
         setCategory(options[0].name);
       } catch {
         if (cancelled) return;
@@ -178,7 +176,7 @@ export default function TicketForm() {
       setPriority(TicketPriority.SREDNI);
       setErrors({});
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Błąd przy tworzeniu zgłoszenia. Sprawdź połączenie i spróbuj ponownie.");
     } finally {
       setLoading(false);
@@ -349,15 +347,10 @@ export default function TicketForm() {
               value={category}
               onChange={(value) => {
                 setCategory(value);
-                const match = categories.find((c) => c.name === value);
-                if (match) {
-                  setSelectedCategoryId(match.id);
-                }
                 if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
               }}
               onSelect={(option) => {
                 setCategory(option.label);
-                setSelectedCategoryId(option.id);
                 if (errors.category) setErrors((prev) => ({ ...prev, category: "" }));
               }}
               placeholder="Wybierz lub wpisz kategorię..."
@@ -370,7 +363,6 @@ export default function TicketForm() {
               className="text-xs font-semibold text-sky-700 underline hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 rounded px-1"
               onClick={() => {
                 setCategoryMode("custom");
-                setSelectedCategoryId("");
                 setCategory("");
               }}
               disabled={loading}
