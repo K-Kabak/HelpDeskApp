@@ -272,6 +272,9 @@ docs/                     # Documentation
 - ✅ Błędy parsowania i ESLint - NAPRAWIONE
 - ✅ Błędy TypeScript w głównym kodzie - NAPRAWIONE
 - ✅ Build - SUKCES
+- ✅ PR utworzony i zmergowany (jeśli wykonano AGENT-GITHUB-PR-PROMPT.md)
+
+**📋 Szczegóły wszystkich opcji:** Zobacz `.cursor/plans/NEXT-STEPS-OPTIONS.md`
 
 **🎯 KROK 2: Wybór Kolejnego Etapu**
 
@@ -280,21 +283,38 @@ docs/                     # Documentation
 - Finalizacja dokumentacji
 - Przygotowanie do deploymentu
 - Naprawa błędów TypeScript w testach (opcjonalne)
+- Security audit
+- Performance testing
 
-**Opcja 2: Nowe Funkcje (P2 z Backlogu)**
-- [093] Signed attachment download URLs
-- [096] SLA calibration tool
-- Inne funkcje z backlogu
+**Opcja 2: Nowe Funkcje P1 z Backlogu** (WYSOKI PRIORYTET)
+- [093] Signed attachment download URLs (security enhancement)
+- [096] SLA calibration tool (admin utility)
+- Advanced search/filtering improvements
+- Attachment upload/download UI (jeśli jeszcze nie zaimplementowane)
+- Knowledge base integration
+- Advanced reporting features
 
-**Opcja 3: Dokumentacja i Szkolenia**
-- Aktualizacja README
-- Dokumentacja API
-- User guide
+**Opcja 3: Nowe Funkcje P2 z Backlogu** (ŚREDNI PRIORYTET)
+- Localization framework (i18n)
+- Advanced security features (2FA, session management)
+- Performance optimizations
+- Export scheduling
+- Metrics/alerting endpoints
+- Advanced automation rules
 
 **Opcja 4: Stabilizacja i Optymalizacja**
 - Naprawa błędów TypeScript w testach
 - Optymalizacja wydajności
 - Dodatkowe testy E2E
+- Code coverage improvements
+- Performance profiling
+
+**Opcja 5: Dokumentacja i Szkolenia**
+- Aktualizacja README
+- Dokumentacja API (OpenAPI spec updates)
+- User guide
+- Developer documentation
+- Deployment runbooks
 
 **Szczegóły statusu:** Zobacz `.cursor/plans/STATUS-FINAL-VERIFICATION.md`
 
