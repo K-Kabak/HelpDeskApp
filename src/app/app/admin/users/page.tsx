@@ -51,13 +51,13 @@ export default async function UsersPage() {
   }));
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="max-w-6xl space-y-4 sm:space-y-6">
       <div>
         <p className="text-xs uppercase text-slate-500">Admin</p>
-        <h1 className="text-2xl font-semibold text-slate-900">
+        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
           Zarządzanie użytkownikami
         </h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-xs sm:text-sm text-slate-600">
           Zarządzaj użytkownikami w organizacji, przypisuj role i kontroluj dostęp.
         </p>
       </div>

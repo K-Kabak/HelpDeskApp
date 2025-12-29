@@ -34,9 +34,9 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm animate-pulse">
+          <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm animate-pulse">
             <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
             <div className="h-8 bg-slate-200 rounded w-1/2"></div>
           </div>
@@ -57,26 +57,26 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {/* MTTR Card */}
       {metrics.mttr && (
         <div 
-          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm"
           title="Średni czas rozwiązania (MTTR) - średni czas od utworzenia zgłoszenia do jego rozwiązania. Niższa wartość oznacza szybsze rozwiązywanie problemów."
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Średni czas rozwiązania (MTTR)</p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-slate-600">Średni czas rozwiązania (MTTR)</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">
                 {formatTime(metrics.mttr.averageHours, metrics.mttr.averageMinutes)}
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {metrics.mttr.totalResolved} {metrics.mttr.totalResolved === 1 ? "zgłoszenie" : "zgłoszeń"}
               </p>
             </div>
-          <div className="rounded-full bg-blue-100 p-3">
+          <div className="rounded-full bg-blue-100 p-2 sm:p-3 flex-shrink-0">
             <svg
-              className="h-6 w-6 text-blue-700"
+              className="h-5 w-5 sm:h-6 sm:w-6 text-blue-700"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -96,22 +96,22 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
       {/* MTTA Card */}
       {metrics.mtta && (
         <div 
-          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm"
           title="Średni czas odpowiedzi (MTTA) - średni czas od utworzenia zgłoszenia do pierwszej odpowiedzi agenta. Niższa wartość oznacza szybszą reakcję na zgłoszenia."
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Średni czas odpowiedzi (MTTA)</p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-slate-600">Średni czas odpowiedzi (MTTA)</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">
                 {formatTime(metrics.mtta.averageHours, metrics.mtta.averageMinutes)}
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {metrics.mtta.totalWithResponse} {metrics.mtta.totalWithResponse === 1 ? "odpowiedź" : "odpowiedzi"}
               </p>
             </div>
-          <div className="rounded-full bg-green-100 p-3">
+          <div className="rounded-full bg-green-100 p-2 sm:p-3 flex-shrink-0">
             <svg
-              className="h-6 w-6 text-green-700"
+              className="h-5 w-5 sm:h-6 sm:w-6 text-green-700"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -131,20 +131,20 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
       {/* Reopen Rate Card */}
       {metrics.reopenRate && (
         <div 
-          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm"
           title="Wskaźnik ponownych otwarć - procent zamkniętych zgłoszeń, które zostały ponownie otwarte. Niższa wartość oznacza lepszą jakość rozwiązań."
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Wskaźnik ponownych otwarć</p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">{metrics.reopenRate.percentage.toFixed(1)}%</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-slate-600">Wskaźnik ponownych otwarć</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{metrics.reopenRate.percentage.toFixed(1)}%</p>
               <p className="mt-1 text-xs text-slate-500">
                 {metrics.reopenRate.reopenedCount} z {metrics.reopenRate.totalClosedCount} zamkniętych
               </p>
             </div>
-          <div className="rounded-full bg-amber-100 p-3">
+          <div className="rounded-full bg-amber-100 p-2 sm:p-3 flex-shrink-0">
             <svg
-              className="h-6 w-6 text-amber-700"
+              className="h-5 w-5 sm:h-6 sm:w-6 text-amber-700"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -164,20 +164,20 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
       {/* SLA Compliance Card */}
       {metrics.slaCompliance && (
         <div 
-          className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm"
           title="Zgodność z SLA - procent rozwiązanych zgłoszeń, które zostały rozwiązane zgodnie z ustalonymi terminami SLA. Wyższa wartość oznacza lepszą zgodność z umowami."
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Zgodność z SLA</p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">{metrics.slaCompliance.percentage.toFixed(1)}%</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-slate-600">Zgodność z SLA</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{metrics.slaCompliance.percentage.toFixed(1)}%</p>
               <p className="mt-1 text-xs text-slate-500">
                 {metrics.slaCompliance.compliantCount} z {metrics.slaCompliance.totalResolvedCount} rozwiązanych
               </p>
             </div>
-          <div className="rounded-full bg-emerald-100 p-3">
+          <div className="rounded-full bg-emerald-100 p-2 sm:p-3 flex-shrink-0">
             <svg
-              className="h-6 w-6 text-emerald-700"
+              className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-700"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

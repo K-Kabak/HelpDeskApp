@@ -284,13 +284,13 @@ export default async function DashboardPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold sm:text-2xl">Zgłoszenia</h1>
-          <p className="text-sm text-slate-600" aria-live="polite" aria-atomic="true">
+          <p className="text-xs sm:text-sm text-slate-600" aria-live="polite" aria-atomic="true">
             Role: {session.user.role} - Wyświetlane {tickets.length} zgłoszenia
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
           <RefreshButton />
           {session.user.role !== "REQUESTER" && (
             <Suspense fallback={<button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 opacity-50" disabled>Eksportuj zgłoszenia</button>}>
@@ -304,7 +304,7 @@ export default async function DashboardPage({
           )}
           <Link
             href="/app/tickets/new"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+            className="rounded-lg bg-sky-600 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 whitespace-nowrap min-h-[44px] flex items-center justify-center"
             aria-label="Utwórz nowe zgłoszenie"
           >
             Nowe zgloszenie
@@ -346,16 +346,16 @@ export default async function DashboardPage({
         }}
       />
 
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <Link href="/app?slaStatus=breached" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition cursor-pointer sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia z naruszonym SLA</p>
-              <p className="mt-2 text-3xl font-bold text-red-700">{slaCounts.breached}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-slate-600">Otwarte zgloszenia z naruszonym SLA</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-red-700">{slaCounts.breached}</p>
             </div>
-            <div className="rounded-full bg-red-100 p-3">
+            <div className="rounded-full bg-red-100 p-2 sm:p-3 flex-shrink-0">
               <svg
-                className="h-6 w-6 text-red-700"
+                className="h-5 w-5 sm:h-6 sm:w-6 text-red-700"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -371,14 +371,14 @@ export default async function DashboardPage({
           </div>
         </Link>
         <Link href="/app?slaStatus=healthy" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition cursor-pointer sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia zgodne z SLA</p>
-              <p className="mt-2 text-3xl font-bold text-emerald-700">{slaCounts.healthy}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-slate-600">Otwarte zgloszenia zgodne z SLA</p>
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700">{slaCounts.healthy}</p>
             </div>
-            <div className="rounded-full bg-emerald-100 p-3">
+            <div className="rounded-full bg-emerald-100 p-2 sm:p-3 flex-shrink-0">
               <svg
-                className="h-6 w-6 text-emerald-700"
+                className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-700"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -397,9 +397,9 @@ export default async function DashboardPage({
 
       <form className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm space-y-4 sm:p-4" method="get" action="/app">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end w-full">
             <div
-              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[220px] sm:p-3 ${
+              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[200px] sm:p-3 ${
                 statusFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -422,7 +422,7 @@ export default async function DashboardPage({
             </div>
 
             <div
-              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[220px] sm:p-3 ${
+              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[200px] sm:p-3 ${
                 priorityFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -445,7 +445,7 @@ export default async function DashboardPage({
             </div>
 
             <div
-              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[240px] sm:p-3 ${
+              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[200px] sm:p-3 ${
                 searchQuery ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -534,18 +534,18 @@ export default async function DashboardPage({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 min-h-[44px] sm:py-3"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 min-h-[44px] w-full sm:w-auto"
           >
             Zastosuj
           </button>
           <Link
-            className="text-sm font-semibold text-slate-600 underline"
+            className="text-xs sm:text-sm font-semibold text-slate-600 underline w-full sm:w-auto text-center sm:text-left"
             href="/app"
           >
             Wyczyść filtry
           </Link>
           {tagFilters.length > 0 && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-500 w-full sm:w-auto">
               Wybrane tagi: {tagFilters.length}
             </span>
           )}
@@ -595,30 +595,30 @@ export default async function DashboardPage({
                     )}
                   </div>
                 </div>
-                <h3 className="line-clamp-2 font-semibold text-slate-900 group-hover:text-sky-700 transition-colors mb-2">
+                <h3 className="line-clamp-2 font-semibold text-sm sm:text-base text-slate-900 group-hover:text-sky-700 transition-colors mb-2 break-words">
                   {ticket.title}
                 </h3>
                 <div className="mb-3 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 whitespace-nowrap">
                       {statusLabels[ticket.status]}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-slate-600 break-words">
                     <span className="font-medium">Zgłaszający:</span> {ticket.requester?.name ?? "N/A"}
                   </p>
                   {ticket.assigneeUser && (
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-slate-600 break-words">
                       <span className="font-medium">Przypisany:</span> {ticket.assigneeUser.name}
                     </p>
                   )}
                   {ticket.assigneeTeam && (
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-slate-600 break-words">
                       <span className="font-medium">Zespół:</span> {ticket.assigneeTeam.name}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 pt-2 border-t border-slate-100">
                   <p className="text-[11px] text-slate-400">
                     {ticket.createdAt.toLocaleString("pl-PL", {
                       day: "2-digit",
@@ -629,7 +629,7 @@ export default async function DashboardPage({
                     })}
                   </p>
                   {sla.state === "breached" && ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE" && (
-                    <span className="text-[10px] font-medium text-red-600 animate-pulse">
+                    <span className="text-[10px] font-medium text-red-600 animate-pulse whitespace-nowrap">
                       SLA naruszone
                     </span>
                   )}
@@ -657,15 +657,15 @@ export default async function DashboardPage({
         }
       />
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <p className="text-xs sm:text-sm text-slate-600 text-center sm:text-left">
           Wyswietlane: {tickets.length} {nextCursor ? "+" : ""} zgloszenia
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-center sm:justify-end">
           <Link
             aria-disabled={!prevCursor}
             tabIndex={!prevCursor ? -1 : undefined}
-            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+            className={`rounded-lg border px-3 py-2 text-xs sm:text-sm font-semibold transition min-h-[44px] flex items-center justify-center ${
               prevCursor
                 ? "border-slate-300 text-slate-700 hover:border-sky-500 hover:text-sky-700"
                 : "cursor-not-allowed border-slate-200 text-slate-400"
@@ -677,7 +677,7 @@ export default async function DashboardPage({
           <Link
             aria-disabled={!nextCursor}
             tabIndex={!nextCursor ? -1 : undefined}
-            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+            className={`rounded-lg border px-3 py-2 text-xs sm:text-sm font-semibold transition min-h-[44px] flex items-center justify-center ${
               nextCursor
                 ? "border-sky-600 text-sky-700 hover:bg-sky-50"
                 : "cursor-not-allowed border-slate-200 text-slate-400"

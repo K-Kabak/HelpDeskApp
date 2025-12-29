@@ -127,11 +127,11 @@ export default function TicketActions({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">Akcje</h2>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent ml-4" aria-hidden />
+      <div className="mb-4 sm:mb-6 flex items-center justify-between">
+        <h2 className="text-base sm:text-lg font-semibold text-slate-900">Akcje</h2>
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent ml-4 hidden sm:block" aria-hidden />
       </div>
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
         {(canManageStatus || requesterCanUpdate) && (
         <form className="space-y-3" onSubmit={handleStatusSubmit} aria-label="Formularz zmiany statusu zgłoszenia">
           <div>
@@ -216,14 +216,14 @@ export default function TicketActions({
           <form className="space-y-3" onSubmit={handleAssignmentSubmit} aria-label="Formularz przypisania zgłoszenia">
             {suggestedAgentId && suggestedAgentId !== assigneeUserId && (
               <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 flex-1">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
                     <svg className="h-5 w-5 text-sky-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-sky-900">Sugerowane przypisanie</p>
-                      <p className="text-xs text-sky-700 mt-0.5">
+                      <p className="text-xs sm:text-sm font-semibold text-sky-900">Sugerowane przypisanie</p>
+                      <p className="text-xs text-sky-700 mt-0.5 break-words">
                         System sugeruje przypisanie do: <span className="font-medium">{agents.find((a) => a.id === suggestedAgentId)?.name}</span>
                       </p>
                     </div>
@@ -231,7 +231,7 @@ export default function TicketActions({
                   <button
                     type="button"
                     onClick={() => setAssigneeUserId(suggestedAgentId)}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white hover:bg-sky-700 transition-colors whitespace-nowrap min-h-[36px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white hover:bg-sky-700 transition-colors whitespace-nowrap min-h-[36px] w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                     aria-label={`Zastosuj sugerowane przypisanie do ${agents.find((a) => a.id === suggestedAgentId)?.name}`}
                   >
                     <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">

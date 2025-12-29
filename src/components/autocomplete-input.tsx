@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 type AutocompleteOption = {
   id: string;
@@ -44,20 +44,22 @@ export function AutocompleteInput({
   const listRef = useRef<HTMLUListElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Filter options based on value - use useMemo to avoid setState in effect
+  const filteredOptionsMemo = useMemo(() => {
     if (value.trim()) {
-      const filtered = options.filter(
+      return options.filter(
         (opt) =>
           opt.label.toLowerCase().includes(value.toLowerCase()) ||
           opt.description?.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredOptions(filtered);
-      setIsOpen(filtered.length > 0);
-    } else {
-      setFilteredOptions(options);
-      setIsOpen(false);
     }
+    return options;
   }, [value, options]);
+
+  useEffect(() => {
+    setFilteredOptions(filteredOptionsMemo);
+    setIsOpen(value.trim() ? filteredOptionsMemo.length > 0 : false);
+  }, [filteredOptionsMemo, value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

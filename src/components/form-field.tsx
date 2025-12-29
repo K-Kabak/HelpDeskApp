@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useId } from "react";
 
 type FormFieldProps = {
   label: string;
@@ -23,10 +23,10 @@ export function FormField({
   children,
   className = "",
 }: FormFieldProps) {
-  const fieldId = htmlFor || `field-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const fieldId = htmlFor || generatedId;
   const errorId = error ? `${fieldId}-error` : undefined;
   const helpId = helpText ? `${fieldId}-help` : undefined;
-  const describedBy = [errorId, helpId].filter(Boolean).join(" ") || undefined;
 
   return (
     <div className={`grid gap-1 ${className}`}>

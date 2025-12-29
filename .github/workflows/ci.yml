@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+# All jobs run in parallel by default. If any job fails, the workflow fails,
+# which blocks merges when branch protection is enabled.
+# Critical jobs that must pass: lint, type-check, unit-tests, contract-tests, openapi-lint, e2e-tests, security-audit
+
 jobs:
   lint:
     name: Lint
@@ -54,6 +58,7 @@ jobs:
       - run: pnpm prisma:generate
       - run: pnpm test
 
+  # Contract tests verify API consistency and must pass to block merge
   contract-tests:
     name: Contract Tests
     runs-on: ubuntu-latest
@@ -68,7 +73,9 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm prisma:generate
-      - run: pnpm test:contract
+      - name: Run contract tests
+        run: pnpm test:contract
+        # Contract tests must pass - failure blocks merge
 
   openapi-lint:
     name: OpenAPI Lint
@@ -161,3 +168,25 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level=high
+
+  # Verification job that depends on all critical test jobs
+  # This ensures all tests (including contract tests) must pass before merge
+  verify-all-tests:
+    name: Verify All Tests Passed
+    runs-on: ubuntu-latest
+    needs: [lint, type-check, unit-tests, contract-tests, openapi-lint, e2e-tests, security-audit]
+    if: always()
+    steps:
+      - name: Check all jobs succeeded
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.type-check.result }}" != "success" ] || \
+             [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.contract-tests.result }}" != "success" ] || \
+             [ "${{ needs.openapi-lint.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+             [ "${{ needs.security-audit.result }}" != "success" ]; then
+            echo "❌ One or more test jobs failed. Merge is blocked."
+            exit 1
+          fi
+          echo "✅ All tests passed successfully!"

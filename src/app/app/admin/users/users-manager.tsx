@@ -196,7 +196,7 @@ export function UsersManager({ initialUsers }: Props) {
 
   const handleDeleteClick = (id: string, name: string) => {
     const user = users.find((u) => u.id === id);
-    if (user?.activeTicketCount > 0) {
+    if (user && (user.activeTicketCount ?? 0) > 0) {
       toast.error("Nie można usunąć użytkownika z aktywnymi zgłoszeniami.");
       return;
     }
@@ -232,12 +232,12 @@ export function UsersManager({ initialUsers }: Props) {
   return (
     <div className="space-y-6">
       {/* Create User Section */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Dodaj nowego użytkownika</h2>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-base sm:text-lg font-semibold">Dodaj nowego użytkownika</h2>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 min-h-[44px]"
+            className="rounded-lg bg-sky-600 px-4 py-3 text-xs sm:text-sm font-semibold text-white hover:bg-sky-700 min-h-[44px] w-full sm:w-auto"
           >
             {showCreateForm ? "Anuluj" : "Dodaj użytkownika"}
           </button>
@@ -509,26 +509,26 @@ export function UsersManager({ initialUsers }: Props) {
                       </div>
                     </form>
                   ) : (
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700 flex-shrink-0">
                             {user.name.slice(0, 2).toUpperCase()}
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-slate-900">{user.name}</h3>
-                            <p className="text-sm text-slate-600">{user.email}</p>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-slate-900 truncate">{user.name}</h3>
+                            <p className="text-xs sm:text-sm text-slate-600 truncate">{user.email}</p>
                           </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                          <span className={`rounded-full px-2 py-1 font-semibold ${roleColors[user.role]}`}>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500">
+                          <span className={`rounded-full px-2 py-1 font-semibold whitespace-nowrap ${roleColors[user.role]}`}>
                             {roleLabels[user.role]}
                           </span>
-                          <span>•</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>{user.ticketCount} zgłoszeń</span>
                           {user.activeTicketCount > 0 && (
                             <>
-                              <span>•</span>
+                              <span className="hidden sm:inline">•</span>
                               <span className="font-medium text-amber-700">
                                 {user.activeTicketCount} aktywnych
                               </span>
@@ -536,23 +536,23 @@ export function UsersManager({ initialUsers }: Props) {
                           )}
                           {user.emailVerified && (
                             <>
-                              <span>•</span>
+                              <span className="hidden sm:inline">•</span>
                               <span className="text-green-600">✓ Zweryfikowany</span>
                             </>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 sm:flex-shrink-0">
                         <button
                           onClick={() => startEditing(user)}
-                          className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-semibold hover:bg-slate-50"
+                          className="rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold hover:bg-slate-50 min-h-[44px] flex-1 sm:flex-initial whitespace-nowrap"
                         >
                           Edytuj
                         </button>
                         <button
                           onClick={() => handleDeleteClick(user.id, user.name)}
                           disabled={user.activeTicketCount > 0}
-                          className="rounded-lg border border-red-200 px-3 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px]"
+                          className="rounded-lg border border-red-200 px-3 py-2 text-xs sm:text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px] flex-1 sm:flex-initial whitespace-nowrap"
                           aria-label={
                             user.activeTicketCount > 0
                               ? `Nie można usunąć użytkownika ${user.name} z aktywnymi zgłoszeniami`

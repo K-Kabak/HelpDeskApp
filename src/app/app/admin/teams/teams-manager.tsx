@@ -4,6 +4,8 @@ import { Role } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormField } from "@/components/form-field";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 type TeamRow = {
   id: string;
@@ -126,7 +128,7 @@ export function TeamsManager({ initialTeams, users }: Props) {
 
   const handleDeleteClick = (teamId: string, name: string) => {
     const team = teams.find((t) => t.id === teamId);
-    if (team?.activeTicketCount > 0) {
+    if (team && (team.activeTicketCount ?? 0) > 0) {
       toast.error("Nie można usunąć zespołu z aktywnymi zgłoszeniami.");
       return;
     }

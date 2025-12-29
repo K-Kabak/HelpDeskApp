@@ -196,7 +196,7 @@ export default function TicketForm() {
   );
 
   return (
-    <form className="grid gap-4" onSubmit={submit} aria-label="Formularz tworzenia zgłoszenia">
+    <form className="grid gap-3 sm:gap-4" onSubmit={submit} aria-label="Formularz tworzenia zgłoszenia">
       <FormField
         label="Tytuł"
         htmlFor="title"
@@ -207,7 +207,7 @@ export default function TicketForm() {
         <input
           id="title"
           type="text"
-          className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+          className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
             errors.title
               ? "border-red-500 focus:ring-red-500"
               : title.trim().length >= validationRules.title.min && title.trim().length <= validationRules.title.max
@@ -267,7 +267,7 @@ export default function TicketForm() {
           {previewMode === "edit" ? (
             <textarea
               id="description"
-              className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
                 errors.descriptionMd
                   ? "border-red-500 focus:ring-red-500"
                   : descriptionMd.trim().length >= validationRules.descriptionMd.min &&
@@ -289,7 +289,7 @@ export default function TicketForm() {
               placeholder="Opisz problem używając Markdown..."
             />
           ) : (
-            <div className="min-h-[150px] rounded-lg border border-slate-200 bg-slate-50 p-4 prose prose-sm max-w-none">
+            <div className="min-h-[150px] rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4 prose prose-sm max-w-none">
               {descriptionMd ? (
                 <SafeMarkdown>{descriptionMd}</SafeMarkdown>
               ) : (
@@ -307,7 +307,7 @@ export default function TicketForm() {
       >
         <select
           id="priority"
-          className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+          className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
             errors.priority ? "border-red-500 focus:ring-red-500" : "border-slate-300"
           }`}
           value={priority}
@@ -383,7 +383,7 @@ export default function TicketForm() {
           <input
             id="category"
             type="text"
-            className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${
               errors.category
                 ? "border-red-500 focus:ring-red-500"
                 : category.trim().length >= validationRules.category.min &&
@@ -406,8 +406,8 @@ export default function TicketForm() {
         )}
       </FormField>
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-800">Podgląd SLA</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
+          <p className="text-xs sm:text-sm font-semibold text-slate-800">Podgląd SLA</p>
           <p className="text-xs text-slate-500">Aktualizuje się po zmianie priorytetu/kategorii</p>
         </div>
         {slaPreview.status === "loading" || slaPreview.status === "idle" ? (

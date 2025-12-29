@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Przejdź do głównej treści
         </a>
         <Topbar userName={session.user.name} role={session.user.role} />
-        <main id="main-content" className="px-6 py-4" tabIndex={-1} role="main">
+        <main id="main-content" className="px-4 py-4 sm:px-6" tabIndex={-1} role="main">
           {children}
         </main>
       </div>

@@ -142,18 +142,18 @@ export default async function TicketPage({
   const showSla = ticket.status !== "ZAMKNIETE" && ticket.status !== "ROZWIAZANE";
 
   return (
-    <div className="max-w-5xl space-y-4 px-4 sm:space-y-6 sm:px-0">
+    <div className="max-w-5xl space-y-4 sm:space-y-6">
       <Link 
         href="/app" 
-        className="inline-block text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center hover:text-sky-800 transition-colors"
+        className="inline-block text-xs sm:text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center hover:text-sky-800 transition-colors"
         aria-label="Powrót do listy zgłoszeń"
       >
         ← Powrót do listy
       </Link>
       <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
               <p className="text-xs font-semibold text-slate-500">#{ticket.number}</p>
               {showSla && (
                 <div className="flex items-center gap-2">
@@ -183,15 +183,15 @@ export default async function TicketPage({
                 </div>
               )}
             </div>
-            <h1 className="text-2xl font-semibold text-slate-900 mb-3">{ticket.title}</h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+            <h1 className="text-lg sm:text-2xl font-semibold text-slate-900 mb-3 break-words">{ticket.title}</h1>
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-600">
               <span className="font-medium">Zgłaszający:</span>
-              <span>{ticket.requester.name}</span>
-              <span className="text-slate-300">•</span>
+              <span className="break-words">{ticket.requester.name}</span>
+              <span className="text-slate-300 hidden sm:inline">•</span>
               <span className="font-medium">Utworzono:</span>
-              <span>{ticket.createdAt.toLocaleString("pl-PL")}</span>
+              <span className="whitespace-nowrap">{ticket.createdAt.toLocaleString("pl-PL")}</span>
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-600">
               {ticket.assigneeTeam && (
                 <>
                   <span className="font-medium">Zespół:</span>
@@ -207,11 +207,11 @@ export default async function TicketPage({
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
-            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getPriorityColors(ticket.priority)}`}>
+          <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:flex-shrink-0">
+            <span className={`rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold whitespace-nowrap ${getPriorityColors(ticket.priority)}`}>
               {priorityLabels[ticket.priority]}
             </span>
-            <span className="rounded-full bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white" aria-label={`Status: ${statusLabels[ticket.status]}`}>
+            <span className="rounded-full bg-slate-800 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-white whitespace-nowrap" aria-label={`Status: ${statusLabels[ticket.status]}`}>
               {statusLabels[ticket.status]}
             </span>
           </div>
@@ -219,7 +219,7 @@ export default async function TicketPage({
         <section className="mt-4 prose prose-sm max-w-none" aria-label="Opis zgłoszenia">
           <SafeMarkdown>{ticket.descriptionMd}</SafeMarkdown>
         </section>
-        <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2" aria-label="Szczegóły zgłoszenia">
+        <dl className="mt-4 grid gap-3 text-xs sm:text-sm text-slate-600 grid-cols-1 sm:grid-cols-2" aria-label="Szczegóły zgłoszenia">
           <div>
             <dt className="font-semibold text-slate-700">Kategoria</dt>
             <dd>{ticket.category ?? "Brak"}</dd>
@@ -260,8 +260,8 @@ export default async function TicketPage({
       />
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="comments-heading">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="comments-heading" className="text-lg font-semibold">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h2 id="comments-heading" className="text-base sm:text-lg font-semibold">
             Komentarze ({visibleComments.length})
           </h2>
           <p className="text-xs text-slate-500" aria-live="polite">
@@ -272,8 +272,8 @@ export default async function TicketPage({
           <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" aria-hidden />
           <div className="space-y-6">
             {visibleComments.map((comment) => (
-              <div key={comment.id} className="relative flex gap-4 pl-12">
-                <div className={`absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-sm font-semibold shadow-md ${
+              <div key={comment.id} className="relative flex gap-3 sm:gap-4 pl-10 sm:pl-12">
+                <div className={`absolute left-0 top-0 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border-2 border-white text-xs sm:text-sm font-semibold shadow-md flex-shrink-0 ${
                   comment.isInternal
                     ? "bg-amber-100 text-amber-800 ring-2 ring-amber-300"
                     : "bg-slate-100 text-slate-700 ring-2 ring-slate-200"
@@ -281,24 +281,24 @@ export default async function TicketPage({
                   {comment.author.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div
-                  className={`w-full rounded-lg border-2 p-4 shadow-sm transition-shadow ${
+                  className={`w-full min-w-0 rounded-lg border-2 p-3 sm:p-4 shadow-sm transition-shadow ${
                     comment.isInternal
                       ? "border-amber-300 bg-amber-50/50 hover:shadow-md"
                       : "border-slate-200 bg-white hover:shadow-md"
                   }`}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-slate-900">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
                         {comment.author.name}
                       </span>
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${roleColors[comment.author.role]}`}
+                        className={`rounded-full px-2 sm:px-2.5 py-0.5 text-[10px] font-semibold whitespace-nowrap ${roleColors[comment.author.role]}`}
                       >
                         {roleLabels[comment.author.role]}
                       </span>
                       {comment.isInternal && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-white ring-1 ring-amber-600">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 sm:px-2.5 py-0.5 text-[10px] font-semibold uppercase text-white ring-1 ring-amber-600 whitespace-nowrap">
                           <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                           </svg>
@@ -306,7 +306,7 @@ export default async function TicketPage({
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
                       {comment.createdAt.toLocaleString("pl-PL", {
                         day: "2-digit",
                         month: "2-digit",

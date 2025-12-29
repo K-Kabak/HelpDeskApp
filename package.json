@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:smoke": "playwright test e2e/smoke-tests.spec.ts",
     "test:contract": "vitest run --passWithNoTests tests/contract",
     "worker:start": "ts-node src/worker/index.ts",
     "worker:smoke": "ts-node src/worker/index.ts --dry-run",

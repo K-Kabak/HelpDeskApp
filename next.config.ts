@@ -1,13 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Request body size limits
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb", // 10MB for file uploads
-    },
-    responseLimit: "10mb",
-  },
+  // Note: API body size limits are now handled in route handlers
   async headers() {
     return [
       {

@@ -6,7 +6,7 @@ export const errorResponseSchema = z.object({
   error: z.union([
     z.string(),
     z.object({
-      fieldErrors: z.record(z.array(z.string())).optional(),
+      fieldErrors: z.record(z.string(), z.array(z.string())).optional(),
       formErrors: z.array(z.string()).optional(),
     }),
   ]),
