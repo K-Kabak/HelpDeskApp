@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { SaveViewDialog } from "./save-view-dialog";
 
 type SavedView = {
@@ -69,7 +70,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         setViews(data.views || []);
       }
     } catch (error) {
-      console.error("Failed to load views:", error);
+      // Silently fail - views will use initial data
     }
   };
 
@@ -137,9 +138,10 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
       
       // Apply the newly saved view
       applyView(newView);
+      toast.success("Widok został zapisany");
     } catch (error) {
-      console.error("Failed to save view:", error);
-      alert(error instanceof Error ? error.message : "Failed to save view");
+      const message = error instanceof Error ? error.message : "Nie udało się zapisać widoku";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -166,9 +168,9 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         router.push("/app");
         setActiveViewId(null);
       }
+      toast.success("Widok został usunięty");
     } catch (error) {
-      console.error("Failed to delete view:", error);
-      alert("Nie udało się usunąć widoku");
+      toast.error("Nie udało się usunąć widoku. Spróbuj ponownie.");
     }
   };
 
@@ -189,9 +191,9 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
           isDefault: v.id === viewId,
         }))
       );
+      toast.success("Domyślny widok został ustawiony");
     } catch (error) {
-      console.error("Failed to set default view:", error);
-      alert("Nie udało się ustawić domyślnego widoku");
+      toast.error("Nie udało się ustawić domyślnego widoku. Spróbuj ponownie.");
     }
   };
 
@@ -213,9 +215,9 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
       setViews((prev) =>
         prev.map((v) => (v.id === viewId ? { ...v, name: newName } : v))
       );
+      toast.success("Nazwa widoku została zaktualizowana");
     } catch (error) {
-      console.error("Failed to update view:", error);
-      alert("Nie udało się zaktualizować widoku");
+      toast.error("Nie udało się zaktualizować widoku. Spróbuj ponownie.");
     }
   };
 
@@ -225,7 +227,7 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
       <div className="flex flex-wrap items-center gap-2">
         {views.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
@@ -233,12 +235,13 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
               <button
                 key={view.id}
                 onClick={() => handleViewClick(view)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition min-h-[44px] flex items-center justify-center ${
                   activeViewId === view.id
                     ? "bg-sky-600 text-white"
                     : "text-slate-700 hover:bg-slate-100"
                 }`}
                 title={view.isDefault ? "Domyślny widok" : view.name}
+                aria-label={view.isDefault ? `Domyślny widok: ${view.name}` : view.name}
               >
                 {view.name}
                 {view.isDefault && (
@@ -252,7 +255,8 @@ export function SavedViews({ initialViews = [], currentFilters }: SavedViewsProp
         {hasActiveFilters && (
           <button
             onClick={() => setIsSaveDialogOpen(true)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+            aria-label="Zapisz aktualne filtry jako widok"
           >
             Zapisz jako widok
           </button>

@@ -67,6 +67,7 @@ export async function GET(req?: Request) {
   });
 
   if (!auth.ok) {
+    logger.securityEvent("authorization_failure", { reason: "missing_session" });
     logger.warn("auth.required");
     return auth.response;
   }

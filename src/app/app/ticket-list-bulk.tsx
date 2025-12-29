@@ -141,9 +141,8 @@ export function TicketListBulk({
         setShowAssignDialog(false);
         router.refresh();
       } catch (error) {
-        console.error("Błąd podczas przypisywania zgłoszeń:", error);
         toast.error(
-          error instanceof Error ? error.message : "Nie udało się przypisać zgłoszeń"
+          error instanceof Error ? error.message : "Nie udało się przypisać zgłoszeń. Spróbuj ponownie."
         );
       }
     });
@@ -190,9 +189,8 @@ export function TicketListBulk({
         setShowStatusDialog(false);
         router.refresh();
       } catch (error) {
-        console.error("Błąd podczas zmiany statusu zgłoszeń:", error);
         toast.error(
-          error instanceof Error ? error.message : "Nie udało się zmienić statusu zgłoszeń"
+          error instanceof Error ? error.message : "Nie udało się zmienić statusu zgłoszeń. Spróbuj ponownie."
         );
       }
     });
@@ -217,16 +215,17 @@ export function TicketListBulk({
     <>
       {/* Bulk Actions Toolbar */}
       {canUseBulkActions && selectedCount > 0 && (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 shadow-sm sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-sky-900">
                 Zaznaczono: {selectedCount} {selectedCount === 1 ? "zgłoszenie" : "zgłoszeń"}
               </span>
               <button
                 onClick={clearSelection}
-                className="text-sm text-sky-700 underline hover:text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded"
+                className="text-sm text-sky-700 underline hover:text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center"
                 disabled={isPending}
+                aria-label="Odznacz wszystkie zgłoszenia"
               >
                 Odznacz wszystkie
               </button>
@@ -234,15 +233,17 @@ export function TicketListBulk({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowAssignDialog(true)}
-                className="rounded-lg border border-sky-600 bg-white px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px]"
+                className="rounded-lg border border-sky-600 bg-white px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] sm:px-4"
                 disabled={isPending}
+                aria-label="Przypisz wybrane zgłoszenia do agenta"
               >
                 Przypisz do agenta
               </button>
               <button
                 onClick={() => setShowStatusDialog(true)}
-                className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px]"
+                className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] sm:px-4"
                 disabled={isPending}
+                aria-label="Zmień status wybranych zgłoszeń"
               >
                 Zmień status
               </button>
@@ -269,7 +270,7 @@ export function TicketListBulk({
       )}
 
       {/* Ticket Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {tickets.map((ticket) => {
           const isSelected = selectedTicketIds.has(ticket.id);
           const sla = getSlaStatus({
@@ -386,9 +387,26 @@ export function TicketListBulk({
 
       {/* Assign Dialog */}
       {showAssignDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assign-dialog-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isPending) {
+              setShowAssignDialog(false);
+              setSelectedAgentId("");
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !isPending) {
+              setShowAssignDialog(false);
+              setSelectedAgentId("");
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h2 id="assign-dialog-title" className="text-lg font-semibold text-slate-900 mb-4">
               Przypisz {selectedCount} {selectedCount === 1 ? "zgłoszenie" : "zgłoszeń"} do agenta
             </h2>
             <div className="space-y-4">
@@ -437,9 +455,26 @@ export function TicketListBulk({
 
       {/* Status Change Dialog */}
       {showStatusDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="status-dialog-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isPending) {
+              setShowStatusDialog(false);
+              setSelectedStatus(TicketStatus.NOWE);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !isPending) {
+              setShowStatusDialog(false);
+              setSelectedStatus(TicketStatus.NOWE);
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h2 id="status-dialog-title" className="text-lg font-semibold text-slate-900 mb-4">
               Zmień status {selectedCount} {selectedCount === 1 ? "zgłoszenia" : "zgłoszeń"}
             </h2>
             <div className="space-y-4">
@@ -461,14 +496,15 @@ export function TicketListBulk({
                   ))}
                 </select>
               </div>
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                 <button
                   onClick={() => {
                     setShowStatusDialog(false);
                     setSelectedStatus(TicketStatus.NOWE);
                   }}
                   disabled={isPending}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 min-h-[44px]"
+                  aria-label="Anuluj zmianę statusu"
                 >
                   Anuluj
                 </button>
@@ -476,6 +512,8 @@ export function TicketListBulk({
                   onClick={handleBulkStatusChange}
                   disabled={isPending}
                   className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px]"
+                  aria-label={isPending ? "Zmienianie statusu..." : "Zmień status zgłoszeń"}
+                  aria-busy={isPending}
                 >
                   {isPending ? "Zmienianie..." : "Zmień status"}
                 </button>

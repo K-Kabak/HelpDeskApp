@@ -136,16 +136,16 @@ export default async function TicketPage({
     process.env.NEXT_PUBLIC_ATTACHMENTS_ENABLED !== "false";
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="max-w-5xl space-y-4 px-4 sm:space-y-6 sm:px-0">
       <Link 
         href="/app" 
-        className="text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded"
+        className="inline-block text-sm text-sky-700 underline focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center"
         aria-label="Powrót do listy zgłoszeń"
       >
         ← Powrót do listy
       </Link>
-      <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+      <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs text-slate-500">#{ticket.number}</p>
             <h1 className="text-2xl font-semibold">{ticket.title}</h1>
@@ -210,7 +210,7 @@ export default async function TicketPage({
         attachmentsEnabled={attachmentsEnabled}
       />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="comments-heading">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="comments-heading">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 id="comments-heading" className="text-lg font-semibold">
             Komentarze ({visibleComments.length})
@@ -261,7 +261,28 @@ export default async function TicketPage({
               </div>
             ))}
             {visibleComments.length === 0 && (
-              <p className="pl-12 text-sm text-slate-500">Brak komentarzy.</p>
+              <div className="pl-12 py-8 text-center">
+                <svg
+                  className="mx-auto h-10 w-10 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                <p className="mt-2 text-sm font-medium text-slate-900">Brak komentarzy</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {canSeeInternal
+                    ? "Dodaj pierwszy komentarz, aby rozpocząć dyskusję."
+                    : "Dodaj komentarz, aby rozpocząć dyskusję."}
+                </p>
+              </div>
             )}
           </div>
         </div>

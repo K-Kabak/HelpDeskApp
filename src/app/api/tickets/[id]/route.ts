@@ -60,6 +60,7 @@ async function updateTicket(
   });
 
   if (!auth.ok) {
+    logger.securityEvent("authorization_failure", { reason: "missing_session" });
     logger.warn("auth.required");
     return auth.response;
   }
@@ -69,6 +70,12 @@ async function updateTicket(
   });
 
   if (!ticket || ticket.organizationId !== auth.user.organizationId) {
+    logger.securityEvent("suspicious_activity", {
+      reason: "ticket_access_wrong_org",
+      ticketId: ticket?.id ?? id,
+      expectedOrgId: auth.user.organizationId,
+      actualOrgId: ticket?.organizationId,
+    });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -76,6 +83,11 @@ async function updateTicket(
   const isRequester = auth.user.role === "REQUESTER";
 
   if (isRequester && ticket.requesterId !== auth.user.id) {
+    logger.securityEvent("suspicious_activity", {
+      reason: "ticket_access_other_requester",
+      ticketId: ticket.id,
+      requesterId: ticket.requesterId,
+    });
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

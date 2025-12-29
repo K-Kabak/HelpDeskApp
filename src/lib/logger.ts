@@ -8,7 +8,20 @@ type RequestLoggerOptions = {
 
 type LogLevel = "info" | "warn" | "error";
 
-function writeLog(level: LogLevel, message: string, context: RequestLoggerOptions & { requestId: string }, meta?: Record<string, unknown>) {
+export type SecurityEventType =
+  | "failed_login"
+  | "authorization_failure"
+  | "rate_limit_violation"
+  | "suspicious_activity";
+
+type SecurityEventMeta = Record<string, unknown>;
+
+function writeLog(
+  level: LogLevel,
+  message: string,
+  context: RequestLoggerOptions & { requestId: string },
+  meta?: Record<string, unknown>
+) {
   const payload = {
     level,
     message,
@@ -34,5 +47,7 @@ export function createRequestLogger(options: RequestLoggerOptions) {
       writeLog("warn", message, context, meta),
     error: (message: string, meta?: Record<string, unknown>) =>
       writeLog("error", message, context, meta),
+    securityEvent: (event: SecurityEventType, meta?: SecurityEventMeta) =>
+      writeLog("warn", `security.${event}`, context, { event, ...meta }),
   };
 }

@@ -41,8 +41,7 @@ export function NotificationsList({ initialNotifications }: Props) {
         const data = await response.json();
         setNotifications(data.notifications);
       } catch (error) {
-        console.error("Error fetching notifications:", error);
-        toast.error("Błąd podczas pobierania powiadomień");
+        toast.error("Błąd podczas pobierania powiadomień. Spróbuj ponownie.");
       }
     });
   };
@@ -74,8 +73,7 @@ export function NotificationsList({ initialNotifications }: Props) {
 
         toast.success("Powiadomienie oznaczone jako przeczytane");
       } catch (error) {
-        console.error("Error marking notification as read:", error);
-        toast.error("Błąd podczas oznaczania powiadomienia jako przeczytanego");
+        toast.error("Błąd podczas oznaczania powiadomienia jako przeczytanego. Spróbuj ponownie.");
       }
     });
   };
@@ -124,21 +122,32 @@ export function NotificationsList({ initialNotifications }: Props) {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="text-center py-12">
-          <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white py-12 text-center shadow-sm">
+          <svg
+            className="mx-auto h-12 w-12 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
           </svg>
           <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak powiadomień</h3>
           <p className="mt-1 text-sm text-slate-500">
             {filter === "all"
-              ? "Nie masz żadnych powiadomień."
-              : `Nie masz powiadomień typu "${filterOptions.find(f => f.value === filter)?.label}".`
-            }
+              ? "Nie masz żadnych powiadomień. Będziesz otrzymywać powiadomienia o aktualizacjach zgłoszeń, komentarzach i przypisaniach."
+              : `Nie masz powiadomień typu "${filterOptions.find(f => f.value === filter)?.label}".`}
           </p>
           {filter !== "all" && (
             <button
               onClick={() => handleFilterChange("all")}
-              className="mt-3 text-sm text-sky-600 hover:text-sky-500"
+              className="mt-4 inline-flex rounded-lg border border-sky-600 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] items-center justify-center"
+              aria-label="Pokaż wszystkie powiadomienia"
             >
               Pokaż wszystkie powiadomienia
             </button>

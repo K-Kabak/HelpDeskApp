@@ -176,7 +176,6 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       setEditingId(null);
     } catch (error) {
       toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -207,7 +206,6 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       toast.success(`Reguła została ${enabled ? "włączona" : "wyłączona"}`);
     } catch (error) {
       toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
-      console.error(error);
     }
   };
 
@@ -225,7 +223,6 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       toast.success("Reguła została usunięta");
     } catch (error) {
       toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
-      console.error(error);
     }
   };
 
@@ -503,7 +500,37 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
 
       <div className="space-y-2">
         {rules.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">Brak reguł automatyzacji</p>
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
+            <svg
+              className="mx-auto h-12 w-12 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+            <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak reguł automatyzacji</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Utwórz reguły automatyzacji, aby automatycznie przypisywać zgłoszenia, zmieniać statusy i priorytety.
+            </p>
+            <button
+              onClick={() => {
+                setIsCreating(true);
+                setForm(defaultForm);
+                setEditingId(null);
+              }}
+              className="mt-4 inline-flex rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] items-center justify-center"
+              aria-label="Utwórz pierwszą regułę automatyzacji"
+            >
+              Utwórz regułę
+            </button>
+          </div>
         ) : (
           rules.map((rule) => (
             <div key={rule.id} className="border rounded-lg p-4">

@@ -14,25 +14,62 @@ export default function CommentForm({
   const [bodyMd, setBody] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const validate = () => {
+    const trimmed = bodyMd.trim();
+    if (!trimmed) {
+      setError("Treść komentarza jest wymagana.");
+      return false;
+    }
+    if (trimmed.length < 3) {
+      setError("Komentarz musi mieć co najmniej 3 znaki.");
+      return false;
+    }
+    if (trimmed.length > 5000) {
+      setError("Komentarz może mieć maksymalnie 5000 znaków.");
+      return false;
+    }
+    setError(null);
+    return true;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    const res = await fetch(`/api/tickets/${ticketId}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bodyMd, isInternal }),
-    });
-    setLoading(false);
-    if (!res.ok) {
-      toast.error("Nie udało się dodać komentarza");
+    
+    if (!validate()) {
       return;
     }
-    toast.success("Komentarz dodany");
-    setBody("");
-    setIsInternal(false);
-    router.refresh();
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bodyMd: bodyMd.trim(), isInternal }),
+      });
+      
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        const message = errorBody?.error || errorBody?.message || "Nie udało się dodać komentarza. Spróbuj ponownie.";
+        setError(message);
+        toast.error(message);
+        return;
+      }
+      
+      toast.success("Komentarz dodany");
+      setBody("");
+      setIsInternal(false);
+      setError(null);
+      router.refresh();
+    } catch (error) {
+      const message = "Nie udało się dodać komentarza. Sprawdź połączenie i spróbuj ponownie.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,13 +78,31 @@ export default function CommentForm({
         <label htmlFor="comment-body" className="text-sm text-slate-700">Treść</label>
         <textarea
           id="comment-body"
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+            error ? "border-red-500" : "border-slate-300"
+          }`}
           rows={3}
           value={bodyMd}
-          onChange={(e) => setBody(e.target.value)}
-          required
+          onChange={(e) => {
+            setBody(e.target.value);
+            if (error) setError(null);
+          }}
+          minLength={3}
+          maxLength={5000}
+          disabled={loading}
+          aria-invalid={!!error}
+          aria-describedby={error ? "comment-body-error" : "comment-body-help"}
           aria-label="Treść komentarza"
         />
+        {error ? (
+          <p id="comment-body-error" className="text-xs text-red-600" role="alert">
+            {error}
+          </p>
+        ) : (
+          <p id="comment-body-help" className="text-xs text-slate-500">
+            Minimum 3 znaki, maksimum 5000 znaków
+          </p>
+        )}
       </div>
       {allowInternal && (
         <label className="flex items-center gap-2 text-sm text-slate-700">

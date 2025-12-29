@@ -29,6 +29,7 @@ export async function POST(
   });
 
   if (!auth.ok) {
+    logger.securityEvent("authorization_failure", { reason: "missing_session" });
     logger.warn("auth.required");
     return auth.response;
   }
@@ -48,6 +49,12 @@ export async function POST(
   });
   if (!ticket) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!isSameOrganization(auth.user, ticket.organizationId)) {
+    logger.securityEvent("suspicious_activity", {
+      reason: "comment_access_wrong_org",
+      ticketId: ticket?.id ?? id,
+      attemptedOrgId: auth.user.organizationId,
+      actualOrgId: ticket.organizationId,
+    });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

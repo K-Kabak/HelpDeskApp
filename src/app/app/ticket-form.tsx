@@ -152,35 +152,43 @@ export default function TicketForm() {
     if (!validate()) return;
 
     setLoading(true);
-    const res = await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, descriptionMd, priority, category }),
-    });
-    setLoading(false);
-    if (!res.ok) {
-      const errorBody = await res.json().catch(() => null);
-      const message =
-        errorBody?.message ||
-        errorBody?.error ||
-        "Błąd przy tworzeniu zgłoszenia. Spróbuj ponownie lub skontaktuj się z administratorem.";
-      toast.error(message);
-      return;
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, descriptionMd, priority, category }),
+      });
+      
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => null);
+        const message =
+          errorBody?.message ||
+          errorBody?.error ||
+          "Błąd przy tworzeniu zgłoszenia. Spróbuj ponownie lub skontaktuj się z administratorem.";
+        toast.error(message);
+        return;
+      }
+      
+      toast.success("Zgłoszenie utworzone");
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      setPriority(TicketPriority.SREDNI);
+      setErrors({});
+      router.refresh();
+    } catch (error) {
+      toast.error("Błąd przy tworzeniu zgłoszenia. Sprawdź połączenie i spróbuj ponownie.");
+    } finally {
+      setLoading(false);
     }
-    toast.success("Zgłoszenie utworzone");
-    setTitle("");
-    setDescription("");
-    setCategory("");
-    setPriority(TicketPriority.SREDNI);
-    setErrors({});
-    router.refresh();
   };
 
   return (
     <form className="grid gap-4" onSubmit={submit}>
       <div className="grid gap-1">
-        <label className="text-sm text-slate-700">Tytuł</label>
+        <label htmlFor="title" className="text-sm text-slate-700">Tytuł</label>
         <input
+          id="title"
           className={`rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${errors.title ? "border-red-500" : "border-slate-300"}`}
           value={title}
           onChange={(e) => {
@@ -191,7 +199,7 @@ export default function TicketForm() {
           maxLength={validationRules.title.max}
           disabled={loading}
           aria-invalid={!!errors.title}
-          aria-describedby="title-error"
+          aria-describedby={errors.title ? "title-error" : undefined}
         />
         {errors.title && (
           <p id="title-error" className="text-xs text-red-600">

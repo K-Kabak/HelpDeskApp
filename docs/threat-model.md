@@ -2,30 +2,33 @@
 
 ## System & Trust Boundaries
 - Client > Next.js app/API guarded by NextAuth middleware on `/app/**`; API routes perform their own session lookups.
-- API > Database via Prisma using `DATABASE_URL`; some routes enforce org filters while others require hardening.
-- Content rendering boundary: user-supplied Markdown is rendered in server components today without sanitization.
+- API > Database via Prisma using `DATABASE_URL`; organization filters and `ticketScope()` enforce tenant isolation on query paths.
+- Content rendering boundary: user-supplied Markdown is sanitized with `rehype-sanitize` before rendering, and CSP is applied at the platform boundary.
 - Seed/ops boundary: seed script inserts demo users with static passwords for local use only.
-- Future storage boundary: attachment metadata exists in schema but no upload routes or storage backend are defined yet.
+- Future storage boundary: attachment metadata exists in schema but uploads go through signed URLs, AV scanning, and storage validation before persistence.
+- Observability boundary: security events (failed logins, auth failures, rate-limit violations, suspicious access) are emitted with request IDs to the logging pipeline for monitoring or alerting.
 
 ## Assets
 - Authentication secrets and session claims (JWT), user credentials, and roles.
 - Organization-scoped ticket data, comments, SLA timestamps, and audit events.
 - Markdown content rendered in UI and planned attachments/exports.
+- Security logs and rate-limit counters that track abuse, along with attachment metadata and signed URLs.
 
 ## Threats, Mitigations, Verification
 | Area | Threat | Mitigation (planned/current) | Verification |
 | --- | --- | --- | --- |
-| Authentication | Credential stuffing and reuse of demo creds. | Add rate limits to auth routes; rotate/remove seed accounts outside dev; consider MFA. | Brute-force test hits 429; prod seed disabled; manual MFA check once added. |
-| Org scoping | Ticket detail page currently lacks org filter, enabling cross-org reads if IDs known. | Apply `organizationId` filters to all ticket/comment queries and centralize a guard helper. | Integration test requesting another org's ticket returns 404; lint/semgrep rule for missing org filter. |
-| Authorization | Client role strings can be tampered; requester could attempt forbidden updates. | Keep server-side role checks; add shared policy helper and audit denied attempts. | API tests assert 403 on disallowed updates; audit log contains denied actions. |
-| Error handling | Verbose stack traces or inconsistent envelopes leak details. | Standardize responses to `{ error: { code, message } }` (plus optional details) and suppress stack traces in production. | Contract/API tests assert envelope shape; staging log review ensures no stack traces or secrets leak. |
-| Markdown/XSS | Markdown rendered without sanitization. | Enable `rehype-sanitize` (or equivalent) and add CSP. | Unit test rendering `<script>` is escaped; Playwright CSP check. |
-| Rate limiting/DoS | No limiter on auth or ticket/comment routes. | Add Redis-backed limiter in middleware and per-route guards. | Load test to 429 threshold; monitor allow/deny metrics. |
-| Attachments (future) | Malicious files, MIME spoofing, cross-org URL sharing. | Build signed URL service with org ownership, allowlist, size cap, AV scan, audit trail, and follow upload security checklist before launch. | Integration tests for blocked types/oversize; cross-org attempt returns 403/404. |
-| Audit integrity | Audit events lack tamper protection. | Hash chain or append-only store with periodic verification. | Unit test of hash chain; operational integrity check script. |
-| CSRF/session fixation | Credential login uses JSON POST without CSRF token; cookies may be reused. | Enforce SameSite cookies, add anti-CSRF token for credential form, rotate session on privilege change. | Browser test sending cross-site POST fails; session ID changes after privilege elevation. |
-| Data validation | Max lengths/body size limits missing for ticket/comment payloads. | Add server-side caps and request size limits. | Integration test rejecting oversized payloads with 400/413. |
-| SLA monitoring | Due timestamps computed on create but not monitored for breach. | Add background job to evaluate SLA breaches and notify. | Fake-clock job test; alert in staging on breach simulation. |
+| Area | Threat | Mitigation (planned/current) | Verification |
+| --- | --- | --- | --- |
+| Authentication | Credential stuffing and demo credential reuse still risk account takeover. | Credential logins go through NextAuth with bcrypt, rate limiting, and security event logging; seed/demo accounts are disabled in production. | Brute-force tests return 429; security logger flags `failed_login`; NextAuth session issuance is monitored. |
+| Org scoping | Tickets, comments, and attachments missing org filters enable cross-tenant reads and writes. | `ticketScope()` and `isSameOrganization()` enforce tenant boundaries, and mismatched org access now surfaces `security.suspicious_activity` events. | Cross-org access requests return 404/403 with audit trails and logged security events; tests simulate foreign IDs. |
+| Authorization | Requesters might escalate privileges or tamper with role claims in-flight. | Server-side role guards (`isAgentOrAdmin()`, `ticketScope()`) centralize RBAC and log `security.authorization_failure` events for denied operations. | API tests assert 403 on forbidden data changes; logs surface the security event plus request ID. |
+| Security headers / CSP | Missing headers allow clickjacking, MIME sniffing, or data injection. | Next.js middleware injects CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`; CSP works with sanitized Markdown. | Automated checks (`curl -I`, Playwright) confirm headers; CSP tests ensure `<script>` payloads are blocked. |
+| Rate limiting / DoS | Auth, ticket/comment writes, and bulk routes were previously unthrottled. | `checkRateLimit()` enforces per-IP and per-user caps with retry headers and security logging; defaults enable limits in prod. | Load/abuse tests produce 429/ retry headers; logs mark `rate_limit_violation`; dashboards show drop in abuse volume. |
+| Security logging & monitoring | Lack of structured security telemetry delays incident response. | `src/lib/logger.ts` emits structured security events (failed logins, auth failures, rate-limit violations, suspicious activities) with request IDs, routed to the observability stack. | Alerts trigger on suspicious log spikes; runbooks verify log delivery/resolution. |
+| Attachments | Malicious uploads or cross-org shares expose sensitive files. | Upload APIs enforce MIME/size allowlists, signed URLs, AV scanning, and org checks; audit trails capture `ATTACHMENT_*` events. | Integration tests block disallowed content; audit logs show attachments per org. |
+| Audit integrity | Audit events lack tamper protection. | Hash chaining or append-only storage is being prototyped with periodic verification scripts. | Automated scripts verify hash chain integrity; manual reviews confirm the append-only store is intact. |
+| CSRF / Session fixation | Credential forms could be abused without CSRF protection. | SameSite cookies, anti-CSRF tokens, and rotation on privilege elevation harden session handling. | Browser test sending cross-site POST fails; session ID rotates on role change. |
+| Data validation | Payloads lack max lengths/body size guards. | Zod schemas enforce length limits; request size checks drop oversized payloads before processing. | Integration tests reject oversized/tampered payloads with 400/413 responses. |
 
 ## Top Priorities
 1. Add org filters to ticket detail/comments and cover with tests.

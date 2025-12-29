@@ -13,19 +13,45 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const validate = () => {
+    if (!email.trim()) {
+      setError("Email jest wymagany.");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Podaj prawidłowy adres email.");
+      return false;
+    }
+    if (!password) {
+      setError("Hasło jest wymagane.");
+      return false;
+    }
+    if (password.length < 8) {
+      setError("Hasło musi mieć co najmniej 8 znaków.");
+      return false;
+    }
+    setError(null);
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validate()) {
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     const res = await signIn("credentials", {
       redirect: false,
-      email,
+      email: email.trim(),
       password,
       callbackUrl,
     });
     setLoading(false);
     if (res?.error) {
-      setError("B?'?tdny email lub has?'o");
+      setError("Błędny email lub hasło");
       return;
     }
     router.push(res?.url ?? "/app");
@@ -79,7 +105,9 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-sky-600 text-white py-2 font-medium hover:bg-sky-700 transition disabled:opacity-50"
+            className="w-full rounded-lg bg-sky-600 text-white py-2 font-medium hover:bg-sky-700 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px]"
+            aria-label={loading ? "Logowanie..." : "Zaloguj się"}
+            aria-busy={loading}
           >
             {loading ? "Logowanie..." : "Zaloguj"}
           </button>

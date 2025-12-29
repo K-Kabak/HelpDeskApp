@@ -27,6 +27,7 @@ export async function POST(
   });
 
   if (!auth.ok) {
+    logger.securityEvent("authorization_failure", { reason: "missing_session" });
     logger.warn("auth.required");
     return auth.response;
   }
@@ -62,12 +63,23 @@ export async function POST(
   });
 
   if (!ticket || !isSameOrganization(auth.user, ticket.organizationId)) {
+    logger.securityEvent("suspicious_activity", {
+      reason: "attachment_upload_wrong_org",
+      ticketId: ticket?.id ?? id,
+      attemptedOrgId: auth.user.organizationId,
+      actualOrgId: ticket?.organizationId,
+    });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const isRequester = auth.user.role === "REQUESTER";
 
   if (isRequester && ticket.requesterId !== auth.user.id) {
+    logger.securityEvent("suspicious_activity", {
+      reason: "attachment_upload_other_requester",
+      ticketId: ticket.id,
+      requesterId: ticket.requesterId,
+    });
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -135,6 +147,7 @@ export async function DELETE(
   });
 
   if (!auth.ok) {
+    logger.securityEvent("authorization_failure", { reason: "missing_session" });
     logger.warn("auth.required");
     return auth.response;
   }
@@ -157,6 +170,12 @@ export async function DELETE(
     !isSameOrganization(auth.user, attachment.ticket.organizationId) ||
     attachment.ticket.id !== id
   ) {
+    logger.securityEvent("suspicious_activity", {
+      reason: "attachment_delete_wrong_org",
+      ticketId: attachment?.ticketId ?? id,
+      attachmentId: attachment?.id,
+      actualOrgId: attachment?.ticket.organizationId,
+    });
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

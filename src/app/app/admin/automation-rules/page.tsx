@@ -44,7 +44,7 @@ export default async function AutomationRulesPage() {
         },
       ];
     } catch (error) {
-      console.error("Invalid automation rule config:", rule.id, error);
+      // Skip invalid rules - they will be filtered out
       return [];
     }
   });

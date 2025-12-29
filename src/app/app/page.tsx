@@ -132,7 +132,7 @@ export default async function DashboardPage({
       }
     }
   } catch (error) {
-    console.error("Failed to load saved views:", error);
+    // Silently fail - saved views are optional
   }
 
   // Apply view filters if a view is selected, otherwise use URL params
@@ -257,7 +257,6 @@ export default async function DashboardPage({
     try {
       kpiMetrics = await calculateKpiMetrics(session.user.organizationId);
     } catch (error) {
-      console.error("Error fetching KPI metrics:", error);
       // Continue without KPI metrics if there's an error
     }
   }
@@ -282,14 +281,14 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Zgłoszenia</h1>
+          <h1 className="text-xl font-semibold sm:text-2xl">Zgłoszenia</h1>
           <p className="text-sm text-slate-600" aria-live="polite" aria-atomic="true">
             Role: {session.user.role} - Wyświetlane {tickets.length} zgłoszenia
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <RefreshButton />
           {session.user.role !== "REQUESTER" && (
             <Suspense fallback={<button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 opacity-50" disabled>Eksportuj zgłoszenia</button>}>
@@ -345,8 +344,8 @@ export default async function DashboardPage({
         }}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/app?slaStatus=breached" className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition cursor-pointer">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+        <Link href="/app?slaStatus=breached" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition cursor-pointer sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia z naruszonym SLA</p>
@@ -369,7 +368,7 @@ export default async function DashboardPage({
             </div>
           </div>
         </Link>
-        <Link href="/app?slaStatus=healthy" className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition cursor-pointer">
+        <Link href="/app?slaStatus=healthy" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition cursor-pointer sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Otwarte zgloszenia zgodne z SLA</p>
@@ -394,38 +393,11 @@ export default async function DashboardPage({
         </Link>
       </div>
 
-      {/* Saved Views */}
-      <SavedViews
-        initialViews={savedViews.map((v) => ({
-          id: v.id,
-          name: v.name,
-          filters: v.filters as {
-            status?: string;
-            priority?: string;
-            search?: string;
-            category?: string;
-            tagIds?: string[];
-          },
-          isShared: v.isShared,
-          isDefault: v.isDefault,
-          createdAt: v.createdAt.toISOString(),
-          updatedAt: v.updatedAt.toISOString(),
-        }))}
-        currentFilters={{
-          status: statusFilter,
-          priority: priorityFilter,
-          q: searchQuery,
-          category: categoryFilter,
-          tags: tagFilters,
-          slaStatus: slaStatusFilter,
-        }}
-      />
-
-      <form className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4" method="get" action="/app">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-1 flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
+      <form className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm space-y-4 sm:p-4" method="get" action="/app">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <div
-              className={`flex flex-1 min-w-0 sm:min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
+              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[220px] sm:p-3 ${
                 statusFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -448,7 +420,7 @@ export default async function DashboardPage({
             </div>
 
             <div
-              className={`flex flex-1 min-w-0 sm:min-w-[220px] flex-col rounded-lg border p-3 shadow-sm ${
+              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[220px] sm:p-3 ${
                 priorityFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -471,7 +443,7 @@ export default async function DashboardPage({
             </div>
 
             <div
-              className={`flex flex-1 min-w-[240px] flex-col rounded-lg border p-3 shadow-sm ${
+              className={`flex flex-1 min-w-0 flex-col rounded-lg border p-2 shadow-sm sm:min-w-[240px] sm:p-3 ${
                 searchQuery ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
               }`}
             >
@@ -489,9 +461,9 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2">
           <div
-            className={`flex flex-col rounded-lg border p-3 shadow-sm ${
+            className={`flex flex-col rounded-lg border p-2 shadow-sm sm:p-3 ${
               categoryFilter ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
             }`}
           >
@@ -523,7 +495,7 @@ export default async function DashboardPage({
           </div>
 
           <div
-            className={`flex flex-col rounded-lg border p-3 shadow-sm ${
+            className={`flex flex-col rounded-lg border p-2 shadow-sm sm:p-3 ${
               tagFilters.length > 0 ? "border-sky-500 ring-2 ring-sky-100" : "border-slate-200"
             }`}
           >
@@ -560,7 +532,7 @@ export default async function DashboardPage({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 min-h-[44px]"
+            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 min-h-[44px] sm:py-3"
           >
             Zastosuj
           </button>
@@ -579,23 +551,42 @@ export default async function DashboardPage({
      </form>
 
       {tickets.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Brak zgloszen</h2>
-          <p className="mt-1 text-sm text-slate-600">Brak zgloszen - utworz pierwsze.</p>
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
+          <svg
+            className="mx-auto h-12 w-12 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <h2 className="mt-4 text-lg font-semibold text-slate-900">Brak zgłoszeń</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {searchQuery || statusFilter || priorityFilter || categoryFilter || tagFilters.length > 0 || slaStatusFilter
+              ? "Nie znaleziono zgłoszeń pasujących do wybranych filtrów. Spróbuj zmienić kryteria wyszukiwania."
+              : "Nie masz jeszcze żadnych zgłoszeń. Utwórz pierwsze zgłoszenie, aby rozpocząć."}
+          </p>
           <Link
             href="/app/tickets/new"
-            className="mt-4 inline-flex rounded-lg border border-sky-600 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+            className="mt-4 inline-flex rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 min-h-[44px] items-center justify-center"
+            aria-label="Utwórz nowe zgłoszenie"
           >
-            Utworz zgloszenie
+            Utwórz zgłoszenie
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {tickets.map((ticket) => (
             <Link
               key={ticket.id}
               href={`/app/tickets/${ticket.id}`}
-              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md sm:p-4"
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">#{ticket.number}</span>

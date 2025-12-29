@@ -25,8 +25,8 @@ export function KpiCards({ initialMetrics }: KpiCardsProps) {
           setMetrics(data);
           setLoading(false);
         })
-        .catch((err) => {
-          console.error("Error fetching KPI metrics:", err);
+        .catch(() => {
+          // Silently fail - metrics are optional
           setLoading(false);
         });
     }

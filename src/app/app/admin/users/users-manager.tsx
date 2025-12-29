@@ -216,31 +216,37 @@ export function UsersManager({ initialUsers }: Props) {
           <form onSubmit={handleCreate} className="mt-4 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <label htmlFor="user-email" className="text-sm font-semibold text-slate-700">Email</label>
                 <input
+                  id="user-email"
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   required
+                  aria-required="true"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-700">Imię i nazwisko</label>
+                <label htmlFor="user-name" className="text-sm font-semibold text-slate-700">Imię i nazwisko</label>
                 <input
+                  id="user-name"
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   required
+                  aria-required="true"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-700">Rola</label>
+                <label htmlFor="user-role" className="text-sm font-semibold text-slate-700">Rola</label>
                 <select
+                  id="user-role"
                   value={form.role}
                   onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as Role }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  aria-label="Rola użytkownika"
                 >
                   {Object.entries(roleLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -250,25 +256,31 @@ export function UsersManager({ initialUsers }: Props) {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-700">Hasło</label>
+                <label htmlFor="user-password" className="text-sm font-semibold text-slate-700">Hasło</label>
                 <input
+                  id="user-password"
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   required
                   minLength={8}
+                  aria-required="true"
+                  aria-describedby="password-help"
                 />
+                <p id="password-help" className="mt-1 text-xs text-slate-500">Minimum 8 znaków</p>
               </div>
             </div>
             {formError && (
-              <p className="text-sm text-red-600">{formError}</p>
+              <p className="text-sm text-red-600" role="alert" aria-live="polite">{formError}</p>
             )}
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60 min-h-[44px]"
+                className="rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                aria-label={loading ? "Dodawanie użytkownika..." : "Dodaj użytkownika"}
+                aria-busy={loading}
               >
                 {loading ? "Dodawanie..." : "Dodaj użytkownika"}
               </button>
@@ -279,7 +291,8 @@ export function UsersManager({ initialUsers }: Props) {
                   setShowCreateForm(false);
                   setFormError(null);
                 }}
-                className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold hover:bg-slate-50 min-h-[44px]"
+                className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold hover:bg-slate-50 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                aria-label="Anuluj dodawanie użytkownika"
               >
                 Anuluj
               </button>

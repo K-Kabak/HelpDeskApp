@@ -3,7 +3,9 @@ import type { User, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 import bcrypt from "bcrypt";
+import { createHash } from "crypto";
 import { prisma } from "./prisma";
+import { createRequestLogger } from "./logger";
 import type { AdapterUser } from "next-auth/adapters";
 
 type AppUser = {
@@ -19,6 +21,11 @@ type AppToken = JWT & {
   organizationId?: string;
 };
 
+function hashIdentifier(value?: string) {
+  if (!value) return undefined;
+  return createHash("sha256").update(value.toLowerCase()).digest("hex");
+}
+
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" as const },
@@ -32,29 +39,51 @@ export const authOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Hasło", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials.password) {
-          return null;
-        }
+    async authorize(credentials) {
+      const logger = createRequestLogger({
+        route: "/api/auth/credentials",
+        method: "POST",
+      });
+      const identifierHash = hashIdentifier(credentials?.email);
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase() },
+      if (!credentials?.email || !credentials.password) {
+        logger.securityEvent("failed_login", {
+          reason: "missing_credentials",
+          identifierHash,
         });
-        if (!user) return null;
+        return null;
+      }
 
-        const ok = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!ok) return null;
+      const user = await prisma.user.findUnique({
+        where: { email: credentials.email.toLowerCase() },
+      });
+      if (!user) {
+        logger.securityEvent("failed_login", {
+          reason: "user_not_found",
+          identifierHash,
+        });
+        return null;
+      }
 
-        const appUser: AppUser = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          organizationId: user.organizationId,
-        };
+      const ok = await bcrypt.compare(credentials.password, user.passwordHash);
+      if (!ok) {
+        logger.securityEvent("failed_login", {
+          reason: "invalid_password",
+          identifierHash,
+        });
+        return null;
+      }
 
-        return appUser;
-      },
+      const appUser: AppUser = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        organizationId: user.organizationId,
+      };
+
+      return appUser;
+    },
     }),
   ],
   callbacks: {

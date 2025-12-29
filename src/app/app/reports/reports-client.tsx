@@ -58,7 +58,8 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
       setAnalytics(analyticsData);
       setKpi(kpiData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Nieznany błąd";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -104,13 +105,15 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-red-800">Error loading reports: {error}</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+          <p className="text-red-800 font-semibold">Błąd podczas ładowania raportów</p>
+          <p className="text-red-700 mt-1">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-2 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+            className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px]"
+            aria-label="Spróbuj ponownie załadować raporty"
           >
-            Retry
+            Spróbuj ponownie
           </button>
         </div>
       </div>

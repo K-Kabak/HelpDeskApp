@@ -117,7 +117,6 @@ export default async function ReportsPage({
       calculateKpiMetrics(session.user.organizationId, dateRange),
     ]);
   } catch (error) {
-    console.error("Error fetching reports data:", error);
     // Continue with null data - client will handle fetching
   }
 

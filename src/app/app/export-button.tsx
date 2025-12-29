@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type ExportButtonProps = {
   label: string;
@@ -61,9 +62,9 @@ export function ExportButton({ label, endpoint, className }: ExportButtonProps) 
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success("Eksport zakończony pomyślnie");
     } catch (error) {
-      console.error("Export error:", error);
-      alert("Nie udało się wyeksportować danych. Spróbuj ponownie.");
+      toast.error("Nie udało się wyeksportować danych. Spróbuj ponownie.");
     } finally {
       setExporting(false);
     }

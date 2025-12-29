@@ -292,7 +292,26 @@ export function SlaPoliciesManager({ initialPolicies, categories }: Props) {
           <span className="text-xs text-slate-500">{policies.length} pozycji</span>
         </div>
         {policies.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">Brak polityk SLA.</p>
+          <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h3 className="mt-4 text-sm font-semibold text-slate-900">Brak polityk SLA</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Utwórz polityki SLA, aby definiować czasy reakcji i rozwiązania dla zgłoszeń o różnych priorytetach.
+            </p>
+          </div>
         ) : (
           <div className="mt-3 space-y-2">
             {policies.map((p) => {
