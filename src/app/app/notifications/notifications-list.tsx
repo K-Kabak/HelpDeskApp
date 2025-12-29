@@ -4,12 +4,13 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
+import type { Prisma } from "@prisma/client";
 
 type Notification = {
   id: string;
   subject: string | null;
   body: string | null;
-  data: Record<string, unknown> | null;
+  data: Prisma.JsonValue | null;
   readAt: Date | null;
   createdAt: Date;
 };

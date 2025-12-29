@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import type { KpiMetrics } from "@/lib/kpi-metrics";
 
 interface AnalyticsData {
   period: {
@@ -21,29 +22,6 @@ interface AnalyticsData {
     resolved: number;
     byPriority: Record<string, number>;
   }>;
-}
-
-interface KpiMetrics {
-  mttr?: {
-    averageHours: number;
-    averageMinutes: number;
-    totalResolved: number;
-  };
-  mtta?: {
-    averageHours: number;
-    averageMinutes: number;
-    totalWithResponse: number;
-  };
-  reopenRate?: {
-    percentage: number;
-    reopenedCount: number;
-    totalClosedCount: number;
-  };
-  slaCompliance?: {
-    percentage: number;
-    compliantCount: number;
-    totalResolvedCount: number;
-  };
 }
 
 interface ReportsClientProps {
@@ -325,4 +303,3 @@ export function ReportsClient({ initialAnalytics, initialKpi, initialDays }: Rep
     </div>
   );
 }
-
