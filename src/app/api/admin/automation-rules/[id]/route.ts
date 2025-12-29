@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/authorization";
 import { validateTriggerConfig, validateActionConfig } from "@/lib/automation-rules";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
@@ -42,13 +43,14 @@ async function getRule(id: string, organizationId: string) {
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await assertAdmin();
   if (!auth.ok) return auth.response;
 
+  const resolvedParams = await params;
   const orgId = auth.user.organizationId ?? "";
-  const ruleCheck = await getRule(params.id, orgId);
+  const ruleCheck = await getRule(resolvedParams.id, orgId);
   if (!ruleCheck.ok) return ruleCheck.response;
   const existingRule = ruleCheck.rule;
 
@@ -84,17 +86,17 @@ export async function PATCH(
   const updateData: Partial<{
     name: string;
     enabled: boolean;
-    triggerConfig: unknown;
-    actionConfig: unknown;
+    triggerConfig: Prisma.InputJsonValue;
+    actionConfig: Prisma.InputJsonValue;
   }> = {
     ...(parsed.data.name !== undefined && { name: parsed.data.name }),
     ...(parsed.data.enabled !== undefined && { enabled: parsed.data.enabled }),
-    ...(parsed.data.triggerConfig !== undefined && { triggerConfig: parsed.data.triggerConfig }),
-    ...(parsed.data.actionConfig !== undefined && { actionConfig: parsed.data.actionConfig }),
+    ...(parsed.data.triggerConfig !== undefined && { triggerConfig: parsed.data.triggerConfig as Prisma.InputJsonValue }),
+    ...(parsed.data.actionConfig !== undefined && { actionConfig: parsed.data.actionConfig as Prisma.InputJsonValue }),
   };
 
   const rule = await prisma.automationRule.update({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     data: updateData,
   });
 
@@ -123,18 +125,19 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await assertAdmin();
   if (!auth.ok) return auth.response;
 
+  const resolvedParams = await params;
   const orgId = auth.user.organizationId ?? "";
-  const ruleCheck = await getRule(params.id, orgId);
+  const ruleCheck = await getRule(resolvedParams.id, orgId);
   if (!ruleCheck.ok) return ruleCheck.response;
   const rule = ruleCheck.rule;
 
   await prisma.automationRule.delete({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
   });
 
   await recordAdminAudit({

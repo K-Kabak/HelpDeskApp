@@ -19,6 +19,22 @@ type AuthResult =
 export async function requireAuth(): Promise<AuthResult> {
   const session = (await getServerSession(authOptions)) as SessionWithUser | null;
 
+  // #region agent log
+  fetch("http://127.0.0.1:7242/ingest/4c56f378-5b29-4f14-93b1-f3f61e2c3120", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: "debug-session",
+      runId: "pre-fix",
+      hypothesisId: "session-structure",
+      location: "src/lib/authorization.ts:21",
+      message: "requireAuth session shape",
+      data: { user: session?.user },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
   if (!session?.user) {
     return {
       ok: false,
@@ -58,13 +74,44 @@ export async function requireAuth(): Promise<AuthResult> {
  */
 export function ticketScope(user: AuthenticatedUser) {
   if (user.role === "REQUESTER") {
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/4c56f378-5b29-4f14-93b1-f3f61e2c3120", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "debug-session",
+        runId: "pre-fix",
+        hypothesisId: "ticket-scope-filter",
+        location: "src/lib/authorization.ts:59",
+        message: "ticketScope requester filter",
+        data: { scope: { requesterId: user.id } },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     return { requesterId: user.id };
   }
 
   // SECURITY: Ensure organization scoping is always enforced for non-requester roles
   if (!user.organizationId) {
     // If user has no organization, they should not see any tickets
-    return { id: null }; // This will result in no matches
+    // Return a filter that matches nothing (empty array for 'in' operator)
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/4c56f378-5b29-4f14-93b1-f3f61e2c3120", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "debug-session",
+        runId: "pre-fix",
+        hypothesisId: "ticket-scope-filter",
+        location: "src/lib/authorization.ts:95",
+        message: "ticketScope missing org filter",
+        data: { scope: { id: { in: [] } } },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    return { id: { in: [] } };
   }
 
   return { organizationId: user.organizationId };

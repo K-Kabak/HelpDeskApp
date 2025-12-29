@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type SaveViewDialogProps = {
   isOpen: boolean;
@@ -17,14 +17,6 @@ export function SaveViewDialog({
 }: SaveViewDialogProps) {
   const [name, setName] = useState("");
   const [setAsDefault, setSetAsDefault] = useState(false);
-
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setName("");
-      setSetAsDefault(false);
-    }
-  }, [isOpen]);
 
   const handleClose = () => {
     setName("");

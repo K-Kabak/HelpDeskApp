@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 
 // Helper function to determine notification type from data/subject
 function getNotificationType(notification: {
@@ -45,7 +46,7 @@ function getNotificationType(notification: {
 }
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

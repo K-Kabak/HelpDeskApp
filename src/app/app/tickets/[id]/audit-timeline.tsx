@@ -29,25 +29,27 @@ const roleColors: Record<Role, string> = {
   ADMIN: "bg-indigo-100 text-indigo-700",
 };
 
+type ChangeValue = { old: unknown; new: unknown };
+
 function formatAuditChange(action: string, data: Record<string, unknown> | null): string {
   switch (action) {
     case "TICKET_UPDATED": {
-      const changes = data?.changes || {};
+      const changes = (data?.changes as Record<string, ChangeValue | undefined>) || {};
       const parts: string[] = [];
 
-      if (changes.status) {
+      if (changes.status && typeof changes.status === 'object' && 'old' in changes.status && 'new' in changes.status) {
         const statusChange = `Status: ${changes.status.old} → ${changes.status.new}`;
         parts.push(statusChange);
       }
-      if (changes.priority) {
+      if (changes.priority && typeof changes.priority === 'object' && 'old' in changes.priority && 'new' in changes.priority) {
         parts.push(`Priorytet: ${changes.priority.old} → ${changes.priority.new}`);
       }
-      if (changes.assigneeUserId) {
+      if (changes.assigneeUserId && typeof changes.assigneeUserId === 'object' && 'old' in changes.assigneeUserId && 'new' in changes.assigneeUserId) {
         const oldUser = changes.assigneeUserId.old ? "przypisany" : "nieprzypisany";
         const newUser = changes.assigneeUserId.new ? "przypisany" : "nieprzypisany";
         parts.push(`Agent: ${oldUser} → ${newUser}`);
       }
-      if (changes.assigneeTeamId) {
+      if (changes.assigneeTeamId && typeof changes.assigneeTeamId === 'object' && 'old' in changes.assigneeTeamId && 'new' in changes.assigneeTeamId) {
         const oldTeam = changes.assigneeTeamId.old ? "przypisany" : "nieprzypisany";
         const newTeam = changes.assigneeTeamId.new ? "przypisany" : "nieprzypisany";
         parts.push(`Zespół: ${oldTeam} → ${newTeam}`);
@@ -57,12 +59,12 @@ function formatAuditChange(action: string, data: Record<string, unknown> | null)
     }
 
     case "ATTACHMENT_UPLOADED": {
-      const attachment = data?.attachment;
+      const attachment = data?.attachment as { fileName?: string } | undefined;
       return `Przesłano załącznik: ${attachment?.fileName || "plik"}`;
     }
 
     case "ATTACHMENT_DELETED": {
-      const attachment = data?.attachment;
+      const attachment = data?.attachment as { fileName?: string } | undefined;
       return `Usunięto załącznik: ${attachment?.fileName || "plik"}`;
     }
 
@@ -176,7 +178,7 @@ export function AuditTimeline({ ticketId }: { ticketId: string }) {
                   {event.action === "TICKET_UPDATED" && event.data && typeof event.data === "object" && "reopenReason" in event.data && event.data.reopenReason && (
                     <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
                       <p className="text-xs font-semibold text-amber-800 mb-1">Powód ponownego otwarcia:</p>
-                      <p className="text-sm text-amber-900">{String(event.data.reopenReason)}</p>
+                      <p className="text-sm text-amber-900">{String((event.data as { reopenReason: unknown }).reopenReason)}</p>
                     </div>
                   )}
                 </div>

@@ -2,18 +2,20 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const ticket = await prisma.ticket.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     select: {
       id: true,
       organizationId: true,
@@ -42,7 +44,7 @@ export async function GET(
   }
 
   const auditEvents = await prisma.auditEvent.findMany({
-    where: { ticketId: params.id },
+    where: { ticketId: resolvedParams.id },
     include: {
       actor: {
         select: {

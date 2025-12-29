@@ -1,11 +1,9 @@
-import { authOptions } from "@/lib/auth";
 import { getTicketPage } from "@/lib/ticket-list";
 import { getSlaStatus } from "@/lib/sla-status";
 import { parseMultiParam, appendMultiParam } from "@/lib/search-filters";
 import { prisma } from "@/lib/prisma";
 import { TicketPriority, TicketStatus } from "@prisma/client";
-import { getServerSession } from "next-auth/next";
-import type { SessionWithUser } from "@/lib/session-types";
+import { getAppServerSession } from "@/lib/server-session";
 import Link from "next/link";
 import TicketForm from "./ticket-form";
 import { KpiCards } from "./kpi-cards";
@@ -50,7 +48,7 @@ export default async function DashboardPage({
 }: {
   searchParams?: DashboardSearchParams | Promise<DashboardSearchParams>;
 }) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const session = await getAppServerSession();
   if (!session?.user) return null;
 
   const params = (await searchParams) ?? {};

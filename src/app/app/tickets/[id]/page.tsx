@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Role, TicketPriority, TicketStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { notFound, redirect } from "next/navigation";
+import type { SessionWithUser } from "@/lib/session-types";
 import Link from "next/link";
 import CommentForm from "./comment-form";
 import TicketActions from "./ticket-actions";
@@ -46,7 +47,7 @@ export default async function TicketPage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     redirect("/login");
   }

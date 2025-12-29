@@ -64,7 +64,7 @@ export async function POST(
     }
 
     // Check if token has expired (double-check)
-    if (csatRequest.expiresAt < new Date()) {
+    if (csatRequest.expiresAt && csatRequest.expiresAt < new Date()) {
       logger.warn("csat.token.expired");
       return NextResponse.json({ error: "Token has expired" }, { status: 401 });
     }

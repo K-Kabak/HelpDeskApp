@@ -2,17 +2,18 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 
 // GET /api/admin/teams - List teams for admin
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const teams = await prisma.team.findMany({
-      where: { organizationId: session.user.organizationId },
+      where: { organizationId: session.user.organizationId ?? undefined },
       include: {
         _count: {
           select: {
@@ -48,7 +49,7 @@ export async function GET() {
 
 // POST /api/admin/teams - Create new team
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     const existingTeam = await prisma.team.findFirst({
       where: {
         name: trimmedName,
-        organizationId: session.user.organizationId,
+        organizationId: session.user.organizationId ?? undefined,
       },
     });
 
@@ -91,11 +92,12 @@ export async function POST(request: NextRequest) {
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: session.user.id,
-        action: "CREATE_TEAM",
-        entityType: "TEAM",
-        entityId: team.id,
-        details: { name: team.name },
+        actorId: session.user.id,
+        organizationId: session.user.organizationId ?? "",
+        resource: "TEAM",
+        resourceId: team.id,
+        action: "CREATE",
+        data: { name: team.name },
       },
     });
 

@@ -2,17 +2,19 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notificationId = params.id;
+  const notificationId = resolvedParams.id;
 
   try {
     // First check if the notification belongs to the user

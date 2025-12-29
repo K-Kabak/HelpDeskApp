@@ -1,13 +1,16 @@
 import type { Session } from "next-auth";
 
+export type UserRole = "REQUESTER" | "AGENT" | "ADMIN";
+
 /**
- * SessionWithUser is an alias for Session that ensures the user object
- * has the required fields (id, role, organizationId) as defined in
- * the NextAuth type augmentation.
- * 
- * Since NextAuth types are augmented in src/types/next-auth.d.ts,
- * the Session type already includes these fields, so this is primarily
- * for documentation and type clarity.
+ * SessionWithUser refines NextAuth's Session to guarantee the stored user
+ * includes the Prisma-backed identity fields we rely on throughout the app.
  */
-export type SessionWithUser = Session;
+export type SessionWithUser = Omit<Session, "user"> & {
+  user: Session["user"] & {
+    id: string;
+    role: UserRole;
+    organizationId: string;
+  };
+};
 

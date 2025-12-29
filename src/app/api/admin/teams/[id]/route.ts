@@ -2,13 +2,15 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import type { SessionWithUser } from "@/lib/session-types";
 
 // GET /api/admin/teams/[id] - Get specific team with members
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -16,8 +18,8 @@ export async function GET(
   try {
     const team = await prisma.team.findFirst({
       where: {
-        id: params.id,
-        organizationId: session.user.organizationId,
+        id: resolvedParams.id,
+        organizationId: session.user.organizationId ?? undefined,
       },
       include: {
         memberships: {
@@ -79,9 +81,10 @@ export async function GET(
 // PATCH /api/admin/teams/[id] - Update team
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -104,8 +107,8 @@ export async function PATCH(
     // Check if team exists and belongs to admin's organization
     const existingTeam = await prisma.team.findFirst({
       where: {
-        id: params.id,
-        organizationId: session.user.organizationId,
+        id: resolvedParams.id,
+        organizationId: session.user.organizationId ?? undefined,
       },
     });
 
@@ -118,8 +121,8 @@ export async function PATCH(
       const nameExists = await prisma.team.findFirst({
         where: {
           name: trimmedName,
-          organizationId: session.user.organizationId,
-          id: { not: params.id },
+          organizationId: session.user.organizationId ?? undefined,
+          id: { not: resolvedParams.id },
         },
       });
 
@@ -130,18 +133,19 @@ export async function PATCH(
 
     // Update team
     const team = await prisma.team.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: { name: trimmedName },
     });
 
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: session.user.id,
-        action: "UPDATE_TEAM",
-        entityType: "TEAM",
-        entityId: team.id,
-        details: { name: team.name },
+        actorId: session.user.id,
+        organizationId: session.user.organizationId ?? "",
+        resource: "TEAM",
+        resourceId: team.id,
+        action: "UPDATE",
+        data: { name: team.name },
       },
     });
 
@@ -162,9 +166,10 @@ export async function PATCH(
 // DELETE /api/admin/teams/[id] - Delete team
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -173,8 +178,8 @@ export async function DELETE(
     // Check if team exists and belongs to admin's organization
     const existingTeam = await prisma.team.findFirst({
       where: {
-        id: params.id,
-        organizationId: session.user.organizationId,
+        id: resolvedParams.id,
+        organizationId: session.user.organizationId ?? undefined,
       },
       include: {
         _count: {
@@ -204,17 +209,18 @@ export async function DELETE(
 
     // Delete team (cascade will handle memberships)
     await prisma.team.delete({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
     });
 
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: session.user.id,
-        action: "DELETE_TEAM",
-        entityType: "TEAM",
-        entityId: params.id,
-        details: { name: existingTeam.name },
+        actorId: session.user.id,
+        organizationId: session.user.organizationId ?? "",
+        resource: "TEAM",
+        resourceId: resolvedParams.id,
+        action: "DELETE",
+        data: { name: existingTeam.name },
       },
     });
 

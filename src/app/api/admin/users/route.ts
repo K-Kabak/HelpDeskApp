@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 
   try {
     const users = await prisma.user.findMany({
-      where: { organizationId: auth.user.organizationId },
+      where: { organizationId: auth.user.organizationId ?? undefined },
       select: {
         id: true,
         email: true,
@@ -127,14 +127,14 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await hash(password, 12);
 
-    // Create user
+    // Create user - use unchecked input to avoid organization relation requirement
     const user = await prisma.user.create({
       data: {
         email,
         name,
         role: role as Role,
         passwordHash,
-        organizationId: auth.user.organizationId,
+        ...(auth.user.organizationId ? { organizationId: auth.user.organizationId } : {}),
         emailVerified: new Date(), // Auto-verify for admin-created users
       },
       select: {
@@ -151,11 +151,12 @@ export async function POST(request: NextRequest) {
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: auth.user.id,
-        action: "CREATE_USER",
-        entityType: "USER",
-        entityId: user.id,
-        details: { email: user.email, name: user.name, role: user.role },
+        actorId: auth.user.id,
+        organizationId: auth.user.organizationId ?? "",
+        resource: "USER",
+        resourceId: user.id,
+        action: "CREATE",
+        data: { email: user.email, name: user.name, role: user.role },
       },
     });
 

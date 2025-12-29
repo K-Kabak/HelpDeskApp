@@ -3,15 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { Role, Prisma } from "@prisma/client";
-import { Role } from "@prisma/client";
 import { hash } from "bcryptjs";
+import type { SessionWithUser } from "@/lib/session-types";
 
 // GET /api/admin/users/[id] - Get specific user
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -19,8 +20,8 @@ export async function GET(
   try {
     const user = await prisma.user.findFirst({
       where: {
-        id: params.id,
-        organizationId: session.user.organizationId,
+        id: resolvedParams.id,
+        organizationId: session.user.organizationId ?? undefined,
       },
       select: {
         id: true,
@@ -71,9 +72,10 @@ export async function GET(
 // PATCH /api/admin/users/[id] - Update user
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -94,8 +96,8 @@ export async function PATCH(
     // Check if user exists and belongs to admin's organization
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
-        organizationId: session.user.organizationId,
+        id: resolvedParams.id,
+        organizationId: session.user.organizationId ?? undefined,
       },
     });
 
@@ -123,7 +125,7 @@ export async function PATCH(
 
     // Update user
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: updateData,
       select: {
         id: true,
@@ -139,11 +141,12 @@ export async function PATCH(
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: session.user.id,
-        action: "UPDATE_USER",
-        entityType: "USER",
-        entityId: user.id,
-        details: { email: user.email, name: user.name, role: user.role },
+        actorId: session.user.id,
+        organizationId: session.user.organizationId ?? "",
+        resource: "USER",
+        resourceId: user.id,
+        action: "UPDATE",
+        data: { email: user.email, name: user.name, role: user.role },
       },
     });
 
@@ -164,9 +167,10 @@ export async function PATCH(
 // DELETE /api/admin/users/[id] - Delete user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -175,8 +179,8 @@ export async function DELETE(
     // Check if user exists and belongs to admin's organization
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
-        organizationId: session.user.organizationId,
+        id: resolvedParams.id,
+        organizationId: session.user.organizationId ?? undefined,
       },
       include: {
         _count: {
@@ -213,17 +217,18 @@ export async function DELETE(
 
     // Delete user (cascade will handle related records)
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
     });
 
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        adminId: session.user.id,
-        action: "DELETE_USER",
-        entityType: "USER",
-        entityId: params.id,
-        details: { email: existingUser.email, name: existingUser.name },
+        actorId: session.user.id,
+        organizationId: session.user.organizationId ?? "",
+        resource: "USER",
+        resourceId: resolvedParams.id,
+        action: "DELETE",
+        data: { email: existingUser.email, name: existingUser.name },
       },
     });
 

@@ -1,9 +1,10 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { User, Session, NextAuthOptions } from "next-auth";
+import type { User, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 import bcrypt from "bcrypt";
 import { prisma } from "./prisma";
+import type { NextAuthOptions } from "next-auth";
 
 type AppUser = {
   id: string;

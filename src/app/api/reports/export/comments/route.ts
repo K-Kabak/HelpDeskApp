@@ -4,6 +4,7 @@ import { ticketScope } from "@/lib/authorization";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
+import type { SessionWithUser } from "@/lib/session-types";
 
 /**
  * Export comments to CSV
@@ -15,10 +16,26 @@ import type { Prisma } from "@prisma/client";
  *   - internal (optional): "true" to include internal comments (agents/admins only)
  */
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
   if (!session?.user?.organizationId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // #region agent log
+  fetch("http://127.0.0.1:7242/ingest/4c56f378-5b29-4f14-93b1-f3f61e2c3120", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId: "debug-session",
+      runId: "pre-fix",
+      hypothesisId: "route-session",
+      location: "src/app/api/reports/export/comments/route.ts:19",
+      message: "Comments export session",
+      data: { user: session.user, params: Object.fromEntries(new URL(req.url).searchParams.entries()) },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
 
   const { searchParams } = new URL(req.url);
   const ticketIdParam = searchParams.get("ticketId");
@@ -32,7 +49,7 @@ export async function GET(req: Request) {
 
   // Build where clause with organization scoping and visibility rules
   const where: Prisma.CommentWhereInput = {
-    internal: includeInternal ? undefined : false, // Requesters only see public comments
+    isInternal: includeInternal ? undefined : false, // Requesters only see public comments
   };
 
   // Build ticket scope for filtering
@@ -41,6 +58,10 @@ export async function GET(req: Request) {
     role: session.user.role ?? "REQUESTER",
     organizationId: session.user.organizationId,
   });
+
+  // Handle invalid scope - if user has no organizationId and is not a requester,
+  // ticketScope returns { id: { in: [] } } which will match no tickets
+  // We can proceed with the query as it will naturally return empty results
 
   // Ticket filter - must respect organization scoping
   if (ticketIdParam) {
@@ -114,7 +135,7 @@ export async function GET(req: Request) {
 
   const rows = comments.map((comment) => {
     // Security: For requesters, scrub internal comment content even if somehow included
-    const commentBody = comment.internal && isRequester ? "[Internal Comment - Hidden]" : comment.body;
+    const commentBody = comment.isInternal && isRequester ? "[Internal Comment - Hidden]" : comment.bodyMd;
 
     return [
       comment.ticket.number.toString(),
@@ -122,7 +143,7 @@ export async function GET(req: Request) {
       `"${(commentBody || "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
       comment.author?.name || "",
       comment.author?.email || "",
-      comment.internal ? "Yes" : "No",
+      comment.isInternal ? "Yes" : "No",
       comment.createdAt.toISOString(),
     ];
   });

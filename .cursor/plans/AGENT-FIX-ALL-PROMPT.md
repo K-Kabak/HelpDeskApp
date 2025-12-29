@@ -259,3 +259,4 @@ Po zakończeniu przygotuj krótki raport:
 
 **Powodzenia! 🎯**
 
+

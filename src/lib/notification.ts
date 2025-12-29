@@ -52,6 +52,8 @@ const notificationSchema = z.object({
     .optional(),
 });
 
+export type NotificationPayload = z.infer<typeof notificationSchema>;
+
 async function resolveUserId(to: string): Promise<string | null> {
   if (to.includes("@")) {
     const user = await prisma.user.findUnique({
@@ -114,7 +116,7 @@ class NotificationServiceImpl implements NotificationService {
    * @returns Notification result with ID, status, and deduplication flag
    */
   async send(request: NotificationRequest): Promise<NotificationResult> {
-    const payload = notificationSchema.parse(request);
+    const payload: NotificationPayload = notificationSchema.parse(request);
 
     // Check idempotency: if we've already sent this notification, return cached result
     if (payload.idempotencyKey) {
@@ -125,8 +127,7 @@ class NotificationServiceImpl implements NotificationService {
     }
 
     // Determine notification type from metadata or default to ticketUpdate
-    const notificationType =
-      (payload.metadata?.notificationType as NotificationType) ?? "ticketUpdate";
+    const notificationType = payload.metadata?.notificationType ?? "ticketUpdate";
 
     // Resolve user ID from email or user ID string
     const userId = await resolveUserId(payload.to);
@@ -219,10 +220,10 @@ class NotificationServiceImpl implements NotificationService {
       }
 
       // Store notificationType in data field for filtering
-      const notificationData = {
-        ...(payload.data || {}),
+      const notificationData: Prisma.JsonObject = {
+        ...((payload.data ?? {}) as Prisma.JsonObject),
         notificationType: specificType,
-      } as Prisma.JsonValue;
+      };
 
       const notification = await prisma.inAppNotification.create({
         data: {

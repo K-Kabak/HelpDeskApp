@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { TicketPriority, TicketStatus } from "@prisma/client";
 import { z } from "zod";
+import type { SessionWithUser } from "@/lib/session-types";
 
 const exportQuerySchema = z.object({
   status: z.nativeEnum(TicketStatus).optional(),
@@ -18,8 +19,8 @@ const exportQuerySchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  if (!session?.user?.organizationId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -41,7 +42,11 @@ export async function GET(req: Request) {
 
   // Build where clause similar to ticket-list.ts
   const where = {
-    ...ticketScope(session.user),
+    ...ticketScope({
+      id: session.user.id,
+      role: session.user.role ?? "REQUESTER",
+      organizationId: session.user.organizationId,
+    }),
     ...(filters.status ? { status: filters.status } : {}),
     ...(filters.priority ? { priority: filters.priority } : {}),
     ...(filters.search

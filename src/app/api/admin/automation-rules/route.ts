@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/authorization";
 import { validateTriggerConfig, validateActionConfig } from "@/lib/automation-rules";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -63,8 +64,8 @@ export async function POST(req: Request) {
     data: {
       organizationId: orgId,
       name: parsed.data.name,
-      triggerConfig: parsed.data.triggerConfig,
-      actionConfig: parsed.data.actionConfig,
+      triggerConfig: parsed.data.triggerConfig as Prisma.InputJsonValue,
+      actionConfig: parsed.data.actionConfig as Prisma.InputJsonValue,
     },
   });
 

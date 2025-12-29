@@ -1,10 +1,8 @@
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth/next";
+import { getAppServerSession } from "@/lib/server-session";
 import { redirect } from "next/navigation";
 import { ReportsClient } from "./reports-client";
 import { calculateKpiMetrics, DateRange, type KpiMetrics } from "@/lib/kpi-metrics";
 import { prisma } from "@/lib/prisma";
-import type { SessionWithUser } from "@/lib/session-types";
 
 async function fetchAnalytics(organizationId: string, days: number) {
   const endDate = new Date();
@@ -85,7 +83,7 @@ export default async function ReportsPage({
 }: {
   searchParams?: { days?: string } | Promise<{ days?: string }>;
 }) {
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const session = await getAppServerSession();
   if (!session?.user) {
     redirect("/login");
   }
