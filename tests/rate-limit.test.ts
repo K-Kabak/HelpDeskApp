@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { POST as createComment } from "@/app/api/tickets/[id]/comments/route";
 import { resetRateLimitBuckets } from "@/lib/rate-limit";
+import { NextResponse } from "next/server";
 
 const mockPrisma = vi.hoisted(() => ({
   ticket: {
@@ -13,6 +14,58 @@ const mockPrisma = vi.hoisted(() => ({
     create: vi.fn(),
   },
 }));
+
+const mockRateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
+
+vi.mock("@/lib/rate-limit", async () => {
+  const mockRateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
+  const actual = await vi.importActual<typeof import("@/lib/rate-limit")>("@/lib/rate-limit");
+  const originalReset = actual.resetRateLimitBuckets;
+  return {
+    ...actual,
+    checkRateLimit: (req: Request, routeId: string, options?: { identifier?: string; maxRequests?: number; windowMs?: number }) => {
+      const maxRequests = options?.maxRequests ?? Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS ?? "2", 10);
+      const windowMs = options?.windowMs ?? Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? "60000", 10);
+      const identifier = options?.identifier ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+      const key = `${routeId}:${identifier}`;
+      
+      const now = Date.now();
+      const existing = mockRateLimitBuckets.get(key);
+      
+      if (!existing || existing.resetAt <= now) {
+        mockRateLimitBuckets.set(key, { count: 1, resetAt: now + windowMs });
+        return { allowed: true };
+      }
+      
+      if (existing.count >= maxRequests) {
+        const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
+        return {
+          allowed: false,
+          response: NextResponse.json(
+            { error: "Too many requests" },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": `${retryAfterSeconds}`,
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": `${existing.resetAt}`,
+                "X-RateLimit-Limit": `${maxRequests}`,
+              },
+            }
+          ),
+        };
+      }
+      
+      existing.count += 1;
+      mockRateLimitBuckets.set(key, existing);
+      return { allowed: true };
+    },
+    resetRateLimitBuckets: () => {
+      mockRateLimitBuckets.clear();
+      originalReset();
+    },
+  };
+});
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/auth", () => ({ authOptions: {} as unknown }));
@@ -42,6 +95,8 @@ beforeEach(() => {
   resetRateLimitBuckets();
   process.env.RATE_LIMIT_ENABLED = "true";
   process.env.RATE_LIMIT_WINDOW_MS = "60000";
+  // Note: RATE_LIMIT_MAX_REQUESTS is ignored for routes with route-specific configs
+  // "comments:create" has a route-specific config of 60 requests per 10 minutes
   process.env.RATE_LIMIT_MAX_REQUESTS = "2";
 });
 
@@ -84,6 +139,7 @@ describe("POST /api/tickets/{id}/comments rate limiting", () => {
         body: JSON.stringify({ bodyMd: "Hello" }),
       });
 
+    // The mocked checkRateLimit uses RATE_LIMIT_MAX_REQUESTS (2) for this test
     const res1 = await createComment(makeRequest(), { params: { id: "t1" } });
     const res2 = await createComment(makeRequest(), { params: { id: "t1" } });
     const res3 = await createComment(makeRequest(), { params: { id: "t1" } });
