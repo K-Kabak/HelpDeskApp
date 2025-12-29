@@ -116,7 +116,7 @@ export default async function ReportsPage({
       fetchAnalytics(session.user.organizationId, validDays),
       calculateKpiMetrics(session.user.organizationId, dateRange),
     ]);
-  } catch (error) {
+  } catch {
     // Continue with null data - client will handle fetching
   }
 

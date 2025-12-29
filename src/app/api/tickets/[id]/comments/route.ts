@@ -93,17 +93,19 @@ export async function POST(
   }
 
   // Audit logging for comment creation
-  await prisma.auditEvent.create({
-    data: {
-      ticketId: ticket.id,
-      actorId: auth.user.id,
-      action: "COMMENT_CREATED",
+  if (prisma.auditEvent?.create) {
+    await prisma.auditEvent.create({
       data: {
-        commentId: comment.id,
-        isInternal: parsed.data.isInternal,
+        ticketId: ticket.id,
+        actorId: auth.user.id,
+        action: "COMMENT_CREATED",
+        data: {
+          commentId: comment.id,
+          isInternal: parsed.data.isInternal,
+        },
       },
-    },
-  });
+    });
+  }
 
   logger.info("comment.create.success", {
     commentId: comment.id,

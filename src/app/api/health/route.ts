@@ -31,7 +31,7 @@ export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     health.database = true;
-  } catch (error) {
+  } catch {
     health.database = false;
     return NextResponse.json(health, { status: 503 });
   }
@@ -54,7 +54,7 @@ export async function GET() {
       await queue.getJobCounts();
       await queue.close();
       health.redis = true;
-    } catch (error) {
+    } catch {
       health.redis = false;
       // Redis is optional, so we don't fail the health check
     }
@@ -84,7 +84,7 @@ export async function GET() {
       } else {
         health.minio = false;
       }
-    } catch (error) {
+    } catch {
       health.minio = false;
       // MinIO is optional, so we don't fail the health check
     }

@@ -73,7 +73,7 @@ describe("Notification channels", () => {
       },
     });
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/notifications"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -105,7 +105,7 @@ describe("Notification channels", () => {
 
     mockPrisma.inAppNotification.findMany.mockResolvedValue(mockNotifications);
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/notifications"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -121,7 +121,7 @@ describe("Notification channels", () => {
   it("returns 401 when unauthenticated", async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/notifications"));
     const body = await res.json();
 
     expect(res.status).toBe(401);

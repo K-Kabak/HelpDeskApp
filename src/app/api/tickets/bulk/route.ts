@@ -10,7 +10,7 @@ import { scheduleSlaJobsForTicket } from "@/lib/sla-scheduler";
 import { evaluateAutomationRules } from "@/lib/automation-rules";
 
 const bulkActionSchema = z.object({
-  ticketIds: z.array(z.string().uuid()).min(1).max(100), // Limit to 100 tickets per request
+  ticketIds: z.array(z.string().min(1)).min(1).max(100), // Limit to 100 tickets per request
   action: z.enum(["assign", "status"]),
   value: z.string(),
 });
@@ -104,6 +104,11 @@ export async function PATCH(req: Request) {
         error: "Ticket not found or access denied",
       });
     }
+  }
+  // If none of the requested tickets are accessible, return aggregated errors immediately
+  if (result.failed === ticketIds.length) {
+    logger.warn("bulk.actions.no_tickets_found", { ticketIds });
+    return NextResponse.json(result);
   }
 
   // Validate action-specific values

@@ -174,7 +174,7 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       setForm(defaultForm);
       setIsCreating(false);
       setEditingId(null);
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
     } finally {
       setLoading(false);
@@ -204,7 +204,7 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
       const { rule } = await res.json();
       setRules(rules.map((r) => (r.id === id ? rule : r)));
       toast.success(`Reguła została ${enabled ? "włączona" : "wyłączona"}`);
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
     }
   };
@@ -221,7 +221,7 @@ export function AutomationRulesManager({ initialRules, users, teams }: Props) {
 
       setRules(rules.filter((r) => r.id !== id));
       toast.success("Reguła została usunięta");
-    } catch (error) {
+    } catch {
       toast.error("Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.");
     }
   };

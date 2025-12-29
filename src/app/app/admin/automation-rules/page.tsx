@@ -43,7 +43,7 @@ export default async function AutomationRulesPage() {
           updatedAt: rule.updatedAt,
         },
       ];
-    } catch (error) {
+    } catch {
       // Skip invalid rules - they will be filtered out
       return [];
     }

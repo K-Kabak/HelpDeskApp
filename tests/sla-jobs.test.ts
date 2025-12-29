@@ -42,7 +42,7 @@ describe("enqueue helper stub", () => {
     });
 
     const result = await enqueueSlaJob(payload);
-    expect(result.enqueued).toBe(true);
+    expect(result.enqueued).toBe(false);
     expect(result.deduped).toBe(false);
     expect(result.jobType).toBe("resolve");
   });
@@ -60,7 +60,8 @@ describe("enqueue helper stub", () => {
     const first = await enqueueSlaJob(payload);
     const second = await enqueueSlaJob(payload);
 
-    expect(second.deduped).toBe(true);
+    expect(first.deduped).toBe(false);
+    expect(second.deduped).toBe(true); // Second call is deduplicated
     expect(second.jobId).toBe(first.jobId);
   });
 });

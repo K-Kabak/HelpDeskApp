@@ -1,9 +1,7 @@
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import type { SessionWithUser } from "@/lib/session-types";
 import { createRequestLogger } from "@/lib/logger";
+import { requireAuth } from "@/lib/authorization";
 
 // GET /api/admin/teams/[id] - Get specific team with members
 export async function GET(
@@ -11,14 +9,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const auth = await requireAuth();
   const logger = createRequestLogger({
     route: `/api/admin/teams/${resolvedParams.id}`,
     method: "GET",
-    userId: session?.user?.id,
+    userId: auth.ok ? auth.user.id : undefined,
   });
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!auth.ok || auth.user.role !== "ADMIN") {
     logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -27,7 +25,7 @@ export async function GET(
     const team = await prisma.team.findFirst({
       where: {
         id: resolvedParams.id,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
       include: {
         memberships: {
@@ -92,14 +90,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const auth = await requireAuth();
   const logger = createRequestLogger({
     route: `/api/admin/teams/${resolvedParams.id}`,
     method: "PATCH",
-    userId: session?.user?.id,
+    userId: auth.ok ? auth.user.id : undefined,
   });
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!auth.ok || auth.user.role !== "ADMIN") {
     logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -123,7 +121,7 @@ export async function PATCH(
     const existingTeam = await prisma.team.findFirst({
       where: {
         id: resolvedParams.id,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
     });
 
@@ -136,7 +134,7 @@ export async function PATCH(
       const nameExists = await prisma.team.findFirst({
         where: {
           name: trimmedName,
-          organizationId: session.user.organizationId ?? undefined,
+          organizationId: auth.user.organizationId ?? undefined,
           id: { not: resolvedParams.id },
         },
       });
@@ -155,8 +153,8 @@ export async function PATCH(
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        actorId: session.user.id,
-        organizationId: session.user.organizationId ?? "",
+        actorId: auth.user.id,
+        organizationId: auth.user.organizationId ?? "",
         resource: "TEAM",
         resourceId: team.id,
         action: "UPDATE",
@@ -184,14 +182,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  const session = (await getServerSession(authOptions)) as SessionWithUser | null;
+  const auth = await requireAuth();
   const logger = createRequestLogger({
     route: `/api/admin/teams/${resolvedParams.id}`,
     method: "DELETE",
-    userId: session?.user?.id,
+    userId: auth.ok ? auth.user.id : undefined,
   });
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!auth.ok || auth.user.role !== "ADMIN") {
     logger.warn("admin.required");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -201,7 +199,7 @@ export async function DELETE(
     const existingTeam = await prisma.team.findFirst({
       where: {
         id: resolvedParams.id,
-        organizationId: session.user.organizationId ?? undefined,
+        organizationId: auth.user.organizationId ?? undefined,
       },
       include: {
         _count: {
@@ -225,7 +223,7 @@ export async function DELETE(
     // Prevent deleting teams with active tickets
     if (existingTeam._count.tickets > 0) {
       return NextResponse.json({
-        error: "Cannot delete team with active tickets. Please reassign or close all tickets first."
+        error: "Cannot delete team with assigned tickets. Please reassign or close all tickets first."
       }, { status: 400 });
     }
 
@@ -237,8 +235,8 @@ export async function DELETE(
     // Log admin action
     await prisma.adminAudit.create({
       data: {
-        actorId: session.user.id,
-        organizationId: session.user.organizationId ?? "",
+        actorId: auth.user.id,
+        organizationId: auth.user.organizationId ?? "",
         resource: "TEAM",
         resourceId: resolvedParams.id,
         action: "DELETE",

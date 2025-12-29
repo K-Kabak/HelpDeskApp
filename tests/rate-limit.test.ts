@@ -9,6 +9,9 @@ const mockPrisma = vi.hoisted(() => ({
   comment: {
     create: vi.fn(),
   },
+  auditEvent: {
+    create: vi.fn(),
+  },
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));

@@ -92,7 +92,7 @@ export function BulkActionsToolbar({
 
         toast.error(`Nie udało się zaktualizować ${result.failed} zgłoszeń:\n${errorDetails}`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Wystąpił błąd podczas aktualizacji statusów. Spróbuj ponownie.");
     } finally {
       setIsUpdating(false);
@@ -146,7 +146,7 @@ export function BulkActionsToolbar({
 
         toast.error(`Nie udało się przypisać ${result.failed} zgłoszeń:\n${errorDetails}`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Wystąpił błąd podczas przypisywania. Spróbuj ponownie.");
     } finally {
       setIsUpdating(false);

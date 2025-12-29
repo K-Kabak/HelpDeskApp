@@ -133,7 +133,7 @@ export default async function DashboardPage({
         }
       }
     }
-  } catch (error) {
+  } catch {
     // Silently fail - saved views are optional
   }
 
@@ -258,7 +258,7 @@ export default async function DashboardPage({
   if (session.user.role === "ADMIN" && session.user.organizationId) {
     try {
       kpiMetrics = await calculateKpiMetrics(session.user.organizationId);
-    } catch (error) {
+  } catch {
       // Continue without KPI metrics if there's an error
     }
   }

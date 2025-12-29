@@ -40,7 +40,7 @@ export function NotificationsList({ initialNotifications }: Props) {
         
         const data = await response.json();
         setNotifications(data.notifications);
-      } catch (error) {
+      } catch {
         toast.error("Błąd podczas pobierania powiadomień. Spróbuj ponownie.");
       }
     });
@@ -72,7 +72,7 @@ export function NotificationsList({ initialNotifications }: Props) {
         );
 
         toast.success("Powiadomienie oznaczone jako przeczytane");
-      } catch (error) {
+      } catch {
         toast.error("Błąd podczas oznaczania powiadomienia jako przeczytanego. Spróbuj ponownie.");
       }
     });

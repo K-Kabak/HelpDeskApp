@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Role } from "@prisma/client";
 import { SkeletonComment } from "@/components/ui/skeleton";
-import { ErrorState, InlineError } from "@/components/ui/error-state";
+import { InlineError } from "@/components/ui/error-state";
 import { EmptyState } from "@/components/ui/empty-state";
 
 type AuditEvent = {

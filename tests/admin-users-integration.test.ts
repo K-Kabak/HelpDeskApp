@@ -289,11 +289,7 @@ describe("Admin Users API Integration", () => {
     });
 
     it("rejects update to user from different org", async () => {
-      mocks.findFirst.mockResolvedValue({
-        id: "user-other",
-        email: "other@example.com",
-        organizationId: "other-org",
-      });
+      mocks.findFirst.mockResolvedValue(null);
 
       const req = new Request("http://localhost/api/admin/users/user-other", {
         method: "PATCH",
@@ -388,11 +384,7 @@ describe("Admin Users API Integration", () => {
     });
 
     it("rejects deletion of user from different org", async () => {
-      mocks.findFirst.mockResolvedValue({
-        id: "user-other",
-        email: "other@example.com",
-        organizationId: "other-org",
-      });
+      mocks.findFirst.mockResolvedValue(null);
 
       const req = new Request("http://localhost/api/admin/users/user-other", {
         method: "DELETE",

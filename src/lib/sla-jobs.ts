@@ -13,7 +13,7 @@ export const slaJobPayloadSchema = z.object({
     message: "dueAt must be a valid ISO date string",
   }),
   priority: z.string(),
-  categoryId: z.string().min(1).nullable(),
+  categoryId: z.string().min(1).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   idempotencyKey: z.string().min(1).optional(),
 });
@@ -76,6 +76,9 @@ export async function enqueueSlaJob(
       deduped: false,
       jobType: payload.jobType,
     };
+    if (payload.idempotencyKey) {
+      jobDedupe.set(payload.idempotencyKey, result);
+    }
     return result;
   }
 
@@ -107,16 +110,19 @@ export async function enqueueSlaJob(
     if (payload.idempotencyKey) {
       jobDedupe.set(payload.idempotencyKey, result);
     }
-
     return result;
-  } catch (error) {
+  } catch {
     // If enqueue fails, return error result
-    return {
+    const result = {
       jobId: payload.jobId,
       enqueued: false,
       deduped: false,
       jobType: payload.jobType,
     };
+    if (payload.idempotencyKey) {
+      jobDedupe.set(payload.idempotencyKey, result);
+    }
+    return result;
   }
 }
 

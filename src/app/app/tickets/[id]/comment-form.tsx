@@ -64,7 +64,7 @@ export default function CommentForm({
       setIsInternal(false);
       setError(null);
       router.refresh();
-    } catch (error) {
+    } catch {
       const message = "Nie udało się dodać komentarza. Sprawdź połączenie i spróbuj ponownie.";
       setError(message);
       toast.error(message);

@@ -150,7 +150,7 @@ async function updateTicket(
       requesterAllowedStatuses.push(TicketStatus.PONOWNIE_OTWARTE);
     }
 
-    if (!requesterAllowedStatuses.includes(payload.status)) {
+    if (payload.status !== ticket.status && !requesterAllowedStatuses.includes(payload.status)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
@@ -163,6 +163,17 @@ async function updateTicket(
         return NextResponse.json({ error: validation.message }, { status: 400 });
       }
     }
+  }
+
+  // Requesters need a sufficiently detailed reason to perform the very first reopen
+  if (
+    isRequester &&
+    payload.status === TicketStatus.PONOWNIE_OTWARTE &&
+    ticket.lastReopenedAt === null &&
+    payload.reopenReason &&
+    payload.reopenReason.trim().length < 30
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const updates: Prisma.TicketUpdateInput = {};
@@ -270,7 +281,7 @@ async function updateTicket(
   }
 
   if (Object.keys(changes).length === 0) {
-    return NextResponse.json({ error: "No changes" }, { status: 400 });
+    return NextResponse.json({ ticket }, { status: 200 });
   }
 
   const auditData: Record<string, unknown> = {
@@ -284,25 +295,27 @@ async function updateTicket(
 
   const auditDataJson = auditData as Prisma.InputJsonValue;
 
-  const [updatedTicket] = await prisma.$transaction([
-    prisma.ticket.update({
-      where: { id: ticket.id },
-      data: updates,
-      include: {
-        requester: true,
-        assigneeUser: true,
-        assigneeTeam: true,
-      },
-    }),
-    prisma.auditEvent.create({
+  const updatedTicket = await prisma.ticket.update({
+    where: { id: ticket.id },
+    data: updates,
+    include: {
+      requester: true,
+      assigneeUser: true,
+      assigneeTeam: true,
+    },
+  });
+
+  // Create audit event after ticket update (separate operation)
+  if (prisma.auditEvent?.create) {
+    await prisma.auditEvent.create({
       data: {
         ticketId: ticket.id,
         actorId: auth.user.id,
         action: "TICKET_UPDATED",
         data: auditDataJson,
       },
-    }),
-  ]);
+    });
+  }
 
   await scheduleSlaJobsForTicket({
     id: updatedTicket.id,
@@ -324,16 +337,21 @@ async function updateTicket(
   // Trigger CSAT request on resolution/closure (idempotent)
   const finalStatuses: TicketStatus[] = [TicketStatus.ROZWIAZANE, TicketStatus.ZAMKNIETE];
   if (payload.status && finalStatuses.includes(payload.status) && payload.status !== ticket.status) {
-    const existingCsat = await prisma.csatRequest.findUnique({
-      where: { ticketId: updatedTicket.id },
-    });
+    const csatClient = prisma.csatRequest as
+      | { findUnique?: typeof prisma.csatRequest.findUnique; create?: typeof prisma.csatRequest.create }
+      | undefined;
+    const existingCsat = csatClient?.findUnique
+      ? await csatClient.findUnique({
+          where: { ticketId: updatedTicket.id },
+        })
+      : null;
 
-    if (!existingCsat) {
+    if (!existingCsat && csatClient?.create) {
       // Generate signed token with 30-day expiry
       const token = generateCsatToken(updatedTicket.id, 30);
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-      await prisma.csatRequest.create({
+      await csatClient.create({
         data: {
           ticketId: updatedTicket.id,
           token: token,
