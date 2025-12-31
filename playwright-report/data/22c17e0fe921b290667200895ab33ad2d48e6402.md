@@ -1,0 +1,61 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - paragraph [ref=e6]: SerwisDesk
+        - heading "Witaj, Agent" [level=1] [ref=e7]
+        - paragraph [ref=e8]: "Rola: AGENT"
+      - navigation "Główne nawigacja" [ref=e9]:
+        - link "Zgłoszenia" [ref=e10] [cursor=pointer]:
+          - /url: /app
+        - button "Wyloguj się z systemu" [ref=e11] [cursor=pointer]: Wyloguj
+    - main [ref=e12]:
+      - generic [ref=e13]:
+        - link "← Powrót" [ref=e14] [cursor=pointer]:
+          - /url: /app
+        - heading "Nowe zgłoszenie" [level=1] [ref=e15]
+        - form "Formularz tworzenia zgłoszenia" [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: Tytuł*
+            - textbox "Tytułwymagane" [ref=e21]
+            - paragraph [ref=e22]: Minimum 5, maksimum 120 znaków
+          - generic [ref=e23]:
+            - generic [ref=e24]: Opis (Markdown)*
+            - generic [ref=e26]:
+              - group "Tryb edycji opisu" [ref=e27]:
+                - button "Tryb edycji" [pressed] [ref=e28] [cursor=pointer]: ✏️ Edycja
+                - button "Tryb podglądu" [ref=e29] [cursor=pointer]: 👁️ Podgląd
+              - textbox "Opis (Markdown)wymagane" [ref=e30]:
+                - /placeholder: Opisz problem używając Markdown...
+            - paragraph [ref=e31]: Minimum 20, maksimum 5000 znaków
+          - generic [ref=e32]:
+            - generic [ref=e33]: Priorytet*
+            - combobox "Priorytetwymagane" [ref=e35]:
+              - option "Niski"
+              - option "Średni" [selected]
+              - option "Wysoki"
+              - option "Krytyczny"
+          - generic [ref=e36]:
+            - generic [ref=e37]: Kategoria*
+            - generic [ref=e39]:
+              - combobox "Kategoria zgłoszenia" [ref=e41]: Hardware
+              - button "Przełącz na ręczne wpisywanie kategorii" [ref=e42] [cursor=pointer]: Wpisz kategorię ręcznie
+            - paragraph [ref=e43]: Minimum 3, maksimum 50 znaków
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - paragraph [ref=e46]: Podgląd SLA
+              - paragraph [ref=e47]: Aktualizuje się po zmianie priorytetu/kategorii
+            - list [ref=e48]:
+              - listitem [ref=e49]: "Odpowiedź: 30.12.2025, 08:40 (~8h)"
+              - listitem [ref=e50]: "Rozwiązanie: 1.01.2026, 00:40 (~48h)"
+          - button "Utwórz zgłoszenie" [ref=e51] [cursor=pointer]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e58] [cursor=pointer]:
+    - img [ref=e59]
+  - alert [ref=e62]: Witaj, Agent
+```
